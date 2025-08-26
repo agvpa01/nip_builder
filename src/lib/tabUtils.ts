@@ -181,6 +181,19 @@ export function convertTabsForHtml(text: string, tabSize: number = 4): string {
 }
 
 /**
+ * Converts WYSIWYG formatting tags to proper HTML tags for final output
+ * @param text - Text that may contain <b> and <i> tags from WYSIWYG editor
+ * @returns Text with proper HTML formatting tags
+ */
+export function convertFormattingForHtml(text: string): string {
+  return text
+    .replace(/<b>/g, '<strong>')
+    .replace(/<\/b>/g, '</strong>')
+    .replace(/<i>/g, '<em>')
+    .replace(/<\/i>/g, '</em>');
+}
+
+/**
  * Extracts display text from formatted text (removes HTML tags)
  * @param formattedText - Text that may contain HTML formatting
  * @returns Plain text without HTML tags

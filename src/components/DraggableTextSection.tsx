@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { FormattableTableInput } from "./FormattableTableInput";
 
 interface TextSection {
   id: string;
@@ -33,7 +34,7 @@ interface DraggableTextSectionProps {
     value: string
   ) => void;
   onDeleteSection: (id: string) => void;
-  onTextSelect?: (sectionId: string, element: HTMLTextAreaElement) => void;
+  onTextSelect?: (sectionId: string, element: HTMLElement) => void;
 }
 
 interface SortableItemProps {
@@ -44,7 +45,7 @@ interface SortableItemProps {
     value: string
   ) => void;
   onDeleteSection: (id: string) => void;
-  onTextSelect?: (sectionId: string, element: HTMLTextAreaElement) => void;
+  onTextSelect?: (sectionId: string, element: HTMLElement) => void;
 }
 
 function SortableItem({
@@ -105,16 +106,11 @@ function SortableItem({
         </button>
       </div>
 
-      <textarea
+      <FormattableTableInput
         value={section.content}
-        onChange={(e) => onUpdateSection(section.id, "content", e.target.value)}
-        onSelect={(e) => {
-          if (onTextSelect) {
-            onTextSelect(section.id, e.target as HTMLTextAreaElement);
-          }
-        }}
-        className="w-full h-24 text-sm border border-gray-300 rounded p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onChange={(value) => onUpdateSection(section.id, "content", value)}
         placeholder="Enter section content..."
+        className="w-full h-24 text-sm border border-gray-300 rounded p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );

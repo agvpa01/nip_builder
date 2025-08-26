@@ -6,7 +6,7 @@ import { DraggableTextSection } from "./DraggableTextSection";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
-import { convertTabsForHtml } from "../lib/tabUtils";
+import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
 
 interface ComplexSupplementsTemplateProps {
   product: any;
@@ -154,24 +154,35 @@ export function ComplexSupplementsTemplate({
   ]);
 
   // Thickness state
-  const [nutritionalRowThickness, setNutritionalRowThickness] = useState<'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick'>('normal');
-  const [ingredientRowThickness, setIngredientRowThickness] = useState<'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick'>('normal');
+  const [nutritionalRowThickness, setNutritionalRowThickness] = useState<
+    "normal" | "thick" | "medium-thick" | "large-thick" | "extra-large-thick"
+  >("normal");
+  const [ingredientRowThickness, setIngredientRowThickness] = useState<
+    "normal" | "thick" | "medium-thick" | "large-thick" | "extra-large-thick"
+  >("normal");
 
   // Utility function to get border class based on thickness
-  const getBorderClass = (thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
+  const getBorderClass = (
+    thickness:
+      | "normal"
+      | "thick"
+      | "medium-thick"
+      | "large-thick"
+      | "extra-large-thick"
+  ) => {
     switch (thickness) {
-      case 'normal':
-        return 'border-b border-gray-400';
-      case 'thick':
-        return 'border-b-2 border-gray-600';
-      case 'medium-thick':
-        return 'border-b-4 border-gray-700';
-      case 'large-thick':
-        return 'border-b-8 border-gray-800';
-      case 'extra-large-thick':
-        return 'border-b-8 border-double border-black';
+      case "normal":
+        return "border-b border-gray-400";
+      case "thick":
+        return "border-b-2 border-gray-600";
+      case "medium-thick":
+        return "border-b-4 border-gray-700";
+      case "large-thick":
+        return "border-b-8 border-gray-800";
+      case "extra-large-thick":
+        return "border-b-8 border-double border-black";
       default:
-        return 'border-b border-gray-400';
+        return "border-b border-gray-400";
     }
   };
 
@@ -184,8 +195,10 @@ export function ComplexSupplementsTemplate({
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.ingredientRows) setIngredientRows(content.ingredientRows);
-        if (content.nutritionalRowThickness) setNutritionalRowThickness(content.nutritionalRowThickness);
-        if (content.ingredientRowThickness) setIngredientRowThickness(content.ingredientRowThickness);
+        if (content.nutritionalRowThickness)
+          setNutritionalRowThickness(content.nutritionalRowThickness);
+        if (content.ingredientRowThickness)
+          setIngredientRowThickness(content.ingredientRowThickness);
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -351,9 +364,13 @@ export function ComplexSupplementsTemplate({
 
   // Generate HTML output
   const generateHtml = useCallback(() => {
-    const nutritionalThicknessBorder = getThicknessBorderStyle(nutritionalRowThickness);
-    const ingredientThicknessBorder = getThicknessBorderStyle(ingredientRowThickness);
-    
+    const nutritionalThicknessBorder = getThicknessBorderStyle(
+      nutritionalRowThickness
+    );
+    const ingredientThicknessBorder = getThicknessBorderStyle(
+      ingredientRowThickness
+    );
+
     let html = `
     <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; background: white; padding: 20px;">
       <!-- Nutritional Information Table -->
@@ -377,9 +394,9 @@ export function ComplexSupplementsTemplate({
     nutritionalRows.forEach((row) => {
       html += `
             <tr style="border-bottom: ${nutritionalThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.nutrient)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.perServe)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.per100g)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
     `;
     });
@@ -405,9 +422,9 @@ export function ComplexSupplementsTemplate({
     ingredientRows.forEach((row) => {
       html += `
             <tr style="border-bottom: ${ingredientThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.ingredient)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.amount)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.dailyValue)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.ingredient))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.dailyValue))}</td>
             </tr>
     `;
     });
@@ -427,8 +444,8 @@ export function ComplexSupplementsTemplate({
     textSections.forEach((section) => {
       html += `
         <div class="text-section" style="margin-bottom: 15px;">
-          <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${convertTabsForHtml(section.title)}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertTabsForHtml(section.content)}</p>
+          <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
         </div>
       `;
     });
@@ -439,7 +456,13 @@ export function ComplexSupplementsTemplate({
     `;
 
     return html;
-  }, [textSections, nutritionalRows, ingredientRows, nutritionalRowThickness, ingredientRowThickness]);
+  }, [
+    textSections,
+    nutritionalRows,
+    ingredientRows,
+    nutritionalRowThickness,
+    ingredientRowThickness,
+  ]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
@@ -661,7 +684,11 @@ export function ComplexSupplementsTemplate({
             onSectionsReorder={handleTextSectionsReorder}
             onUpdateSection={updateTextSection}
             onDeleteSection={deleteTextSection}
-            onTextSelect={handleTextSelect}
+            onTextSelect={(sectionId: string, element: HTMLElement) => {
+              if (element instanceof HTMLTextAreaElement) {
+                handleTextSelect(sectionId, element);
+              }
+            }}
           />
         </div>
 
@@ -693,7 +720,10 @@ export function ComplexSupplementsTemplate({
                 </thead>
                 <tbody>
                   {nutritionalRows.map((row) => (
-                    <tr key={row.id} className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}>
+                    <tr
+                      key={row.id}
+                      className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
+                    >
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.nutrient}
@@ -783,7 +813,10 @@ export function ComplexSupplementsTemplate({
                 </thead>
                 <tbody>
                   {ingredientRows.map((row) => (
-                    <tr key={row.id} className={`${getBorderClass(ingredientRowThickness)} hover:bg-gray-50`}>
+                    <tr
+                      key={row.id}
+                      className={`${getBorderClass(ingredientRowThickness)} hover:bg-gray-50`}
+                    >
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.ingredient}

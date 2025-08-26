@@ -167,21 +167,21 @@ export function FormattableTableInput({
   const isBold = value.includes("<b>") && value.includes("</b>");
   const isItalic = value.includes("<i>") && value.includes("</i>");
 
-  // Convert HTML to display format for contentEditable
+  // Convert HTML to display format for contentEditable with enhanced styling
   const getDisplayHtml = useCallback((htmlValue: string) => {
     return htmlValue
-      .replace(/<b>/g, '<strong>')
+      .replace(/<b>/g, '<strong style="font-weight: bold;">')
       .replace(/<\/b>/g, '</strong>')
-      .replace(/<i>/g, '<em>')
+      .replace(/<i>/g, '<em style="font-style: italic;">')
       .replace(/<\/i>/g, '</em>');
   }, []);
 
   // Convert display format back to storage format
   const convertToStorageFormat = useCallback((displayHtml: string) => {
     return displayHtml
-      .replace(/<strong>/g, '<b>')
+      .replace(/<strong[^>]*>/g, '<b>')
       .replace(/<\/strong>/g, '</b>')
-      .replace(/<em>/g, '<i>')
+      .replace(/<em[^>]*>/g, '<i>')
       .replace(/<\/em>/g, '</i>')
       .replace(/<div>/g, '')
       .replace(/<\/div>/g, '')
@@ -264,6 +264,41 @@ export function FormattableTableInput({
 
   const displayHtml = useMemo(() => getDisplayHtml(value), [getDisplayHtml, value]);
 
+  // Update the contentEditable div when the value changes externally
+  useEffect(() => {
+    const element = inputRef.current;
+    if (element && element.innerHTML !== displayHtml) {
+      const selection = window.getSelection();
+      const hadFocus = document.activeElement === element;
+      const cursorPosition = hadFocus && selection?.rangeCount ? selection.getRangeAt(0).startOffset : 0;
+      
+      element.innerHTML = displayHtml;
+      
+      // Restore focus and cursor position if the element had focus
+      if (hadFocus) {
+        element.focus();
+        if (selection) {
+          try {
+            const range = document.createRange();
+            const textNode = element.firstChild;
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+              const maxOffset = Math.min(cursorPosition, textNode.textContent?.length || 0);
+              range.setStart(textNode, maxOffset);
+              range.setEnd(textNode, maxOffset);
+            } else {
+              range.setStart(element, 0);
+              range.setEnd(element, 0);
+            }
+            selection.removeAllRanges();
+            selection.addRange(range);
+          } catch (e) {
+            // Ignore cursor positioning errors
+          }
+        }
+      }
+    }
+  }, [displayHtml]);
+
   return (
     <div className="relative group">
       <div
@@ -275,7 +310,19 @@ export function FormattableTableInput({
           if (disabled) return;
           const target = e.target as HTMLElement;
           const newHtml = target.innerHTML;
-          const newValue = convertToStorageFormat(newHtml);
+          
+          // Check if user typed HTML tags literally
+          const textContent = target.textContent || '';
+          
+          let newValue: string;
+          if (textContent.includes('<b>') || textContent.includes('<i>')) {
+            // User typed HTML tags literally, use the text content as the value
+            newValue = textContent;
+          } else {
+            // Normal case, convert from HTML
+            newValue = convertToStorageFormat(newHtml);
+          }
+          
           onChange(newValue);
         }}
         onKeyDown={(e) => {
@@ -333,7 +380,13 @@ export function FormattableTableInput({
         className={`${className} pr-20 min-h-[1.5rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
         style={{
           whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word'
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          overflow: 'auto',
+          lineHeight: '1.5',
+          fontFamily: 'inherit',
+          maxWidth: '100%',
+          maxHeight: '200px'
         }}
       />
       {!value && !disabled && (

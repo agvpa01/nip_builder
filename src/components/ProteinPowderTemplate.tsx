@@ -6,7 +6,7 @@ import { DraggableTextSection } from "./DraggableTextSection";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
-import { convertTabsForHtml } from "../lib/tabUtils";
+import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
 
 interface ProteinPowderTemplateProps {
   product: any;
@@ -28,14 +28,24 @@ interface NutritionalRow {
   nutrient: string;
   perServe: string;
   per100g: string;
-  thickness?: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick';
+  thickness?:
+    | "normal"
+    | "thick"
+    | "medium-thick"
+    | "large-thick"
+    | "extra-large-thick";
 }
 
 interface AminoAcidRow {
   id: string;
   aminoAcid: string;
   amount: string;
-  thickness?: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick';
+  thickness?:
+    | "normal"
+    | "thick"
+    | "medium-thick"
+    | "large-thick"
+    | "extra-large-thick";
 }
 
 export function ProteinPowderTemplate({
@@ -133,7 +143,6 @@ export function ProteinPowderTemplate({
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.aminoAcidRows) setAminoAcidRows(content.aminoAcidRows);
-
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -164,37 +173,64 @@ export function ProteinPowderTemplate({
   ]);
 
   // Individual row thickness update functions
-  const updateNutritionalRowThickness = useCallback((rowId: string, thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
-    setNutritionalRows(prev => prev.map(row => 
-      row.id === rowId ? { ...row, thickness } : row
-    ));
-  }, []);
+  const updateNutritionalRowThickness = useCallback(
+    (
+      rowId: string,
+      thickness:
+        | "normal"
+        | "thick"
+        | "medium-thick"
+        | "large-thick"
+        | "extra-large-thick"
+    ) => {
+      setNutritionalRows((prev) =>
+        prev.map((row) => (row.id === rowId ? { ...row, thickness } : row))
+      );
+    },
+    []
+  );
 
-  const updateAminoAcidRowThickness = useCallback((rowId: string, thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
-    setAminoAcidRows(prev => prev.map(row => 
-      row.id === rowId ? { ...row, thickness } : row
-    ));
-  }, []);
+  const updateAminoAcidRowThickness = useCallback(
+    (
+      rowId: string,
+      thickness:
+        | "normal"
+        | "thick"
+        | "medium-thick"
+        | "large-thick"
+        | "extra-large-thick"
+    ) => {
+      setAminoAcidRows((prev) =>
+        prev.map((row) => (row.id === rowId ? { ...row, thickness } : row))
+      );
+    },
+    []
+  );
 
   // Utility function to get border class based on thickness
-  const getBorderClass = (thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
+  const getBorderClass = (
+    thickness:
+      | "normal"
+      | "thick"
+      | "medium-thick"
+      | "large-thick"
+      | "extra-large-thick"
+  ) => {
     switch (thickness) {
-      case 'normal':
-        return 'border-b border-gray-400';
-      case 'thick':
-        return 'border-b-2 border-gray-600';
-      case 'medium-thick':
-        return 'border-b-4 border-gray-700';
-      case 'large-thick':
-        return 'border-b-8 border-gray-800';
-      case 'extra-large-thick':
-        return 'border-b-8 border-double border-black';
+      case "normal":
+        return "border-b border-gray-400";
+      case "thick":
+        return "border-b-2 border-gray-600";
+      case "medium-thick":
+        return "border-b-4 border-gray-700";
+      case "large-thick":
+        return "border-b-8 border-gray-800";
+      case "extra-large-thick":
+        return "border-b-8 border-double border-black";
       default:
-        return 'border-b border-gray-400';
+        return "border-b border-gray-400";
     }
   };
-
-
 
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState("");
@@ -337,8 +373,8 @@ export function ProteinPowderTemplate({
     textSections.forEach((section) => {
       html += `
         <div class="text-section" style="margin-bottom: 16px;">
-          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertTabsForHtml(section.title)}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertTabsForHtml(section.content)}</p>
+          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
         </div>
       `;
     });
@@ -367,12 +403,14 @@ export function ProteinPowderTemplate({
 
     // Add nutritional rows
     nutritionalRows.forEach((row) => {
-      const rowThicknessBorder = getThicknessBorderStyle(row.thickness || 'normal');
+      const rowThicknessBorder = getThicknessBorderStyle(
+        row.thickness || "normal"
+      );
       html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.nutrient)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.perServe)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.per100g)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
       `;
     });
@@ -394,18 +432,20 @@ export function ProteinPowderTemplate({
 
     // Add amino acid rows
     aminoAcidRows.forEach((row) => {
-      const rowThicknessBorder = getThicknessBorderStyle(row.thickness || 'normal');
+      const rowThicknessBorder = getThicknessBorderStyle(
+        row.thickness || "normal"
+      );
       if (row.amount) {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.aminoAcid)}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.amount)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
             </tr>
         `;
       } else {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td colspan="2" style="padding: 4px 8px; font-size: 10px; font-weight: bold; text-align: center; background: black; color: white;">${convertTabsForHtml(row.aminoAcid)}</td>
+              <td colspan="2" style="padding: 4px 8px; font-size: 10px; font-weight: bold; text-align: center; background: black; color: white;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
             </tr>
         `;
       }
@@ -709,7 +749,7 @@ export function ProteinPowderTemplate({
             onDeleteSection={deleteTextSection}
             onTextSelect={(sectionId, element) => {
               setSelectedTextId(sectionId);
-              handleTextSelect(element);
+              handleTextSelect(element as HTMLTextAreaElement);
             }}
           />
         </div>
@@ -752,7 +792,10 @@ export function ProteinPowderTemplate({
                 </thead>
                 <tbody>
                   {nutritionalRows.map((row) => (
-                    <tr key={row.id} className={`${getBorderClass(row.thickness || 'normal')} hover:bg-gray-50`}>
+                    <tr
+                      key={row.id}
+                      className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                    >
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.nutrient}
@@ -765,8 +808,10 @@ export function ProteinPowderTemplate({
                             product.variants.length > 1 &&
                             !activeVariantId
                           }
-                          rowThickness={row.thickness || 'normal'}
-                          onThicknessChange={(thickness) => updateNutritionalRowThickness(row.id, thickness)}
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(thickness) =>
+                            updateNutritionalRowThickness(row.id, thickness)
+                          }
                         />
                       </td>
                       <td className="p-2">
@@ -781,8 +826,10 @@ export function ProteinPowderTemplate({
                             product.variants.length > 1 &&
                             !activeVariantId
                           }
-                          rowThickness={row.thickness || 'normal'}
-                          onThicknessChange={(thickness) => updateNutritionalRowThickness(row.id, thickness)}
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(thickness) =>
+                            updateNutritionalRowThickness(row.id, thickness)
+                          }
                         />
                       </td>
                       <td className="p-2">
@@ -797,8 +844,10 @@ export function ProteinPowderTemplate({
                             product.variants.length > 1 &&
                             !activeVariantId
                           }
-                          rowThickness={row.thickness || 'normal'}
-                          onThicknessChange={(thickness) => updateNutritionalRowThickness(row.id, thickness)}
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(thickness) =>
+                            updateNutritionalRowThickness(row.id, thickness)
+                          }
                         />
                       </td>
                       <td className="p-2">
@@ -850,7 +899,10 @@ export function ProteinPowderTemplate({
                 </thead>
                 <tbody>
                   {aminoAcidRows.map((row) => (
-                    <tr key={row.id} className={`${getBorderClass(row.thickness || 'normal')} hover:bg-gray-50`}>
+                    <tr
+                      key={row.id}
+                      className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                    >
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.aminoAcid}
@@ -863,8 +915,10 @@ export function ProteinPowderTemplate({
                             product.variants.length > 1 &&
                             !activeVariantId
                           }
-                          rowThickness={row.thickness || 'normal'}
-                          onThicknessChange={(thickness) => updateAminoAcidRowThickness(row.id, thickness)}
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(thickness) =>
+                            updateAminoAcidRowThickness(row.id, thickness)
+                          }
                         />
                       </td>
                       <td className="p-2">
@@ -879,8 +933,10 @@ export function ProteinPowderTemplate({
                             product.variants.length > 1 &&
                             !activeVariantId
                           }
-                          rowThickness={row.thickness || 'normal'}
-                          onThicknessChange={(thickness) => updateAminoAcidRowThickness(row.id, thickness)}
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(thickness) =>
+                            updateAminoAcidRowThickness(row.id, thickness)
+                          }
                         />
                       </td>
                       <td className="p-2">
