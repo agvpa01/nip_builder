@@ -55,6 +55,7 @@ export function FormattableTableInput({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const formattingRef = useRef<HTMLDivElement>(null);
   const isUndoRedoOperation = useRef(false);
 
   // Handle dropdown positioning
@@ -167,9 +168,44 @@ export function FormattableTableInput({
     }
   }, [value]);
 
-  // Check if text has formatting
-  const isBold = value.includes("<b>") && value.includes("</b>");
-  const isItalic = value.includes("<i>") && value.includes("</i>");
+  // Check if current selection or entire text has formatting
+  const getFormattingState = useCallback(() => {
+    const element = inputRef.current;
+    if (!element) return { isBold: false, isItalic: false };
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      // Check formatting of selected text
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+      
+      // Check if selection is within formatted elements
+      let currentNode: Node | null = container.nodeType === Node.TEXT_NODE ? container.parentNode : container;
+      let isBold = false;
+      let isItalic = false;
+      
+      while (currentNode && currentNode !== element) {
+        if (currentNode.nodeType === Node.ELEMENT_NODE) {
+          const tagName = (currentNode as Element).tagName.toLowerCase();
+          if (tagName === 'strong' || tagName === 'b') isBold = true;
+          if (tagName === 'em' || tagName === 'i') isItalic = true;
+        }
+        currentNode = currentNode.parentNode;
+      }
+      
+      return { isBold, isItalic };
+    } else {
+      // Check formatting of entire content
+      return {
+        isBold: value.includes("<b>") && value.includes("</b>"),
+        isItalic: value.includes("<i>") && value.includes("</i>")
+      };
+    }
+  }, [value]);
+
+  const formattingState = getFormattingState();
+  const isBold = formattingState.isBold;
+  const isItalic = formattingState.isItalic;
 
   // Convert HTML to display format for contentEditable with enhanced styling
   const getDisplayHtml = useCallback((htmlValue: string) => {
@@ -200,27 +236,31 @@ export function FormattableTableInput({
       if (!element) return;
 
       const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) {
-        // No selection, format entire content
-        const currentHtml = element.innerHTML;
-        const plainText = element.textContent || "";
+      const currentFormattingState = getFormattingState();
+      const isCurrentlyFormatted = tag === "b" ? currentFormattingState.isBold : currentFormattingState.isItalic;
 
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        // No selection or collapsed selection, format entire content
+        const plainText = element.textContent || "";
+        
         let newValue: string;
-        if (tag === "b") {
-          if (isBold) {
-            // Remove bold formatting
-            newValue = value.replace(/<\/?b>/g, "");
-          } else {
-            // Add bold formatting
-            newValue = `<b>${plainText}</b>`;
-          }
+        if (isCurrentlyFormatted) {
+          // Remove formatting from entire content
+          const tagRegex = tag === "b" ? /<\/?b>/g : /<\/?i>/g;
+          newValue = value.replace(tagRegex, "");
         } else {
-          if (isItalic) {
-            // Remove italic formatting
-            newValue = value.replace(/<\/?i>/g, "");
+          // Add formatting to entire content
+          // First remove any existing formatting of this type, then add new
+          const tagRegex = tag === "b" ? /<\/?b>/g : /<\/?i>/g;
+          const cleanValue = value.replace(tagRegex, "");
+          const cleanText = cleanValue.replace(/<\/?[bi]>/g, ""); // Get text without any formatting
+          
+          if (tag === "b") {
+            // Preserve italic formatting if it exists
+            newValue = cleanValue.includes("<i>") ? cleanValue.replace(/^(.*)$/, "<b>$1</b>") : `<b>${cleanText}</b>`;
           } else {
-            // Add italic formatting
-            newValue = `<i>${plainText}</i>`;
+            // Preserve bold formatting if it exists  
+            newValue = cleanValue.includes("<b>") ? cleanValue.replace(/^(.*)$/, "<i>$1</i>") : `<i>${cleanText}</i>`;
           }
         }
 
@@ -235,18 +275,37 @@ export function FormattableTableInput({
       if (selectedText) {
         const htmlTag = tag === "b" ? "strong" : "em";
 
-        // Check if selection is already formatted
-        const parentElement = range.commonAncestorContainer.parentElement;
-        const isAlreadyFormatted =
-          parentElement?.tagName.toLowerCase() === htmlTag;
-
-        if (isAlreadyFormatted) {
-          // Remove formatting
-          const contents = range.extractContents();
-          const textNode = document.createTextNode(selectedText);
-          range.insertNode(textNode);
+        if (isCurrentlyFormatted) {
+          // Remove formatting from selected text
+          // Find the formatted parent and unwrap it
+          let container = range.commonAncestorContainer;
+          if (container.nodeType === Node.TEXT_NODE) {
+            container = container.parentNode!;
+          }
+          
+          // Find the formatting element to remove
+          let formatElement: Element | null = null;
+          let currentNode: Node | null = container;
+          
+          while (currentNode && currentNode !== element) {
+            if (currentNode.nodeType === Node.ELEMENT_NODE) {
+              const tagName = (currentNode as Element).tagName.toLowerCase();
+              if ((tag === "b" && (tagName === "strong" || tagName === "b")) ||
+                  (tag === "i" && (tagName === "em" || tagName === "i"))) {
+                formatElement = currentNode as Element;
+                break;
+              }
+            }
+            currentNode = currentNode.parentNode;
+          }
+          
+          if (formatElement) {
+            // Replace the formatted element with its text content
+            const textNode = document.createTextNode(formatElement.textContent || "");
+            formatElement.parentNode?.replaceChild(textNode, formatElement);
+          }
         } else {
-          // Add formatting
+          // Add formatting to selected text
           const contents = range.extractContents();
           const formattedElement = document.createElement(htmlTag);
           formattedElement.appendChild(contents);
@@ -258,13 +317,13 @@ export function FormattableTableInput({
         const newValue = convertToStorageFormat(newHtml);
         onChange(newValue);
 
-        // Restore selection
+        // Restore focus
         setTimeout(() => {
           element.focus();
         }, 0);
       }
     },
-    [value, onChange, isBold, isItalic, convertToStorageFormat]
+    [value, onChange, getFormattingState, convertToStorageFormat]
   );
 
   const displayHtml = useMemo(
@@ -389,7 +448,19 @@ export function FormattableTableInput({
           }
         }}
         onFocus={() => !disabled && setShowFormatting(true)}
-        onBlur={() => setTimeout(() => setShowFormatting(false), 200)}
+        onBlur={(e) => {
+          if (disabled) return;
+          // Only hide formatting if focus is moving outside both the input and formatting buttons
+          setTimeout(() => {
+            const activeElement = document.activeElement;
+            const isWithinInput = inputRef.current?.contains(activeElement);
+            const isWithinFormatting = formattingRef.current?.contains(activeElement);
+            
+            if (!isWithinInput && !isWithinFormatting) {
+              setShowFormatting(false);
+            }
+          }, 0);
+        }}
         className={`${className} pr-20 min-h-[1.5rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
         style={{
           whiteSpace: "pre-wrap",
@@ -410,7 +481,14 @@ export function FormattableTableInput({
 
       {/* Formatting buttons */}
       {showFormatting && !disabled && (
-        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1">
+        <div 
+          ref={formattingRef}
+          className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1"
+          onMouseDown={(e) => {
+            // Prevent the input from losing focus when clicking formatting buttons
+            e.preventDefault();
+          }}
+        >
           <button
             type="button"
             onClick={() => applyFormatting("b")}
