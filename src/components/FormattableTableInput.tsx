@@ -1,7 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import {
-  convertTabsForHtml,
-} from "../lib/tabUtils";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
+import { convertTabsForHtml } from "../lib/tabUtils";
 import { handleNavigationKeyPress } from "../lib/navigationUtils";
 import {
   createUndoRedoState,
@@ -171,22 +175,22 @@ export function FormattableTableInput({
   const getDisplayHtml = useCallback((htmlValue: string) => {
     return htmlValue
       .replace(/<b>/g, '<strong style="font-weight: bold;">')
-      .replace(/<\/b>/g, '</strong>')
+      .replace(/<\/b>/g, "</strong>")
       .replace(/<i>/g, '<em style="font-style: italic;">')
-      .replace(/<\/i>/g, '</em>');
+      .replace(/<\/i>/g, "</em>");
   }, []);
 
   // Convert display format back to storage format
   const convertToStorageFormat = useCallback((displayHtml: string) => {
     return displayHtml
-      .replace(/<strong[^>]*>/g, '<b>')
-      .replace(/<\/strong>/g, '</b>')
-      .replace(/<em[^>]*>/g, '<i>')
-      .replace(/<\/em>/g, '</i>')
-      .replace(/<div>/g, '')
-      .replace(/<\/div>/g, '')
-      .replace(/<br>/g, '')
-      .replace(/&nbsp;/g, ' ');
+      .replace(/<strong[^>]*>/g, "<b>")
+      .replace(/<\/strong>/g, "</b>")
+      .replace(/<em[^>]*>/g, "<i>")
+      .replace(/<\/em>/g, "</i>")
+      .replace(/<div>/g, "")
+      .replace(/<\/div>/g, "")
+      .replace(/<br>/g, "")
+      .replace(/&nbsp;/g, " ");
   }, []);
 
   // Apply formatting to selected text or entire value
@@ -199,13 +203,13 @@ export function FormattableTableInput({
       if (!selection || selection.rangeCount === 0) {
         // No selection, format entire content
         const currentHtml = element.innerHTML;
-        const plainText = element.textContent || '';
-        
+        const plainText = element.textContent || "";
+
         let newValue: string;
-        if (tag === 'b') {
+        if (tag === "b") {
           if (isBold) {
             // Remove bold formatting
-            newValue = value.replace(/<\/?b>/g, '');
+            newValue = value.replace(/<\/?b>/g, "");
           } else {
             // Add bold formatting
             newValue = `<b>${plainText}</b>`;
@@ -213,13 +217,13 @@ export function FormattableTableInput({
         } else {
           if (isItalic) {
             // Remove italic formatting
-            newValue = value.replace(/<\/?i>/g, '');
+            newValue = value.replace(/<\/?i>/g, "");
           } else {
             // Add italic formatting
             newValue = `<i>${plainText}</i>`;
           }
         }
-        
+
         onChange(newValue);
         return;
       }
@@ -227,14 +231,15 @@ export function FormattableTableInput({
       // Handle selected text
       const range = selection.getRangeAt(0);
       const selectedText = range.toString();
-      
+
       if (selectedText) {
-        const htmlTag = tag === 'b' ? 'strong' : 'em';
-        
+        const htmlTag = tag === "b" ? "strong" : "em";
+
         // Check if selection is already formatted
         const parentElement = range.commonAncestorContainer.parentElement;
-        const isAlreadyFormatted = parentElement?.tagName.toLowerCase() === htmlTag;
-        
+        const isAlreadyFormatted =
+          parentElement?.tagName.toLowerCase() === htmlTag;
+
         if (isAlreadyFormatted) {
           // Remove formatting
           const contents = range.extractContents();
@@ -247,12 +252,12 @@ export function FormattableTableInput({
           formattedElement.appendChild(contents);
           range.insertNode(formattedElement);
         }
-        
+
         // Update the value
         const newHtml = element.innerHTML;
         const newValue = convertToStorageFormat(newHtml);
         onChange(newValue);
-        
+
         // Restore selection
         setTimeout(() => {
           element.focus();
@@ -262,7 +267,10 @@ export function FormattableTableInput({
     [value, onChange, isBold, isItalic, convertToStorageFormat]
   );
 
-  const displayHtml = useMemo(() => getDisplayHtml(value), [getDisplayHtml, value]);
+  const displayHtml = useMemo(
+    () => getDisplayHtml(value),
+    [getDisplayHtml, value]
+  );
 
   // Update the contentEditable div when the value changes externally
   useEffect(() => {
@@ -270,10 +278,13 @@ export function FormattableTableInput({
     if (element && element.innerHTML !== displayHtml) {
       const selection = window.getSelection();
       const hadFocus = document.activeElement === element;
-      const cursorPosition = hadFocus && selection?.rangeCount ? selection.getRangeAt(0).startOffset : 0;
-      
+      const cursorPosition =
+        hadFocus && selection?.rangeCount
+          ? selection.getRangeAt(0).startOffset
+          : 0;
+
       element.innerHTML = displayHtml;
-      
+
       // Restore focus and cursor position if the element had focus
       if (hadFocus) {
         element.focus();
@@ -282,7 +293,10 @@ export function FormattableTableInput({
             const range = document.createRange();
             const textNode = element.firstChild;
             if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-              const maxOffset = Math.min(cursorPosition, textNode.textContent?.length || 0);
+              const maxOffset = Math.min(
+                cursorPosition,
+                textNode.textContent?.length || 0
+              );
               range.setStart(textNode, maxOffset);
               range.setEnd(textNode, maxOffset);
             } else {
@@ -310,19 +324,19 @@ export function FormattableTableInput({
           if (disabled) return;
           const target = e.target as HTMLElement;
           const newHtml = target.innerHTML;
-          
+
           // Check if user typed HTML tags literally
-          const textContent = target.textContent || '';
-          
+          const textContent = target.textContent || "";
+
           let newValue: string;
-          if (textContent.includes('<b>') || textContent.includes('<i>')) {
+          if (textContent.includes("<b>") || textContent.includes("<i>")) {
             // User typed HTML tags literally, use the text content as the value
             newValue = textContent;
           } else {
             // Normal case, convert from HTML
             newValue = convertToStorageFormat(newHtml);
           }
-          
+
           onChange(newValue);
         }}
         onKeyDown={(e) => {
@@ -347,27 +361,26 @@ export function FormattableTableInput({
           }
 
           // Handle Enter key to prevent line breaks
-          if (e.key === 'Enter') {
+          if (e.key === "Enter") {
             e.preventDefault();
             return;
           }
 
-          // Handle tab key press for inserting tabs
-          // Note: We need to adapt this for contentEditable
-          if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey) {
+          // Handle tab key press for inserting tabs (text indentation)
+          if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey) {
             e.preventDefault();
-            // Insert tab character at cursor position
+            // Insert 4 spaces for indentation (better than tab character for display)
             const selection = window.getSelection();
             if (selection && selection.rangeCount > 0) {
               const range = selection.getRangeAt(0);
-              const tabNode = document.createTextNode('\t');
+              const indentNode = document.createTextNode("    "); // 4 spaces
               range.deleteContents();
-              range.insertNode(tabNode);
-              range.setStartAfter(tabNode);
-              range.setEndAfter(tabNode);
+              range.insertNode(indentNode);
+              range.setStartAfter(indentNode);
+              range.setEndAfter(indentNode);
               selection.removeAllRanges();
               selection.addRange(range);
-              
+
               // Trigger onChange
               const newHtml = element.innerHTML;
               const newValue = convertToStorageFormat(newHtml);
@@ -379,14 +392,14 @@ export function FormattableTableInput({
         onBlur={() => setTimeout(() => setShowFormatting(false), 200)}
         className={`${className} pr-20 min-h-[1.5rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
         style={{
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          overflowWrap: 'break-word',
-          overflow: 'auto',
-          lineHeight: '1.5',
-          fontFamily: 'inherit',
-          maxWidth: '100%',
-          maxHeight: '200px'
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          overflowWrap: "break-word",
+          overflow: "auto",
+          lineHeight: "1.5",
+          fontFamily: "inherit",
+          maxWidth: "100%",
+          maxHeight: "200px",
         }}
       />
       {!value && !disabled && (

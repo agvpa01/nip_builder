@@ -187,10 +187,10 @@ export function convertTabsForHtml(text: string, tabSize: number = 4): string {
  */
 export function convertFormattingForHtml(text: string): string {
   return text
-    .replace(/<b>/g, '<strong>')
-    .replace(/<\/b>/g, '</strong>')
-    .replace(/<i>/g, '<em>')
-    .replace(/<\/i>/g, '</em>');
+    .replace(/<b>/g, "<strong>")
+    .replace(/<\/b>/g, "</strong>")
+    .replace(/<i>/g, "<em>")
+    .replace(/<\/i>/g, "</em>");
 }
 
 /**
