@@ -6,6 +6,7 @@ import { DraggableTextSection } from "./DraggableTextSection";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
+import { convertTabsForHtml } from "../lib/tabUtils";
 
 interface ProteinPowderTemplateProps {
   product: any;
@@ -318,8 +319,8 @@ export function ProteinPowderTemplate({
     textSections.forEach((section) => {
       html += `
         <div class="text-section" style="margin-bottom: 16px;">
-          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${section.title}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${section.content}</p>
+          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertTabsForHtml(section.title)}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertTabsForHtml(section.content)}</p>
         </div>
       `;
     });
@@ -351,9 +352,9 @@ export function ProteinPowderTemplate({
       const rowThicknessBorder = getThicknessBorderStyle(row.thickness || 'normal');
       html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${row.nutrient}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${row.perServe}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${row.per100g}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.nutrient)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.perServe)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.per100g)}</td>
             </tr>
       `;
     });
@@ -379,14 +380,14 @@ export function ProteinPowderTemplate({
       if (row.amount) {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${row.aminoAcid}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${row.amount}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.aminoAcid)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.amount)}</td>
             </tr>
         `;
       } else {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td colspan="2" style="padding: 4px 8px; font-size: 10px; font-weight: bold; text-align: center; background: black; color: white;">${row.aminoAcid}</td>
+              <td colspan="2" style="padding: 4px 8px; font-size: 10px; font-weight: bold; text-align: center; background: black; color: white;">${convertTabsForHtml(row.aminoAcid)}</td>
             </tr>
         `;
       }

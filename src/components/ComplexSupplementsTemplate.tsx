@@ -6,6 +6,7 @@ import { DraggableTextSection } from "./DraggableTextSection";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
+import { convertTabsForHtml } from "../lib/tabUtils";
 
 interface ComplexSupplementsTemplateProps {
   product: any;
@@ -376,9 +377,9 @@ export function ComplexSupplementsTemplate({
     nutritionalRows.forEach((row) => {
       html += `
             <tr style="border-bottom: ${nutritionalThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${row.nutrient}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${row.perServe}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${row.per100g}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.nutrient)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.perServe)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.per100g)}</td>
             </tr>
     `;
     });
@@ -404,9 +405,9 @@ export function ComplexSupplementsTemplate({
     ingredientRows.forEach((row) => {
       html += `
             <tr style="border-bottom: ${ingredientThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${row.ingredient}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${row.amount}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${row.dailyValue}</td>
+              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.ingredient)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.amount)}</td>
+              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.dailyValue)}</td>
             </tr>
     `;
     });
@@ -426,8 +427,8 @@ export function ComplexSupplementsTemplate({
     textSections.forEach((section) => {
       html += `
         <div class="text-section" style="margin-bottom: 15px;">
-          <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${section.title}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${section.content}</p>
+          <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${convertTabsForHtml(section.title)}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertTabsForHtml(section.content)}</p>
         </div>
       `;
     });

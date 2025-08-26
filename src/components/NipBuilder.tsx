@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PreviewModal } from "./PreviewModal";
 import { Id } from "../../convex/_generated/dataModel";
+import { convertTabsForHtml } from "../lib/tabUtils";
 
 interface NipBuilderProps {
   product: any;
@@ -815,7 +816,7 @@ export function NipBuilder({
 
       switch (section.type) {
         case "text":
-          html += `<div style="${style}">${section.content}</div>`;
+          html += `<div style="${style}">${convertTabsForHtml(section.content)}</div>`;
           break;
         case "table":
           if (section.content.rows) {
@@ -823,7 +824,7 @@ export function NipBuilder({
             section.content.rows.forEach((row: any) => {
               html += "<tr>";
               row.forEach((cell: string) => {
-                html += `<td style="border: 1px solid #ccc; padding: 8px;">${cell}</td>`;
+                html += `<td style="border: 1px solid #ccc; padding: 8px;">${convertTabsForHtml(cell)}</td>`;
               });
               html += "</tr>";
             });
@@ -831,13 +832,13 @@ export function NipBuilder({
           }
           break;
         case "custom":
-          html += `<div style="${style}">${section.content}</div>`;
+          html += `<div style="${style}">${convertTabsForHtml(section.content)}</div>`;
           break;
       }
     });
 
     customFields.forEach((field) => {
-      html += `<div style="margin: 10px 0;"><strong>${field.label}:</strong> ${field.value}</div>`;
+      html += `<div style="margin: 10px 0;"><strong>${convertTabsForHtml(field.label)}:</strong> ${convertTabsForHtml(field.value)}</div>`;
     });
 
     html += "</div>";

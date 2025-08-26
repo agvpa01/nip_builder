@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
+import { convertTabsForHtml } from "../lib/tabUtils";
 
 interface SupplementsTemplateProps {
   product: any;
@@ -160,9 +161,9 @@ export function SupplementsTemplate({
     nutritionalRows.forEach((row) => {
       html += `
           <tr style="border-bottom: ${thicknessBorder};">
-            <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${row.nutrient}</td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${row.perServe}</td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${row.per100g}</td>
+            <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertTabsForHtml(row.nutrient)}</td>
+            <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertTabsForHtml(row.perServe)}</td>
+            <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertTabsForHtml(row.per100g)}</td>
           </tr>
     `;
     });

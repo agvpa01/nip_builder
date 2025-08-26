@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { handleTabKeyPress, convertTabsForHtml, applyFormattingWithTabs } from "../lib/tabUtils";
 
 interface FormattableTableInputProps {
   value: string;
@@ -106,39 +107,16 @@ export function FormattableTableInput({
 
       const start = input.selectionStart || 0;
       const end = input.selectionEnd || 0;
-      const displayValue = value.replace(/<\/?[bi]>/g, "");
-      const selectedText = displayValue.substring(start, end);
-
-      let newValue: string;
-
-      if (selectedText) {
-        // Format selected text within the display value
-        const beforeSelection = displayValue.substring(0, start);
-        const afterSelection = displayValue.substring(end);
-        const formattedText = `<${tag}>${selectedText}</${tag}>`;
-        newValue = beforeSelection + formattedText + afterSelection;
-      } else {
-        // If no selection, check if entire value is already formatted
-        const isAlreadyFormatted = tag === "b" ? isBold : isItalic;
-
-        if (isAlreadyFormatted) {
-          // Remove formatting - extract content between tags
-          if (tag === "b") {
-            newValue = value.replace(/<\/?b>/g, "");
-          } else {
-            newValue = value.replace(/<\/?i>/g, "");
-          }
-        } else {
-          // Apply formatting to entire display value
-          newValue = `<${tag}>${displayValue}</${tag}>`;
-        }
-      }
-
+      
+      // Use the tab-aware formatting function
+      const newValue = applyFormattingWithTabs(value, tag, start, end);
       onChange(newValue);
 
       // Restore focus and selection
       setTimeout(() => {
         input.focus();
+        const displayValue = newValue.replace(/<\/?[bi]>/g, "");
+        const selectedText = displayValue.substring(start, end);
         if (selectedText) {
           const newStart = start + 3; // Account for opening tag
           const newEnd = newStart + selectedText.length;
@@ -146,7 +124,7 @@ export function FormattableTableInput({
         }
       }, 0);
     },
-    [value, onChange, isBold, isItalic]
+    [value, onChange]
   );
 
   // Display value without HTML tags for editing
@@ -174,6 +152,15 @@ export function FormattableTableInput({
           }
 
           onChange(newValue);
+        }}
+        onKeyDown={(e) => {
+          if (disabled) return;
+          
+          const input = inputRef.current;
+          if (!input) return;
+          
+          // Handle tab key press for inserting tabs
+          handleTabKeyPress(e, input, value, onChange, { tabSize: 4, preserveFormatting: true });
         }}
         onFocus={() => !disabled && setShowFormatting(true)}
         onBlur={() => setTimeout(() => setShowFormatting(false), 200)}
