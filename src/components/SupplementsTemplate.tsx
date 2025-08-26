@@ -5,10 +5,7 @@ import { toast } from "sonner";
 import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
-import {
-  convertTabsForHtml,
-  convertFormattingForHtml,
-} from "../lib/tabUtils";
+import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
 
 interface SupplementsTemplateProps {
   product: any;
@@ -63,23 +60,32 @@ export function SupplementsTemplate({
   ]);
 
   // Thickness state
-  const [nutritionalRowThickness, setNutritionalRowThickness] = useState<'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick'>('normal');
+  const [nutritionalRowThickness, setNutritionalRowThickness] = useState<
+    "normal" | "thick" | "medium-thick" | "large-thick" | "extra-large-thick"
+  >("normal");
 
   // Utility function to get border class based on thickness
-  const getBorderClass = (thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
+  const getBorderClass = (
+    thickness:
+      | "normal"
+      | "thick"
+      | "medium-thick"
+      | "large-thick"
+      | "extra-large-thick"
+  ) => {
     switch (thickness) {
-      case 'normal':
-        return 'border-b border-gray-400';
-      case 'thick':
-        return 'border-b-2 border-gray-600';
-      case 'medium-thick':
-        return 'border-b-4 border-gray-700';
-      case 'large-thick':
-        return 'border-b-8 border-gray-800';
-      case 'extra-large-thick':
-        return 'border-b-8 border-double border-black';
+      case "normal":
+        return "border-b border-gray-400";
+      case "thick":
+        return "border-b-2 border-gray-600";
+      case "medium-thick":
+        return "border-b-4 border-gray-700";
+      case "large-thick":
+        return "border-b-8 border-gray-800";
+      case "extra-large-thick":
+        return "border-b-8 border-double border-black";
       default:
-        return 'border-b border-gray-400';
+        return "border-b border-gray-400";
     }
   };
 
@@ -140,7 +146,7 @@ export function SupplementsTemplate({
   // Generate HTML output
   const generateHtml = useCallback(() => {
     const thicknessBorder = getThicknessBorderStyle(nutritionalRowThickness);
-    
+
     let html = `
     <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; background: white;">
       <!-- Nutritional Information Table -->
@@ -442,7 +448,10 @@ export function SupplementsTemplate({
             </thead>
             <tbody>
               {nutritionalRows.map((row) => (
-                    <tr key={row.id} className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}>
+                <tr
+                  key={row.id}
+                  className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
+                >
                   <td className="p-2">
                     <FormattableTableInput
                       value={row.nutrient}
