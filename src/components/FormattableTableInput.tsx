@@ -1,5 +1,18 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { handleTabKeyPress, convertTabsForHtml, applyFormattingWithTabs } from "../lib/tabUtils";
+import {
+  handleTabKeyPress,
+  convertTabsForHtml,
+  applyFormattingWithTabs,
+} from "../lib/tabUtils";
+import { handleNavigationKeyPress } from "../lib/navigationUtils";
+import {
+  createUndoRedoState,
+  addToHistory,
+  undo,
+  redo,
+  handleUndoRedoKeyPress,
+  UndoRedoState,
+} from "../lib/undoRedoUtils";
 
 interface FormattableTableInputProps {
   value: string;
@@ -7,8 +20,20 @@ interface FormattableTableInputProps {
   className?: string;
   placeholder?: string;
   disabled?: boolean;
-  rowThickness?: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick';
-  onThicknessChange?: (thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => void;
+  rowThickness?:
+    | "normal"
+    | "thick"
+    | "medium-thick"
+    | "large-thick"
+    | "extra-large-thick";
+  onThicknessChange?: (
+    thickness:
+      | "normal"
+      | "thick"
+      | "medium-thick"
+      | "large-thick"
+      | "extra-large-thick"
+  ) => void;
 }
 
 export function FormattableTableInput({
@@ -17,14 +42,18 @@ export function FormattableTableInput({
   className = "",
   placeholder = "",
   disabled = false,
-  rowThickness = 'normal',
+  rowThickness = "normal",
   onThicknessChange,
 }: FormattableTableInputProps) {
   const [showFormatting, setShowFormatting] = useState(false);
   const [showThickness, setShowThickness] = useState(false);
+  const [undoRedoState, setUndoRedoState] = useState<UndoRedoState>(() =>
+    createUndoRedoState(value)
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isUndoRedoOperation = useRef(false);
 
   // Handle dropdown positioning
   useEffect(() => {
@@ -37,33 +66,36 @@ export function FormattableTableInput({
       const viewportWidth = window.innerWidth;
 
       // Reset classes
-      dropdown.className = dropdown.className.replace(/\s*(bottom-full|top-full|left-0|right-0)\s*/g, ' ');
-      
+      dropdown.className = dropdown.className.replace(
+        /\s*(bottom-full|top-full|left-0|right-0)\s*/g,
+        " "
+      );
+
       // Check if dropdown would be cut off at the bottom
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = dropdownRect.height || 200; // fallback height
-      
+
       // Check if dropdown would be cut off at the right
       const spaceRight = viewportWidth - rect.right;
       const dropdownWidth = dropdownRect.width || 144; // fallback width
-      
+
       // Position vertically (default to above, fallback to below if needed)
       if (spaceAbove < dropdownHeight && spaceBelow > dropdownHeight) {
-        dropdown.classList.add('top-full', 'mt-1');
-        dropdown.classList.remove('bottom-full', 'mb-1');
+        dropdown.classList.add("top-full", "mt-1");
+        dropdown.classList.remove("bottom-full", "mb-1");
       } else {
-        dropdown.classList.add('bottom-full', 'mb-1');
-        dropdown.classList.remove('top-full', 'mt-1');
+        dropdown.classList.add("bottom-full", "mb-1");
+        dropdown.classList.remove("top-full", "mt-1");
       }
-      
+
       // Position horizontally
       if (spaceRight < dropdownWidth) {
-        dropdown.classList.add('left-0');
-        dropdown.classList.remove('right-0');
+        dropdown.classList.add("left-0");
+        dropdown.classList.remove("right-0");
       } else {
-        dropdown.classList.add('right-0');
-        dropdown.classList.remove('left-0');
+        dropdown.classList.add("right-0");
+        dropdown.classList.remove("left-0");
       }
     }
   }, [showThickness]);
@@ -71,29 +103,67 @@ export function FormattableTableInput({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-        console.log('Click outside detected, closing dropdown');
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        console.log("Click outside detected, closing dropdown");
         setShowThickness(false);
       }
     };
 
     if (showThickness) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
       };
     }
   }, [showThickness]);
 
-    // Thickness options
+  // Thickness options
   const thicknessOptions = [
-    { value: 'normal', label: 'Normal', style: '1px' },
-    { value: 'thick', label: 'Thick', style: '2px' },
-    { value: 'medium-thick', label: 'Medium Thick', style: '3px' },
-    { value: 'large-thick', label: 'Large Thick', style: '4px' },
-    { value: 'extra-large-thick', label: 'Extra Large Thick', style: '5px' },
+    { value: "normal", label: "Normal", style: "1px" },
+    { value: "thick", label: "Thick", style: "2px" },
+    { value: "medium-thick", label: "Medium Thick", style: "3px" },
+    { value: "large-thick", label: "Large Thick", style: "4px" },
+    { value: "extra-large-thick", label: "Extra Large Thick", style: "5px" },
   ] as const;
+
+  // Undo/Redo callbacks
+  const handleUndo = useCallback(() => {
+    const result = undo(undoRedoState);
+    if (result.value !== null) {
+      isUndoRedoOperation.current = true;
+      setUndoRedoState(result.newState);
+      onChange(result.value);
+      setTimeout(() => {
+        isUndoRedoOperation.current = false;
+      }, 0);
+    }
+  }, [undoRedoState, onChange]);
+
+  const handleRedo = useCallback(() => {
+    const result = redo(undoRedoState);
+    if (result.value !== null) {
+      isUndoRedoOperation.current = true;
+      setUndoRedoState(result.newState);
+      onChange(result.value);
+      setTimeout(() => {
+        isUndoRedoOperation.current = false;
+      }, 0);
+    }
+  }, [undoRedoState, onChange]);
+
+  // Update undo/redo history when value changes (but not during undo/redo operations)
+  useEffect(() => {
+    if (!isUndoRedoOperation.current) {
+      setUndoRedoState((prevState: UndoRedoState) =>
+        addToHistory(prevState, value)
+      );
+    }
+  }, [value]);
 
   // Check if text has formatting
   const isBold = value.includes("<b>") && value.includes("</b>");
@@ -107,7 +177,7 @@ export function FormattableTableInput({
 
       const start = input.selectionStart || 0;
       const end = input.selectionEnd || 0;
-      
+
       // Use the tab-aware formatting function
       const newValue = applyFormattingWithTabs(value, tag, start, end);
       onChange(newValue);
@@ -155,12 +225,30 @@ export function FormattableTableInput({
         }}
         onKeyDown={(e) => {
           if (disabled) return;
-          
+
           const input = inputRef.current;
           if (!input) return;
-          
+
+          // Handle undo/redo shortcuts first
+          if (handleUndoRedoKeyPress(e.nativeEvent, handleUndo, handleRedo)) {
+            return; // Undo/redo was handled, don't process other keys
+          }
+
+          // Handle Shift+Tab and Ctrl+Shift+Tab navigation
+          if (
+            handleNavigationKeyPress(e.nativeEvent, {
+              wrapToNextRow: true,
+              wrapToNextTable: false,
+            })
+          ) {
+            return; // Navigation was handled, don't process other keys
+          }
+
           // Handle tab key press for inserting tabs
-          handleTabKeyPress(e, input, value, onChange, { tabSize: 4, preserveFormatting: true });
+          handleTabKeyPress(e, input, value, onChange, {
+            tabSize: 4,
+            preserveFormatting: true,
+          });
         }}
         onFocus={() => !disabled && setShowFormatting(true)}
         onBlur={() => setTimeout(() => setShowFormatting(false), 200)}
@@ -204,7 +292,10 @@ export function FormattableTableInput({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Thickness button clicked, current state:', showThickness);
+                  console.log(
+                    "Thickness button clicked, current state:",
+                    showThickness
+                  );
                   setShowThickness(!showThickness);
                 }}
                 className="px-1.5 py-0.5 text-xs border rounded hover:bg-gray-100 bg-white border-gray-300"
@@ -213,7 +304,7 @@ export function FormattableTableInput({
                 ═
               </button>
               {showThickness && (
-                <div 
+                <div
                   ref={dropdownRef}
                   className="absolute bottom-full right-0 mb-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-36 max-h-48 overflow-y-auto"
                 >
@@ -222,19 +313,21 @@ export function FormattableTableInput({
                       key={option.value}
                       type="button"
                       onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Thickness option clicked:', option.value);
-                          onThicknessChange?.(option.value);
-                          setShowThickness(false);
-                        }}
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("Thickness option clicked:", option.value);
+                        onThicknessChange?.(option.value);
+                        setShowThickness(false);
+                      }}
                       className={`block w-full text-left px-2 py-1 text-xs hover:bg-gray-100 ${
-                        rowThickness === option.value ? 'bg-blue-50 text-blue-700' : ''
+                        rowThickness === option.value
+                          ? "bg-blue-50 text-blue-700"
+                          : ""
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{option.label}</span>
-                        <div 
+                        <div
                           className="w-4 h-0 border-b border-gray-800"
                           style={{ borderBottomWidth: option.style }}
                         ></div>

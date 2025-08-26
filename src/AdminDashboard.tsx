@@ -162,7 +162,11 @@ export function AdminDashboard() {
     async (product: any, variant?: any) => {
       setSelectedProduct(product);
       // Auto-select first variant if no specific variant is provided and product has variants
-      const selectedVar = variant || (product.variants && product.variants.length > 0 ? product.variants[0] : null);
+      const selectedVar =
+        variant ||
+        (product.variants && product.variants.length > 0
+          ? product.variants[0]
+          : null);
       setSelectedVariant(selectedVar);
       // Reset states to ensure clean transition
       setCurrentNip(null);
@@ -1765,7 +1769,8 @@ export function AdminDashboard() {
                         {dashboardStats?.totalUsers || 0}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {dashboardStats?.totalAdmins || 0} admins, {dashboardStats?.totalRegularUsers || 0} regular
+                        {dashboardStats?.totalAdmins || 0} admins,{" "}
+                        {dashboardStats?.totalRegularUsers || 0} regular
                       </p>
                     </div>
                   </div>
@@ -1796,7 +1801,8 @@ export function AdminDashboard() {
                         {dashboardStats?.totalProducts || 0}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {dashboardStats?.productsWithNips || 0} with NIPs, {dashboardStats?.productsWithoutNips || 0} without
+                        {dashboardStats?.productsWithNips || 0} with NIPs,{" "}
+                        {dashboardStats?.productsWithoutNips || 0} without
                       </p>
                     </div>
                   </div>
@@ -1827,7 +1833,9 @@ export function AdminDashboard() {
                         {dashboardStats?.totalNips || 0}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {dashboardStats?.monthlyStats?.nipsCreatedThisMonth || 0} this month
+                        {dashboardStats?.monthlyStats?.nipsCreatedThisMonth ||
+                          0}{" "}
+                        this month
                       </p>
                     </div>
                   </div>
@@ -1855,13 +1863,14 @@ export function AdminDashboard() {
                         This Month
                       </p>
                       <p className="text-2xl font-semibold text-gray-900">
-                        {(dashboardStats?.monthlyStats?.nipsCreatedThisMonth || 0) + 
-                         (dashboardStats?.monthlyStats?.productsAddedThisMonth || 0) + 
-                         (dashboardStats?.monthlyStats?.usersJoinedThisMonth || 0)}
+                        {(dashboardStats?.monthlyStats?.nipsCreatedThisMonth ||
+                          0) +
+                          (dashboardStats?.monthlyStats
+                            ?.productsAddedThisMonth || 0) +
+                          (dashboardStats?.monthlyStats?.usersJoinedThisMonth ||
+                            0)}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        New activities
-                      </p>
+                      <p className="text-xs text-gray-500">New activities</p>
                     </div>
                   </div>
                 </div>
@@ -1873,39 +1882,80 @@ export function AdminDashboard() {
                     Recent Activity
                   </h3>
                   <div className="space-y-4">
-                    {dashboardStats?.recentActivity && dashboardStats.recentActivity.length > 0 ? (
+                    {dashboardStats?.recentActivity &&
+                    dashboardStats.recentActivity.length > 0 ? (
                       dashboardStats.recentActivity.map((activity, index) => {
                         const getActivityIcon = (type: string) => {
                           switch (type) {
-                            case 'nip_created':
+                            case "nip_created":
                               return (
                                 <div className="p-2 bg-green-100 rounded-lg">
-                                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  <svg
+                                    className="w-4 h-4 text-green-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
                                   </svg>
                                 </div>
                               );
-                            case 'product_added':
+                            case "product_added":
                               return (
                                 <div className="p-2 bg-blue-100 rounded-lg">
-                                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  <svg
+                                    className="w-4 h-4 text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                    />
                                   </svg>
                                 </div>
                               );
-                            case 'user_joined':
+                            case "user_joined":
                               return (
                                 <div className="p-2 bg-purple-100 rounded-lg">
-                                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  <svg
+                                    className="w-4 h-4 text-purple-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
                                   </svg>
                                 </div>
                               );
                             default:
                               return (
                                 <div className="p-2 bg-gray-100 rounded-lg">
-                                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  <svg
+                                    className="w-4 h-4 text-gray-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                   </svg>
                                 </div>
                               );
@@ -1913,13 +1963,26 @@ export function AdminDashboard() {
                         };
 
                         return (
-                          <div key={index} className="flex items-start space-x-3">
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3"
+                          >
                             {getActivityIcon(activity.type)}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-900">{activity.description}</p>
+                              <p className="text-sm text-gray-900">
+                                {activity.description}
+                              </p>
                               <p className="text-xs text-gray-500">
-                                {new Date(activity.timestamp).toLocaleDateString()} at{' '}
-                                {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(
+                                  activity.timestamp
+                                ).toLocaleDateString()}{" "}
+                                at{" "}
+                                {new Date(
+                                  activity.timestamp
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </p>
                             </div>
                           </div>
@@ -1941,7 +2004,9 @@ export function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Protein Powder</span>
+                        <span className="text-sm text-gray-700">
+                          Protein Powder
+                        </span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {dashboardStats?.templateTypeStats?.proteinPowder || 0}
@@ -1950,7 +2015,9 @@ export function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Supplements</span>
+                        <span className="text-sm text-gray-700">
+                          Supplements
+                        </span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {dashboardStats?.templateTypeStats?.supplements || 0}
@@ -1959,38 +2026,53 @@ export function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Complex Supplements</span>
+                        <span className="text-sm text-gray-700">
+                          Complex Supplements
+                        </span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">
-                        {dashboardStats?.templateTypeStats?.complexSupplements || 0}
+                        {dashboardStats?.templateTypeStats
+                          ?.complexSupplements || 0}
                       </span>
                     </div>
-                    
-                    {dashboardStats?.totalNips && dashboardStats.totalNips > 0 && (
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <div className="text-xs text-gray-500 mb-2">Template Distribution</div>
-                        <div className="flex space-x-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          {dashboardStats.templateTypeStats.proteinPowder > 0 && (
-                            <div 
-                              className="bg-blue-500" 
-                              style={{ width: `${(dashboardStats.templateTypeStats.proteinPowder / dashboardStats.totalNips) * 100}%` }}
-                            ></div>
-                          )}
-                          {dashboardStats.templateTypeStats.supplements > 0 && (
-                            <div 
-                              className="bg-green-500" 
-                              style={{ width: `${(dashboardStats.templateTypeStats.supplements / dashboardStats.totalNips) * 100}%` }}
-                            ></div>
-                          )}
-                          {dashboardStats.templateTypeStats.complexSupplements > 0 && (
-                            <div 
-                              className="bg-purple-500" 
-                              style={{ width: `${(dashboardStats.templateTypeStats.complexSupplements / dashboardStats.totalNips) * 100}%` }}
-                            ></div>
-                          )}
+
+                    {dashboardStats?.totalNips &&
+                      dashboardStats.totalNips > 0 && (
+                        <div className="mt-6 pt-4 border-t border-gray-200">
+                          <div className="text-xs text-gray-500 mb-2">
+                            Template Distribution
+                          </div>
+                          <div className="flex space-x-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            {dashboardStats.templateTypeStats.proteinPowder >
+                              0 && (
+                              <div
+                                className="bg-blue-500"
+                                style={{
+                                  width: `${(dashboardStats.templateTypeStats.proteinPowder / dashboardStats.totalNips) * 100}%`,
+                                }}
+                              ></div>
+                            )}
+                            {dashboardStats.templateTypeStats.supplements >
+                              0 && (
+                              <div
+                                className="bg-green-500"
+                                style={{
+                                  width: `${(dashboardStats.templateTypeStats.supplements / dashboardStats.totalNips) * 100}%`,
+                                }}
+                              ></div>
+                            )}
+                            {dashboardStats.templateTypeStats
+                              .complexSupplements > 0 && (
+                              <div
+                                className="bg-purple-500"
+                                style={{
+                                  width: `${(dashboardStats.templateTypeStats.complexSupplements / dashboardStats.totalNips) * 100}%`,
+                                }}
+                              ></div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </div>
               </div>
