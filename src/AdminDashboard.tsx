@@ -161,7 +161,9 @@ export function AdminDashboard() {
   const handleProductSelection = useCallback(
     async (product: any, variant?: any) => {
       setSelectedProduct(product);
-      setSelectedVariant(variant || null);
+      // Auto-select first variant if no specific variant is provided and product has variants
+      const selectedVar = variant || (product.variants && product.variants.length > 0 ? product.variants[0] : null);
+      setSelectedVariant(selectedVar);
       // Reset states to ensure clean transition
       setCurrentNip(null);
       setSelectedTemplate(null);

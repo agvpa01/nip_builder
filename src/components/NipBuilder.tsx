@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -44,6 +44,7 @@ export function NipBuilder({
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     variant?._id || null
   );
+  const [isFirstVariantAutoSelected, setIsFirstVariantAutoSelected] = useState(false);
   const [sections, setSections] = useState<Section[]>(
     currentNip?.content?.sections || []
   );
@@ -73,6 +74,24 @@ export function NipBuilder({
   // Get NIP for current variant
   const currentVariantNip =
     productNips?.find((nip) => nip.variantId === activeVariantId) || currentNip;
+
+  // Auto-select first variant when product loads with variants
+  useEffect(() => {
+    if (product?.variants && product.variants.length > 0 && !activeVariantId && !variant) {
+      const firstVariant = product.variants[0];
+      setActiveVariantId(firstVariant._id);
+      setIsFirstVariantAutoSelected(true);
+      
+      // Load existing NIP data for the first variant if it exists
+      const firstVariantNip = productNips?.find(
+        (nip) => nip.variantId === firstVariant._id
+      );
+      if (firstVariantNip) {
+        setSections((firstVariantNip.content?.sections || []) as Section[]);
+        setCustomFields(firstVariantNip.content?.customFields || []);
+      }
+    }
+  }, [product, activeVariantId, variant, productNips]);
 
   // Add new section
   const addSection = useCallback(
@@ -504,7 +523,10 @@ export function NipBuilder({
                 return (
                   <button
                     key={v._id}
-                    onClick={() => handleVariantChange(v._id)}
+                    onClick={() => {
+                      handleVariantChange(v._id);
+                      setIsFirstVariantAutoSelected(false); // Clear auto-selection indicator when user manually selects
+                    }}
                     className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                       activeVariantId === v._id
                         ? "border-blue-500 text-blue-600 bg-blue-50"
@@ -515,6 +537,11 @@ export function NipBuilder({
                     {hasNip && (
                       <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         ✓
+                      </span>
+                    )}
+                    {activeVariantId === v._id && isFirstVariantAutoSelected && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        Auto-selected
                       </span>
                     )}
                   </button>
