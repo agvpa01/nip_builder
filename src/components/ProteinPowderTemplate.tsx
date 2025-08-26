@@ -176,6 +176,24 @@ export function ProteinPowderTemplate({
     ));
   }, []);
 
+  // Utility function to get border class based on thickness
+  const getBorderClass = (thickness: 'normal' | 'thick' | 'medium-thick' | 'large-thick' | 'extra-large-thick') => {
+    switch (thickness) {
+      case 'normal':
+        return 'border-b border-gray-400';
+      case 'thick':
+        return 'border-b-2 border-gray-600';
+      case 'medium-thick':
+        return 'border-b-4 border-gray-700';
+      case 'large-thick':
+        return 'border-b-8 border-gray-800';
+      case 'extra-large-thick':
+        return 'border-b-8 border-double border-black';
+      default:
+        return 'border-b border-gray-400';
+    }
+  };
+
 
 
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
@@ -717,7 +735,7 @@ export function ProteinPowderTemplate({
                 NUTRITIONAL INFORMATION
               </div>
 
-              <table className="w-full">
+              <table className="w-full border-b-2 border-black">
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left p-2 text-xs font-medium">
@@ -734,7 +752,7 @@ export function ProteinPowderTemplate({
                 </thead>
                 <tbody>
                   {nutritionalRows.map((row) => (
-                    <tr key={row.id} className={`${getThicknessBorderStyle(row.thickness || 'normal')} hover:bg-gray-50`}>
+                    <tr key={row.id} className={`${getBorderClass(row.thickness || 'normal')} hover:bg-gray-50`}>
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.nutrient}
@@ -818,7 +836,7 @@ export function ProteinPowderTemplate({
                 Per 100g of Protein
               </div>
 
-              <table className="w-full">
+              <table className="w-full border-b-2 border-black">
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left p-2 text-xs font-medium">
@@ -832,7 +850,7 @@ export function ProteinPowderTemplate({
                 </thead>
                 <tbody>
                   {aminoAcidRows.map((row) => (
-                    <tr key={row.id} className={`${getThicknessBorderStyle(row.thickness || 'normal')} hover:bg-gray-50`}>
+                    <tr key={row.id} className={`${getBorderClass(row.thickness || 'normal')} hover:bg-gray-50`}>
                       <td className="p-2">
                         <FormattableTableInput
                           value={row.aminoAcid}

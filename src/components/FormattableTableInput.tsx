@@ -1,8 +1,6 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
-  handleTabKeyPress,
   convertTabsForHtml,
-  applyFormattingWithTabs,
 } from "../lib/tabUtils";
 import { handleNavigationKeyPress } from "../lib/navigationUtils";
 import {
@@ -169,65 +167,122 @@ export function FormattableTableInput({
   const isBold = value.includes("<b>") && value.includes("</b>");
   const isItalic = value.includes("<i>") && value.includes("</i>");
 
+  // Convert HTML to display format for contentEditable
+  const getDisplayHtml = useCallback((htmlValue: string) => {
+    return htmlValue
+      .replace(/<b>/g, '<strong>')
+      .replace(/<\/b>/g, '</strong>')
+      .replace(/<i>/g, '<em>')
+      .replace(/<\/i>/g, '</em>');
+  }, []);
+
+  // Convert display format back to storage format
+  const convertToStorageFormat = useCallback((displayHtml: string) => {
+    return displayHtml
+      .replace(/<strong>/g, '<b>')
+      .replace(/<\/strong>/g, '</b>')
+      .replace(/<em>/g, '<i>')
+      .replace(/<\/em>/g, '</i>')
+      .replace(/<div>/g, '')
+      .replace(/<\/div>/g, '')
+      .replace(/<br>/g, '')
+      .replace(/&nbsp;/g, ' ');
+  }, []);
+
   // Apply formatting to selected text or entire value
   const applyFormatting = useCallback(
     (tag: "b" | "i") => {
-      const input = inputRef.current;
-      if (!input) return;
+      const element = inputRef.current;
+      if (!element) return;
 
-      const start = input.selectionStart || 0;
-      const end = input.selectionEnd || 0;
-
-      // Use the tab-aware formatting function
-      const newValue = applyFormattingWithTabs(value, tag, start, end);
-      onChange(newValue);
-
-      // Restore focus and selection
-      setTimeout(() => {
-        input.focus();
-        const displayValue = newValue.replace(/<\/?[bi]>/g, "");
-        const selectedText = displayValue.substring(start, end);
-        if (selectedText) {
-          const newStart = start + 3; // Account for opening tag
-          const newEnd = newStart + selectedText.length;
-          input.setSelectionRange(newStart, newEnd);
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) {
+        // No selection, format entire content
+        const currentHtml = element.innerHTML;
+        const plainText = element.textContent || '';
+        
+        let newValue: string;
+        if (tag === 'b') {
+          if (isBold) {
+            // Remove bold formatting
+            newValue = value.replace(/<\/?b>/g, '');
+          } else {
+            // Add bold formatting
+            newValue = `<b>${plainText}</b>`;
+          }
+        } else {
+          if (isItalic) {
+            // Remove italic formatting
+            newValue = value.replace(/<\/?i>/g, '');
+          } else {
+            // Add italic formatting
+            newValue = `<i>${plainText}</i>`;
+          }
         }
-      }, 0);
+        
+        onChange(newValue);
+        return;
+      }
+
+      // Handle selected text
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      
+      if (selectedText) {
+        const htmlTag = tag === 'b' ? 'strong' : 'em';
+        
+        // Check if selection is already formatted
+        const parentElement = range.commonAncestorContainer.parentElement;
+        const isAlreadyFormatted = parentElement?.tagName.toLowerCase() === htmlTag;
+        
+        if (isAlreadyFormatted) {
+          // Remove formatting
+          const contents = range.extractContents();
+          const textNode = document.createTextNode(selectedText);
+          range.insertNode(textNode);
+        } else {
+          // Add formatting
+          const contents = range.extractContents();
+          const formattedElement = document.createElement(htmlTag);
+          formattedElement.appendChild(contents);
+          range.insertNode(formattedElement);
+        }
+        
+        // Update the value
+        const newHtml = element.innerHTML;
+        const newValue = convertToStorageFormat(newHtml);
+        onChange(newValue);
+        
+        // Restore selection
+        setTimeout(() => {
+          element.focus();
+        }, 0);
+      }
     },
-    [value, onChange]
+    [value, onChange, isBold, isItalic, convertToStorageFormat]
   );
 
-  // Display value without HTML tags for editing
-  const displayValue = value.replace(/<\/?[bi]>/g, "");
+  const displayHtml = useMemo(() => getDisplayHtml(value), [getDisplayHtml, value]);
 
   return (
     <div className="relative group">
-      <input
-        ref={inputRef}
-        type="text"
-        value={displayValue}
-        onChange={(e) => {
+      <div
+        ref={inputRef as any}
+        contentEditable={!disabled}
+        suppressContentEditableWarning={true}
+        dangerouslySetInnerHTML={{ __html: displayHtml }}
+        onInput={(e) => {
           if (disabled) return;
-
-          // Preserve existing formatting when typing
-          let newValue = e.target.value;
-
-          // If the original value had formatting, try to preserve it
-          if (isBold && !isItalic) {
-            newValue = `<b>${newValue}</b>`;
-          } else if (isItalic && !isBold) {
-            newValue = `<i>${newValue}</i>`;
-          } else if (isBold && isItalic) {
-            newValue = `<b><i>${newValue}</i></b>`;
-          }
-
+          const target = e.target as HTMLElement;
+          const newHtml = target.innerHTML;
+          const newValue = convertToStorageFormat(newHtml);
           onChange(newValue);
         }}
         onKeyDown={(e) => {
           if (disabled) return;
 
-          const input = inputRef.current;
-          if (!input) return;
+          const element = inputRef.current;
+          if (!element) return;
 
           // Handle undo/redo shortcuts first
           if (handleUndoRedoKeyPress(e.nativeEvent, handleUndo, handleRedo)) {
@@ -244,18 +299,48 @@ export function FormattableTableInput({
             return; // Navigation was handled, don't process other keys
           }
 
+          // Handle Enter key to prevent line breaks
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            return;
+          }
+
           // Handle tab key press for inserting tabs
-          handleTabKeyPress(e, input, value, onChange, {
-            tabSize: 4,
-            preserveFormatting: true,
-          });
+          // Note: We need to adapt this for contentEditable
+          if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey) {
+            e.preventDefault();
+            // Insert tab character at cursor position
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              const tabNode = document.createTextNode('\t');
+              range.deleteContents();
+              range.insertNode(tabNode);
+              range.setStartAfter(tabNode);
+              range.setEndAfter(tabNode);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              
+              // Trigger onChange
+              const newHtml = element.innerHTML;
+              const newValue = convertToStorageFormat(newHtml);
+              onChange(newValue);
+            }
+          }
         }}
         onFocus={() => !disabled && setShowFormatting(true)}
         onBlur={() => setTimeout(() => setShowFormatting(false), 200)}
-        className={`${className} pr-20 ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
-        placeholder={placeholder}
-        disabled={disabled}
+        className={`${className} pr-20 min-h-[1.5rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+        style={{
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word'
+        }}
       />
+      {!value && !disabled && (
+        <div className="absolute inset-0 pointer-events-none text-gray-400 flex items-center">
+          <span className="ml-2">{placeholder}</span>
+        </div>
+      )}
 
       {/* Formatting buttons */}
       {showFormatting && !disabled && (
