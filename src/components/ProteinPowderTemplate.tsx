@@ -413,7 +413,7 @@ export function ProteinPowderTemplate({
     // Add nutritional rows (skip serving-info row as it's now displayed separately)
     nutritionalRows.forEach((row) => {
       if (row.id === "serving-info") return; // Skip serving info row
-      
+
       const rowThicknessBorder = getThicknessBorderStyle(
         row.thickness || "normal"
       );
@@ -813,11 +813,14 @@ export function ProteinPowderTemplate({
                 <tbody>
                   {nutritionalRows.map((row) => {
                     if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
-                    
+
                     return (
                       <React.Fragment key={row.id}>
                         <tr className="border-b border-gray-200">
-                          <td colSpan={2} className="px-3 py-2 font-medium text-sm">
+                          <td
+                            colSpan={2}
+                            className="px-3 py-2 font-medium text-sm"
+                          >
                             <FormattableTableInput
                               value={row.nutrient}
                               onChange={(value) =>
@@ -836,7 +839,9 @@ export function ProteinPowderTemplate({
                             />
                           </td>
                         </tr>
-                        <tr className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}>
+                        <tr
+                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                        >
                           <td className="px-3 py-2 text-center">
                             <FormattableTableInput
                               value={row.perServe}
@@ -880,7 +885,7 @@ export function ProteinPowderTemplate({
                               onClick={() => deleteNutritionalRow(row.id)}
                               className="text-red-500 hover:text-red-700 text-xs"
                             >
-                              × Delete {row.nutrient || 'Row'}
+                              × Delete {row.nutrient || "Row"}
                             </button>
                           </td>
                         </tr>
@@ -906,8 +911,8 @@ export function ProteinPowderTemplate({
 
             <div className="border border-gray-300 rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-semibold text-lg">
-              TYPICAL AMINO ACID PROFILE
-            </div>
+                TYPICAL AMINO ACID PROFILE
+              </div>
               <div className="text-right px-3 py-3 text-sm border-2 border-black border-b border-black">
                 Per 100g of Protein
               </div>
