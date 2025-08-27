@@ -385,32 +385,45 @@ export function ProteinPowderTemplate({
       <!-- Right Column: Tables -->
       <div class="right-column" style="flex: 1; padding: 20px; padding-left: 10px;">
         <!-- Nutritional Information Table -->
-        <div class="nutritional-info" style="margin-bottom: 20px;">
-          <div class="table-header" style="background: black; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 12px;">
+        <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
             NUTRITIONAL INFORMATION
           </div>
-          <table style="width: 100%; border-collapse: collapse; border: 2px solid black;">
+          <!-- Serving Information -->
+          <div style="padding: 12px; border: 2px solid black; border-bottom: 1px solid black; background: white;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+              <span>Serving Size: 30 grams</span>
+              <span>Servings per Pack: 33</span>
+            </div>
+          </div>
+          <!-- Column Headers -->
+          <div style="padding: 12px; border: 2px solid black; border-top: none; border-bottom: 2px solid black; background: white;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+              <span style="flex: 1; text-align: right;">Per Serve</span>
+              <span style="flex: 1; text-align: right;">Per 100g</span>
+            </div>
+          </div>
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black; border-top: none;">
+            <colgroup>
+              <col style="width: 50%;" />
+              <col style="width: 50%;" />
+            </colgroup>
     `;
 
-    // Add nutritional table headers
-    html += `
-            <tr style="border-bottom: 1px solid black;">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;"></td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">Per Serve</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">Per 100g</td>
-            </tr>
-    `;
-
-    // Add nutritional rows
+    // Add nutritional rows (skip serving-info row as it's now displayed separately)
     nutritionalRows.forEach((row) => {
+      if (row.id === "serving-info") return; // Skip serving info row
+      
       const rowThicknessBorder = getThicknessBorderStyle(
         row.thickness || "normal"
       );
       html += `
+            <tr style="border-bottom: 1px solid #ddd;">
+              <td colspan="2" style="padding: 8px 12px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+            </tr>
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
       `;
     });
@@ -420,14 +433,18 @@ export function ProteinPowderTemplate({
         </div>
         
         <!-- Amino Acid Profile Table -->
-        <div class="amino-acid-profile">
-          <div class="table-header" style="background: black; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 12px;">
+        <div class="amino-acid-profile" style="border-radius: 8px; overflow: hidden;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
             TYPICAL AMINO ACID PROFILE
           </div>
-          <div style="text-align: center; padding: 4px; font-size: 10px; border: 2px solid black; border-bottom: 1px solid black;">
+          <div style="text-align: right; padding: 12px; font-size: 12px; border: 2px solid black; border-bottom: 1px solid black;">
             Per 100g of Protein
           </div>
-          <table style="width: 100%; border-collapse: collapse; border: 2px solid black; border-top: none;">
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black; border-top: none;">
+            <colgroup>
+              <col style="width: 75%;" />
+              <col style="width: 25%;" />
+            </colgroup>
     `;
 
     // Add amino acid rows
@@ -438,14 +455,14 @@ export function ProteinPowderTemplate({
       if (row.amount) {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
-              <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
+              <td style="padding: 8px 12px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+                <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
             </tr>
         `;
       } else {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td colspan="2" style="padding: 4px 8px; font-size: 10px; font-weight: bold; text-align: center; background: black; color: white;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+              <td colspan="2" style="padding: 8px 12px; font-size: 12px; font-weight: bold; text-align: center; background: black; color: white;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
             </tr>
         `;
       }
@@ -770,96 +787,106 @@ export function ProteinPowderTemplate({
               </button>
             </div>
 
-            <div className="border border-gray-300 rounded overflow-hidden">
-              <div className="bg-black text-white text-center py-2 font-semibold text-sm">
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              <div className="bg-black text-white text-center font-semibold text-lg">
                 NUTRITIONAL INFORMATION
               </div>
-
-              <table className="w-full border-b-2 border-black">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-2 text-xs font-medium">
-                      Nutrient
-                    </th>
-                    <th className="text-right p-2 text-xs font-medium">
-                      Per Serve
-                    </th>
-                    <th className="text-right p-2 text-xs font-medium">
-                      Per 100g
-                    </th>
-                    <th className="w-8"></th>
-                  </tr>
-                </thead>
+              {/* Serving Information */}
+              <div className="px-3 py-3 border-2 border-black border-b border-black bg-white">
+                <div className="flex justify-between text-xs font-bold">
+                  <span>Serving Size: 30 grams</span>
+                  <span>Servings per Pack: 33</span>
+                </div>
+              </div>
+              {/* Column Headers */}
+              <div className="px-3 py-3 border-2 border-black border-t-0 border-b-2 border-black bg-white">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="flex-1 text-right">Per Serve</span>
+                  <span className="flex-1 text-right">Per 100g</span>
+                </div>
+              </div>
+              <table className="w-full table-fixed border-collapse border-2 border-black border-t-0">
+                <colgroup>
+                  <col className="w-full" />
+                  <col className="w-8" />
+                </colgroup>
                 <tbody>
-                  {nutritionalRows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
-                    >
-                      <td className="p-2">
-                        <FormattableTableInput
-                          value={row.nutrient}
-                          onChange={(value) =>
-                            updateNutritionalRow(row.id, "nutrient", value)
-                          }
-                          className="w-full text-xs bg-transparent border-none outline-none"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={row.thickness || "normal"}
-                          onThicknessChange={(thickness) =>
-                            updateNutritionalRowThickness(row.id, thickness)
-                          }
-                        />
-                      </td>
-                      <td className="p-2">
-                        <FormattableTableInput
-                          value={row.perServe}
-                          onChange={(value) =>
-                            updateNutritionalRow(row.id, "perServe", value)
-                          }
-                          className="w-full text-xs bg-transparent border-none outline-none text-right"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={row.thickness || "normal"}
-                          onThicknessChange={(thickness) =>
-                            updateNutritionalRowThickness(row.id, thickness)
-                          }
-                        />
-                      </td>
-                      <td className="p-2">
-                        <FormattableTableInput
-                          value={row.per100g}
-                          onChange={(value) =>
-                            updateNutritionalRow(row.id, "per100g", value)
-                          }
-                          className="w-full text-xs bg-transparent border-none outline-none text-right"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={row.thickness || "normal"}
-                          onThicknessChange={(thickness) =>
-                            updateNutritionalRowThickness(row.id, thickness)
-                          }
-                        />
-                      </td>
-                      <td className="p-2">
-                        <button
-                          onClick={() => deleteNutritionalRow(row.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          ×
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {nutritionalRows.map((row) => {
+                    if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
+                    
+                    return (
+                      <React.Fragment key={row.id}>
+                        <tr className="border-b border-gray-200">
+                          <td colSpan={2} className="px-3 py-2 font-medium text-sm">
+                            <FormattableTableInput
+                              value={row.nutrient}
+                              onChange={(value) =>
+                                updateNutritionalRow(row.id, "nutrient", value)
+                              }
+                              className="w-full text-sm bg-transparent border-none outline-none font-medium"
+                              disabled={
+                                product?.variants &&
+                                product.variants.length > 1 &&
+                                !activeVariantId
+                              }
+                              rowThickness={row.thickness || "normal"}
+                              onThicknessChange={(thickness) =>
+                                updateNutritionalRowThickness(row.id, thickness)
+                              }
+                            />
+                          </td>
+                        </tr>
+                        <tr className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}>
+                          <td className="px-3 py-2 text-center">
+                            <FormattableTableInput
+                              value={row.perServe}
+                              onChange={(value) =>
+                                updateNutritionalRow(row.id, "perServe", value)
+                              }
+                              className="w-full text-sm bg-transparent border-none outline-none text-right"
+                              disabled={
+                                product?.variants &&
+                                product.variants.length > 1 &&
+                                !activeVariantId
+                              }
+                              rowThickness={row.thickness || "normal"}
+                              onThicknessChange={(thickness) =>
+                                updateNutritionalRowThickness(row.id, thickness)
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <FormattableTableInput
+                              value={row.per100g}
+                              onChange={(value) =>
+                                updateNutritionalRow(row.id, "per100g", value)
+                              }
+                              className="w-full text-sm bg-transparent border-none outline-none text-right"
+                              disabled={
+                                product?.variants &&
+                                product.variants.length > 1 &&
+                                !activeVariantId
+                              }
+                              rowThickness={row.thickness || "normal"}
+                              onThicknessChange={(thickness) =>
+                                updateNutritionalRowThickness(row.id, thickness)
+                              }
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2} className="px-3 py-2">
+                            <button
+                              onClick={() => deleteNutritionalRow(row.id)}
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              × Delete {row.nutrient || 'Row'}
+                            </button>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -877,21 +904,26 @@ export function ProteinPowderTemplate({
               </button>
             </div>
 
-            <div className="border border-gray-300 rounded overflow-hidden">
-              <div className="bg-black text-white text-center py-2 font-semibold text-sm">
-                TYPICAL AMINO ACID PROFILE
-              </div>
-              <div className="text-center py-1 text-xs border-b">
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              <div className="bg-black text-white text-center font-semibold text-lg">
+              TYPICAL AMINO ACID PROFILE
+            </div>
+              <div className="text-right px-3 py-3 text-sm border-2 border-black border-b border-black">
                 Per 100g of Protein
               </div>
 
-              <table className="w-full border-b-2 border-black">
+              <table className="w-full table-fixed border-b-2 border-black">
+                <colgroup>
+                  <col className="w-3/4" />
+                  <col className="w-1/6" />
+                  <col className="w-8" />
+                </colgroup>
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-2 text-xs font-medium">
+                    <th className="text-left px-3 py-2 text-sm font-medium">
                       Amino Acid
                     </th>
-                    <th className="text-right p-2 text-xs font-medium">
+                    <th className="text-right px-3 py-2 text-sm font-medium">
                       Amount
                     </th>
                     <th className="w-8"></th>
@@ -903,13 +935,13 @@ export function ProteinPowderTemplate({
                       key={row.id}
                       className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
                     >
-                      <td className="p-2">
+                      <td className="px-3 py-2">
                         <FormattableTableInput
                           value={row.aminoAcid}
                           onChange={(value) =>
                             updateAminoAcidRow(row.id, "aminoAcid", value)
                           }
-                          className="w-full text-xs bg-transparent border-none outline-none"
+                          className="w-full text-sm bg-transparent border-none outline-none"
                           disabled={
                             product?.variants &&
                             product.variants.length > 1 &&
@@ -921,13 +953,13 @@ export function ProteinPowderTemplate({
                           }
                         />
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-2">
                         <FormattableTableInput
                           value={row.amount}
                           onChange={(value) =>
                             updateAminoAcidRow(row.id, "amount", value)
                           }
-                          className="w-full text-xs bg-transparent border-none outline-none text-right"
+                          className="w-full text-sm bg-transparent border-none outline-none text-right"
                           disabled={
                             product?.variants &&
                             product.variants.length > 1 &&
@@ -939,7 +971,7 @@ export function ProteinPowderTemplate({
                           }
                         />
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-2">
                         <button
                           onClick={() => deleteAminoAcidRow(row.id)}
                           className="text-red-500 hover:text-red-700 text-xs"

@@ -178,27 +178,30 @@ export function FormattableTableInput({
       // Check formatting of selected text
       const range = selection.getRangeAt(0);
       const container = range.commonAncestorContainer;
-      
+
       // Check if selection is within formatted elements
-      let currentNode: Node | null = container.nodeType === Node.TEXT_NODE ? container.parentNode : container;
+      let currentNode: Node | null =
+        container.nodeType === Node.TEXT_NODE
+          ? container.parentNode
+          : container;
       let isBold = false;
       let isItalic = false;
-      
+
       while (currentNode && currentNode !== element) {
         if (currentNode.nodeType === Node.ELEMENT_NODE) {
           const tagName = (currentNode as Element).tagName.toLowerCase();
-          if (tagName === 'strong' || tagName === 'b') isBold = true;
-          if (tagName === 'em' || tagName === 'i') isItalic = true;
+          if (tagName === "strong" || tagName === "b") isBold = true;
+          if (tagName === "em" || tagName === "i") isItalic = true;
         }
         currentNode = currentNode.parentNode;
       }
-      
+
       return { isBold, isItalic };
     } else {
       // Check formatting of entire content
       return {
         isBold: value.includes("<b>") && value.includes("</b>"),
-        isItalic: value.includes("<i>") && value.includes("</i>")
+        isItalic: value.includes("<i>") && value.includes("</i>"),
       };
     }
   }, [value]);
@@ -237,12 +240,15 @@ export function FormattableTableInput({
 
       const selection = window.getSelection();
       const currentFormattingState = getFormattingState();
-      const isCurrentlyFormatted = tag === "b" ? currentFormattingState.isBold : currentFormattingState.isItalic;
+      const isCurrentlyFormatted =
+        tag === "b"
+          ? currentFormattingState.isBold
+          : currentFormattingState.isItalic;
 
       if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
         // No selection or collapsed selection, format entire content
         const plainText = element.textContent || "";
-        
+
         let newValue: string;
         if (isCurrentlyFormatted) {
           // Remove formatting from entire content
@@ -254,13 +260,17 @@ export function FormattableTableInput({
           const tagRegex = tag === "b" ? /<\/?b>/g : /<\/?i>/g;
           const cleanValue = value.replace(tagRegex, "");
           const cleanText = cleanValue.replace(/<\/?[bi]>/g, ""); // Get text without any formatting
-          
+
           if (tag === "b") {
             // Preserve italic formatting if it exists
-            newValue = cleanValue.includes("<i>") ? cleanValue.replace(/^(.*)$/, "<b>$1</b>") : `<b>${cleanText}</b>`;
+            newValue = cleanValue.includes("<i>")
+              ? cleanValue.replace(/^(.*)$/, "<b>$1</b>")
+              : `<b>${cleanText}</b>`;
           } else {
-            // Preserve bold formatting if it exists  
-            newValue = cleanValue.includes("<b>") ? cleanValue.replace(/^(.*)$/, "<i>$1</i>") : `<i>${cleanText}</i>`;
+            // Preserve bold formatting if it exists
+            newValue = cleanValue.includes("<b>")
+              ? cleanValue.replace(/^(.*)$/, "<i>$1</i>")
+              : `<i>${cleanText}</i>`;
           }
         }
 
@@ -282,26 +292,30 @@ export function FormattableTableInput({
           if (container.nodeType === Node.TEXT_NODE) {
             container = container.parentNode!;
           }
-          
+
           // Find the formatting element to remove
           let formatElement: Element | null = null;
           let currentNode: Node | null = container;
-          
+
           while (currentNode && currentNode !== element) {
             if (currentNode.nodeType === Node.ELEMENT_NODE) {
               const tagName = (currentNode as Element).tagName.toLowerCase();
-              if ((tag === "b" && (tagName === "strong" || tagName === "b")) ||
-                  (tag === "i" && (tagName === "em" || tagName === "i"))) {
+              if (
+                (tag === "b" && (tagName === "strong" || tagName === "b")) ||
+                (tag === "i" && (tagName === "em" || tagName === "i"))
+              ) {
                 formatElement = currentNode as Element;
                 break;
               }
             }
             currentNode = currentNode.parentNode;
           }
-          
+
           if (formatElement) {
             // Replace the formatted element with its text content
-            const textNode = document.createTextNode(formatElement.textContent || "");
+            const textNode = document.createTextNode(
+              formatElement.textContent || ""
+            );
             formatElement.parentNode?.replaceChild(textNode, formatElement);
           }
         } else {
@@ -454,8 +468,9 @@ export function FormattableTableInput({
           setTimeout(() => {
             const activeElement = document.activeElement;
             const isWithinInput = inputRef.current?.contains(activeElement);
-            const isWithinFormatting = formattingRef.current?.contains(activeElement);
-            
+            const isWithinFormatting =
+              formattingRef.current?.contains(activeElement);
+
             if (!isWithinInput && !isWithinFormatting) {
               setShowFormatting(false);
             }
@@ -481,7 +496,7 @@ export function FormattableTableInput({
 
       {/* Formatting buttons */}
       {showFormatting && !disabled && (
-        <div 
+        <div
           ref={formattingRef}
           className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1"
           onMouseDown={(e) => {

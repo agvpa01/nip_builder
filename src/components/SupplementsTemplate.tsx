@@ -36,6 +36,10 @@ export function SupplementsTemplate({
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  // Serving information
+  const [servingSize, setServingSize] = useState("1g");
+  const [servingsPerBottle, setServingsPerBottle] = useState("200");
+
   // Query NIPs for all variants of this product
   const productNips = useQuery(
     api.nips.getNipsByProduct,
@@ -98,6 +102,10 @@ export function SupplementsTemplate({
           setNutritionalRows(content.nutritionalRows);
         if (content.nutritionalRowThickness)
           setNutritionalRowThickness(content.nutritionalRowThickness);
+        if (content.servingSize)
+          setServingSize(content.servingSize);
+        if (content.servingsPerBottle)
+          setServingsPerBottle(content.servingsPerBottle);
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -148,43 +156,57 @@ export function SupplementsTemplate({
     const thicknessBorder = getThicknessBorderStyle(nutritionalRowThickness);
 
     let html = `
-    <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; background: white;">
+    <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
       <!-- Nutritional Information Table -->
       <div class="nutritional-info">
-        <div class="table-header" style="background: black; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 12px;">
+        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
           NUTRITIONAL INFORMATION
         </div>
-        <table style="width: 100%; border-collapse: collapse; border: 2px solid black;">
-    `;
-
-    // Add nutritional table headers
-    html += `
-          <tr style="border-bottom: ${thicknessBorder};">
-            <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;"></td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">Per Serve</td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right;">Per 100g</td>
-          </tr>
+        <!-- Serving Information -->
+        <div style="padding: 12px; border-bottom: 1px solid black; background: white;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+            <span>Serving Size: ${servingSize}</span>
+            <span>Servings per Bottle: ${servingsPerBottle}</span>
+          </div>
+        </div>
+        <!-- Column Headers -->
+        <div style="padding: 12px; border-bottom: 2px solid black; background: white;">
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+            <span style="flex: 1; text-align: right;">Per Serve</span>
+            <span style="flex: 1; text-align: right;">Per 100g</span>
+          </div>
+        </div>
+        <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+            <colgroup>
+              <col style="width: 50%;" />
+              <col style="width: 50%;" />
+            </colgroup>
+            <tbody>
     `;
 
     // Add nutritional rows
-    nutritionalRows.forEach((row) => {
+    nutritionalRows.forEach((row, index) => {
+      const bgColor = index % 2 === 0 ? 'white' : '#f9f9f9';
       html += `
-          <tr style="border-bottom: ${thicknessBorder};">
-            <td style="padding: 4px 8px; font-size: 10px; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-            <td style="padding: 4px 8px; font-size: 10px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+          <tr style="background-color: ${bgColor}; border-bottom: 1px solid black;">
+            <td colspan="2" style="padding: 8px 12px; font-size: 14px; font-weight: 500; border-bottom: 1px solid #ddd;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
           </tr>
-      `;
+          <tr style="background-color: ${bgColor};">
+            <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 500; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+            <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+          </tr>
+       `;
     });
 
     html += `
+            </tbody>
         </table>
       </div>
     </div>
     `;
 
     return html;
-  }, [nutritionalRows, nutritionalRowThickness]);
+  }, [nutritionalRows, nutritionalRowThickness, servingSize, servingsPerBottle]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
@@ -208,6 +230,8 @@ export function SupplementsTemplate({
         content: {
           nutritionalRows,
           nutritionalRowThickness,
+          servingSize,
+          servingsPerBottle,
         },
         htmlContent: generateHtml(),
       };
@@ -342,7 +366,38 @@ export function SupplementsTemplate({
           </div>
         )}
 
-        {/* Text formatting tools removed */}
+        {/* Serving Information */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Serving Information:
+          </label>
+          <div className="space-y-2">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">
+                Serving Size:
+              </label>
+              <input
+                type="text"
+                value={servingSize}
+                onChange={(e) => setServingSize(e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., 1g"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">
+                Servings per Bottle:
+              </label>
+              <input
+                type="text"
+                value={servingsPerBottle}
+                onChange={(e) => setServingsPerBottle(e.target.value)}
+                className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., 200"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Actions */}
         {isSaved ? (
@@ -430,85 +485,99 @@ export function SupplementsTemplate({
           </button>
         </div>
 
-        <div className="border border-gray-300 rounded overflow-hidden">
-          <div className="bg-black text-white text-center py-2 font-semibold text-sm">
-            NUTRITIONAL INFORMATION
+        <div className="border-2 border-black rounded-lg overflow-hidden">
+          <div className="bg-black text-white text-center font-bold text-lg">
+          NUTRITIONAL INFORMATION
+        </div>
+          {/* Serving Information */}
+          <div className="px-3 py-3 border-b border-black bg-white">
+            <div className="flex justify-between text-xs font-bold">
+              <span>Serving Size: {servingSize}</span>
+              <span>Servings per Bottle: {servingsPerBottle}</span>
+            </div>
+          </div>
+          {/* Column Headers */}
+          <div className="px-3 py-3 border-b-2 border-black bg-white">
+            <div className="flex justify-between text-sm font-bold">
+              <span className="flex-1 text-right">Per Serve</span>
+              <span className="flex-1 text-right">Per 100g</span>
+            </div>
           </div>
 
-          <table className="w-full border-b-2 border-black">
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="text-left p-2 text-xs font-medium">Nutrient</th>
-                <th className="text-right p-2 text-xs font-medium">
-                  Per Serve
-                </th>
-                <th className="text-right p-2 text-xs font-medium">Per 100g</th>
-                <th className="w-8"></th>
-              </tr>
-            </thead>
+          <table className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-full" />
+              <col className="w-8" />
+            </colgroup>
             <tbody>
-              {nutritionalRows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
-                >
-                  <td className="p-2">
-                    <FormattableTableInput
-                      value={row.nutrient}
-                      onChange={(value) =>
-                        updateNutritionalRow(row.id, "nutrient", value)
-                      }
-                      className="w-full text-xs bg-transparent border-none outline-none"
-                      disabled={
-                        product?.variants &&
-                        product.variants.length > 1 &&
-                        !activeVariantId
-                      }
-                      rowThickness={nutritionalRowThickness}
-                      onThicknessChange={setNutritionalRowThickness}
-                    />
-                  </td>
-                  <td className="p-2">
-                    <FormattableTableInput
-                      value={row.perServe}
-                      onChange={(value) =>
-                        updateNutritionalRow(row.id, "perServe", value)
-                      }
-                      className="w-full text-xs bg-transparent border-none outline-none text-right"
-                      disabled={
-                        product?.variants &&
-                        product.variants.length > 1 &&
-                        !activeVariantId
-                      }
-                      rowThickness={nutritionalRowThickness}
-                      onThicknessChange={setNutritionalRowThickness}
-                    />
-                  </td>
-                  <td className="p-2">
-                    <FormattableTableInput
-                      value={row.per100g}
-                      onChange={(value) =>
-                        updateNutritionalRow(row.id, "per100g", value)
-                      }
-                      className="w-full text-xs bg-transparent border-none outline-none text-right"
-                      disabled={
-                        product?.variants &&
-                        product.variants.length > 1 &&
-                        !activeVariantId
-                      }
-                      rowThickness={nutritionalRowThickness}
-                      onThicknessChange={setNutritionalRowThickness}
-                    />
-                  </td>
-                  <td className="p-2">
-                    <button
-                      onClick={() => deleteNutritionalRow(row.id)}
-                      className="text-red-500 hover:text-red-700 text-xs"
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
+              {nutritionalRows.map((row, index) => (
+                <React.Fragment key={row.id}>
+                  <tr
+                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 border-b border-gray-300`}
+                  >
+                    <td colSpan={2} className="px-3 py-2">
+                      <FormattableTableInput
+                        value={row.nutrient}
+                        onChange={(value) =>
+                          updateNutritionalRow(row.id, "nutrient", value)
+                        }
+                        className="w-full text-sm bg-transparent border-none outline-none font-medium"
+                        disabled={
+                          product?.variants &&
+                          product.variants.length > 1 &&
+                          !activeVariantId
+                        }
+                        rowThickness={nutritionalRowThickness}
+                        onThicknessChange={setNutritionalRowThickness}
+                      />
+                    </td>
+                    <td className="px-1 py-0 w-8">
+                      <button
+                        onClick={() => deleteNutritionalRow(row.id)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                  <tr
+                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 border-b border-black`}
+                  >
+                    <td className="px-3 py-2 border-r border-black text-center">
+                      <FormattableTableInput
+                        value={row.perServe}
+                        onChange={(value) =>
+                          updateNutritionalRow(row.id, "perServe", value)
+                        }
+                        className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
+                        disabled={
+                          product?.variants &&
+                          product.variants.length > 1 &&
+                          !activeVariantId
+                        }
+                        rowThickness={nutritionalRowThickness}
+                        onThicknessChange={setNutritionalRowThickness}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <FormattableTableInput
+                        value={row.per100g}
+                        onChange={(value) =>
+                          updateNutritionalRow(row.id, "per100g", value)
+                        }
+                        className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
+                        disabled={
+                          product?.variants &&
+                          product.variants.length > 1 &&
+                          !activeVariantId
+                        }
+                        rowThickness={nutritionalRowThickness}
+                        onThicknessChange={setNutritionalRowThickness}
+                      />
+                    </td>
+                    <td className="px-1 py-0 w-8"></td>
+                  </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

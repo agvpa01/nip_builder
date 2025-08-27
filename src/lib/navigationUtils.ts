@@ -29,7 +29,9 @@ export function getAllTableInputs(): (HTMLInputElement | HTMLElement)[] {
       return !input.disabled;
     } else {
       // For contentEditable elements, check if they're not disabled via parent or data attributes
-      return input.contentEditable === 'true' && !input.hasAttribute('data-disabled');
+      return (
+        input.contentEditable === "true" && !input.hasAttribute("data-disabled")
+      );
     }
   });
 }
@@ -50,21 +52,25 @@ export function getTableRow(
  * @param row - The table row element
  * @returns Array of input elements in the row
  */
-export function getRowInputs(row: HTMLTableRowElement): (HTMLInputElement | HTMLElement)[] {
+export function getRowInputs(
+  row: HTMLTableRowElement
+): (HTMLInputElement | HTMLElement)[] {
   const inputs = Array.from(
     row.querySelectorAll('input[type="text"]')
   ) as HTMLInputElement[];
-  
+
   const contentEditables = Array.from(
     row.querySelectorAll('div[contenteditable="true"]')
   ) as HTMLElement[];
-  
+
   const allInputs = [...inputs, ...contentEditables];
   return allInputs.filter((input) => {
     if (input instanceof HTMLInputElement) {
       return !input.disabled;
     } else {
-      return input.contentEditable === 'true' && !input.hasAttribute('data-disabled');
+      return (
+        input.contentEditable === "true" && !input.hasAttribute("data-disabled")
+      );
     }
   });
 }
@@ -74,7 +80,9 @@ export function getRowInputs(row: HTMLTableRowElement): (HTMLInputElement | HTML
  * @param input - The input element
  * @returns The table element or null if not found
  */
-export function getTable(input: HTMLInputElement | HTMLElement): HTMLTableElement | null {
+export function getTable(
+  input: HTMLInputElement | HTMLElement
+): HTMLTableElement | null {
   return input.closest("table");
 }
 
@@ -83,21 +91,25 @@ export function getTable(input: HTMLInputElement | HTMLElement): HTMLTableElemen
  * @param table - The table element
  * @returns Array of input elements in the table
  */
-export function getTableInputs(table: HTMLTableElement): (HTMLInputElement | HTMLElement)[] {
+export function getTableInputs(
+  table: HTMLTableElement
+): (HTMLInputElement | HTMLElement)[] {
   const inputs = Array.from(
     table.querySelectorAll('input[type="text"]')
   ) as HTMLInputElement[];
-  
+
   const contentEditables = Array.from(
     table.querySelectorAll('div[contenteditable="true"]')
   ) as HTMLElement[];
-  
+
   const allInputs = [...inputs, ...contentEditables];
   return allInputs.filter((input) => {
     if (input instanceof HTMLInputElement) {
       return !input.disabled;
     } else {
-      return input.contentEditable === 'true' && !input.hasAttribute('data-disabled');
+      return (
+        input.contentEditable === "true" && !input.hasAttribute("data-disabled")
+      );
     }
   });
 }
@@ -253,9 +265,10 @@ export function handleNavigationKeyPress(
   }
 
   // Check if it's a valid input element (either input[type="text"] or contentEditable)
-  const isTextInput = target.tagName === "INPUT" && (target as HTMLInputElement).type === "text";
+  const isTextInput =
+    target.tagName === "INPUT" && (target as HTMLInputElement).type === "text";
   const isContentEditable = target.contentEditable === "true";
-  
+
   if (!isTextInput && !isContentEditable) {
     return false;
   }
@@ -284,7 +297,7 @@ export function handleNavigationKeyPress(
 
       // Focus the next input
       nextInput.focus();
-      
+
       // Select all text based on input type
       if (nextInput instanceof HTMLInputElement) {
         nextInput.select();
