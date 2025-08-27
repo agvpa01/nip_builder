@@ -728,7 +728,7 @@ export function ComplexSupplementsTemplate({
             <h3 className="text-lg font-semibold mb-4">
               Nutritional Information
             </h3>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border-2 border-black rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-bold text-lg">
                 NUTRITIONAL INFORMATION
               </div>
@@ -755,9 +755,23 @@ export function ComplexSupplementsTemplate({
               </div>
               <table className="w-full table-fixed border-collapse border-2 border-black border-t-0">
                 <colgroup>
-                  <col className="w-full" />
-                  <col className="w-8" />
+                  <col className="w-2/3" />
+                  <col className="w-1/6" />
+                  <col className="w-1/6" />
                 </colgroup>
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="text-left px-2 py-1 text-xs font-medium">
+                      Nutrient
+                    </th>
+                    <th className="text-right px-2 py-1 text-xs font-medium">
+                      Per Serve
+                    </th>
+                    <th className="text-right px-2 py-1 text-xs font-medium">
+                      Per 100g
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   {nutritionalRows.map((row) => {
                     if (row.id === "serving-info") return null; // Skip serving info row
@@ -767,7 +781,7 @@ export function ComplexSupplementsTemplate({
                         <tr
                           className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
                         >
-                          <td className="px-3 py-2" colSpan={2}>
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.nutrient}
                               onChange={(value) =>
@@ -783,9 +797,7 @@ export function ComplexSupplementsTemplate({
                               onThicknessChange={setNutritionalRowThickness}
                             />
                           </td>
-                        </tr>
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-center border-r border-black">
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.perServe}
                               onChange={(value) =>
@@ -801,13 +813,13 @@ export function ComplexSupplementsTemplate({
                               onThicknessChange={setNutritionalRowThickness}
                             />
                           </td>
-                          <td className="px-3 py-2 text-center relative">
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.per100g}
                               onChange={(value) =>
                                 updateNutritionalRow(row.id, "per100g", value)
                               }
-                              className="w-full text-sm text-right border-none outline-none bg-transparent font-medium pr-6"
+                              className="w-full text-sm text-right border-none outline-none bg-transparent font-medium"
                               disabled={
                                 product?.variants &&
                                 product.variants.length > 1 &&
@@ -816,11 +828,15 @@ export function ComplexSupplementsTemplate({
                               rowThickness={nutritionalRowThickness}
                               onThicknessChange={setNutritionalRowThickness}
                             />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={3} className="px-0 py-0">
                             <button
                               onClick={() => deleteNutritionalRow(row.id)}
-                              className="absolute right-1 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 text-xs"
+                              className="text-red-500 hover:text-red-700 text-xs"
                             >
-                              ×
+                              × Delete {row.nutrient || "Row"}
                             </button>
                           </td>
                         </tr>
@@ -837,97 +853,77 @@ export function ComplexSupplementsTemplate({
             <h3 className="text-lg font-semibold mb-4">
               Compositional Information
             </h3>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border-2 border-black rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-bold text-lg">
                 COMPOSITIONAL INFORMATION
               </div>
-              <table className="w-full table-fixed border-b-2 border-black">
-                <colgroup>
-                  <col className="w-2/5" />
-                  <col className="w-1/4" />
-                  <col className="w-1/4" />
-                  <col className="w-8" />
-                </colgroup>
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left px-3 py-2 text-sm font-medium">
-                      Ingredient
-                    </th>
-                    <th className="text-right px-3 py-2 text-sm font-medium">
-                      Amount
-                    </th>
-                    <th className="text-right px-3 py-2 text-sm font-medium">
-                      Daily Value
-                    </th>
-                    <th className="w-8"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ingredientRows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`${getBorderClass(ingredientRowThickness)} hover:bg-gray-50`}
-                    >
-                      <td className="px-3 py-2">
-                        <FormattableTableInput
-                          value={row.ingredient}
-                          onChange={(value) =>
-                            updateIngredientRow(row.id, "ingredient", value)
-                          }
-                          className="w-full text-sm border-none outline-none bg-transparent"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={ingredientRowThickness}
-                          onThicknessChange={setIngredientRowThickness}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <FormattableTableInput
-                          value={row.amount}
-                          onChange={(value) =>
-                            updateIngredientRow(row.id, "amount", value)
-                          }
-                          className="w-full text-sm text-right border-none outline-none bg-transparent"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={ingredientRowThickness}
-                          onThicknessChange={setIngredientRowThickness}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <FormattableTableInput
-                          value={row.dailyValue}
-                          onChange={(value) =>
-                            updateIngredientRow(row.id, "dailyValue", value)
-                          }
-                          className="w-full text-sm text-right border-none outline-none bg-transparent"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={ingredientRowThickness}
-                          onThicknessChange={setIngredientRowThickness}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          onClick={() => deleteIngredientRow(row.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          ×
-                        </button>
-                      </td>
+              <div className="p-5 bg-blue-200">
+                <table className="w-full table-fixed border-b-2 border-black">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="text-left px-2 py-1 text-xs font-medium">
+                        Ingredient
+                      </th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Amount
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {ingredientRows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className={`${getBorderClass(ingredientRowThickness)} hover:bg-gray-50`}
+                      >
+                        <td className="px-0 py-0">
+                          <FormattableTableInput
+                            value={row.ingredient}
+                            onChange={(value) =>
+                              updateIngredientRow(row.id, "ingredient", value)
+                            }
+                            className="w-full text-sm border-none outline-none bg-transparent"
+                            disabled={
+                              product?.variants &&
+                              product.variants.length > 1 &&
+                              !activeVariantId
+                            }
+                            rowThickness={ingredientRowThickness}
+                            onThicknessChange={setIngredientRowThickness}
+                          />
+                        </td>
+                        <td className="px-0 py-0 relative">
+                          <div className="flex items-center">
+                            <FormattableTableInput
+                              value={row.amount}
+                              onChange={(value) =>
+                                updateIngredientRow(row.id, "amount", value)
+                              }
+                              className="flex-1 text-sm text-right border-none outline-none bg-transparent pr-6"
+                              disabled={
+                                product?.variants &&
+                                product.variants.length > 1 &&
+                                !activeVariantId
+                              }
+                              rowThickness={ingredientRowThickness}
+                              onThicknessChange={setIngredientRowThickness}
+                            />
+                            <button
+                              onClick={() => deleteIngredientRow(row.id)}
+                              className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <div className="px-3 py-3 text-center text-sm text-gray-600 italic border-t">
                 * Daily Value not established
               </div>

@@ -45,7 +45,8 @@ export function NipBuilder({
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     variant?._id || null
   );
-  const [isFirstVariantAutoSelected, setIsFirstVariantAutoSelected] = useState(false);
+  const [isFirstVariantAutoSelected, setIsFirstVariantAutoSelected] =
+    useState(false);
   const [sections, setSections] = useState<Section[]>(
     currentNip?.content?.sections || []
   );
@@ -78,11 +79,16 @@ export function NipBuilder({
 
   // Auto-select first variant when product loads with variants
   useEffect(() => {
-    if (product?.variants && product.variants.length > 0 && !activeVariantId && !variant) {
+    if (
+      product?.variants &&
+      product.variants.length > 0 &&
+      !activeVariantId &&
+      !variant
+    ) {
       const firstVariant = product.variants[0];
       setActiveVariantId(firstVariant._id);
       setIsFirstVariantAutoSelected(true);
-      
+
       // Load existing NIP data for the first variant if it exists
       const firstVariantNip = productNips?.find(
         (nip) => nip.variantId === firstVariant._id
@@ -540,11 +546,12 @@ export function NipBuilder({
                         ✓
                       </span>
                     )}
-                    {activeVariantId === v._id && isFirstVariantAutoSelected && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        Auto-selected
-                      </span>
-                    )}
+                    {activeVariantId === v._id &&
+                      isFirstVariantAutoSelected && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          Auto-selected
+                        </span>
+                      )}
                   </button>
                 );
               })}

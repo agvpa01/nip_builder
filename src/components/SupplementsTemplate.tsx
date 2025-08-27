@@ -102,8 +102,7 @@ export function SupplementsTemplate({
           setNutritionalRows(content.nutritionalRows);
         if (content.nutritionalRowThickness)
           setNutritionalRowThickness(content.nutritionalRowThickness);
-        if (content.servingSize)
-          setServingSize(content.servingSize);
+        if (content.servingSize) setServingSize(content.servingSize);
         if (content.servingsPerBottle)
           setServingsPerBottle(content.servingsPerBottle);
       } catch (error) {
@@ -186,7 +185,7 @@ export function SupplementsTemplate({
 
     // Add nutritional rows
     nutritionalRows.forEach((row, index) => {
-      const bgColor = index % 2 === 0 ? 'white' : '#f9f9f9';
+      const bgColor = index % 2 === 0 ? "white" : "#f9f9f9";
       html += `
           <tr style="background-color: ${bgColor}; border-bottom: 1px solid black;">
             <td colspan="2" style="padding: 8px 12px; font-size: 14px; font-weight: 500; border-bottom: 1px solid #ddd;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
@@ -206,7 +205,12 @@ export function SupplementsTemplate({
     `;
 
     return html;
-  }, [nutritionalRows, nutritionalRowThickness, servingSize, servingsPerBottle]);
+  }, [
+    nutritionalRows,
+    nutritionalRowThickness,
+    servingSize,
+    servingsPerBottle,
+  ]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
@@ -287,64 +291,63 @@ export function SupplementsTemplate({
   ]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Toolbar */}
-      <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Supplements NIP</h3>
-          <button
-            onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-xl font-bold text-gray-800">Supplements NIP Builder</h1>
+            <div className="text-sm text-gray-600">
+              {product?.title}
+              {activeVariantId && (
+                <span className="ml-2">
+                  - {product.variants?.find((v: any) => v._id === activeVariantId)?.title || "Selected Variant"}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowPreview(true)}
+              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md"
+            >
+              Preview
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+            >
+              Update NIP
+            </button>
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
 
-        {/* Current Variant Indicator */}
-        {activeVariantId && (
-          <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-green-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  Editing Variant
-                </p>
-                <p className="text-sm text-green-700">
-                  {product?.variants?.find(
-                    (v: any) => v._id === activeVariantId
-                  )?.title ||
-                    product?.variants?.find(
-                      (v: any) => v._id === activeVariantId
-                    )?.name ||
-                    "Selected Variant"}
-                </p>
-              </div>
-            </div>
+        {/* Success Message */}
+        {isSaved && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-green-600 font-semibold">✓ NIP Saved Successfully!</div>
+            <p className="text-green-700 text-sm mt-1">
+              Your Supplements NIP has been saved for {product?.title}
+            </p>
           </div>
         )}
 
         {/* Variant Selection */}
         {product?.variants && product.variants.length > 1 && (
-          <div className="mb-4">
+          <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Variant:
             </label>
             <select
               value={activeVariantId || ""}
               onChange={(e) => setActiveVariantId(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-64 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {product.variants.map(
                 (v: { _id: string; title?: string; sku?: string }) => (
@@ -354,26 +357,45 @@ export function SupplementsTemplate({
                 )
               )}
             </select>
-            {productNips && productNips.length > 0 && (
-              <div className="mt-2 text-xs text-gray-600">
-                Existing NIPs:{" "}
-                {productNips.filter((nip) => nip.variantId === activeVariantId)
-                  .length > 0
-                  ? "Found"
-                  : "None"}
-              </div>
-            )}
           </div>
         )}
 
-        {/* Serving Information */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Serving Information:
-          </label>
-          <div className="space-y-2">
+        {/* Quick Actions */}
+        <div className="mt-4">
+          <div className="text-sm font-medium text-gray-700 mb-2">Quick Actions:</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={addNutritionalRow}
+              className="px-3 py-1 text-sm bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md"
+            >
+              + Add Nutritional Row
+            </button>
+            <button
+              onClick={() => {}}
+              className="px-3 py-1 text-sm bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md font-bold"
+            >
+              B
+            </button>
+            <button
+              onClick={() => {}}
+              className="px-3 py-1 text-sm bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md italic"
+            >
+              I
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar for serving info */}
+        <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+
+          <h3 className="text-lg font-semibold mb-4">Serving Information</h3>
+          
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Serving Size:
               </label>
               <input
@@ -385,7 +407,7 @@ export function SupplementsTemplate({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Servings per Bottle:
               </label>
               <input
@@ -399,81 +421,9 @@ export function SupplementsTemplate({
           </div>
         </div>
 
-        {/* Actions */}
-        {isSaved ? (
-          <div className="space-y-4 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-center">
-              <div className="text-green-600 text-lg font-semibold mb-2">
-                ✓ NIP Saved Successfully!
-              </div>
-              <p className="text-green-700 text-sm mb-4">
-                Your Supplements NIP has been saved for {product?.title}
-                {activeVariantId && (
-                  <span>
-                    {" - "}
-                    {product?.variants?.find(
-                      (v: any) => v._id === activeVariantId
-                    )?.name ||
-                      product?.variants?.find(
-                        (v: any) => v._id === activeVariantId
-                      )?.title ||
-                      "Selected Variant"}
-                  </span>
-                )}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={() => setIsSaved(false)}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-              >
-                Continue Editing
-              </button>
-              <button
-                onClick={() => onSave(null)}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 font-medium"
-              >
-                Back to NIPs
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2 mb-6">
-            <button
-              onClick={handleSave}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-            >
-              Save NIP
-            </button>
-            <button
-              onClick={() => setShowPreview(true)}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-            >
-              Preview
-            </button>
-            <button
-              onClick={onCancel}
-              className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
-        {/* Add Buttons */}
-        <div className="space-y-2">
-          <button
-            onClick={addNutritionalRow}
-            className="w-full px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded"
-          >
-            + Add Nutritional Row
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 bg-white overflow-y-auto">
-        <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
+        {/* Main Content Area */}
+        <div className="flex-1 p-6 bg-white overflow-y-auto">
+          <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
 
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-medium">Nutritional Information</h4>
@@ -487,8 +437,8 @@ export function SupplementsTemplate({
 
         <div className="border-2 border-black rounded-lg overflow-hidden">
           <div className="bg-black text-white text-center font-bold text-lg">
-          NUTRITIONAL INFORMATION
-        </div>
+            NUTRITIONAL INFORMATION
+          </div>
           {/* Serving Information */}
           <div className="px-3 py-3 border-b border-black bg-white">
             <div className="flex justify-between text-xs font-bold">
@@ -506,16 +456,24 @@ export function SupplementsTemplate({
 
           <table className="w-full table-fixed border-collapse">
             <colgroup>
-              <col className="w-full" />
-              <col className="w-8" />
+              <col className="w-2/3" />
+              <col className="w-1/6" />
+              <col className="w-1/6" />
             </colgroup>
+            <thead>
+              <tr className="bg-gray-50 border-b">
+                <th className="text-left px-2 py-1 text-xs font-medium">Nutrient</th>
+                <th className="text-right px-2 py-1 text-xs font-medium">Per Serve</th>
+                <th className="text-right px-2 py-1 text-xs font-medium">Per 100g</th>
+              </tr>
+            </thead>
             <tbody>
               {nutritionalRows.map((row, index) => (
                 <React.Fragment key={row.id}>
                   <tr
-                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 border-b border-gray-300`}
+                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black`}
                   >
-                    <td colSpan={2} className="px-3 py-2">
+                    <td className="px-0 py-0">
                       <FormattableTableInput
                         value={row.nutrient}
                         onChange={(value) =>
@@ -531,19 +489,7 @@ export function SupplementsTemplate({
                         onThicknessChange={setNutritionalRowThickness}
                       />
                     </td>
-                    <td className="px-1 py-0 w-8">
-                      <button
-                        onClick={() => deleteNutritionalRow(row.id)}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                  <tr
-                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 border-b border-black`}
-                  >
-                    <td className="px-3 py-2 border-r border-black text-center">
+                    <td className="px-0 py-0">
                       <FormattableTableInput
                         value={row.perServe}
                         onChange={(value) =>
@@ -559,7 +505,7 @@ export function SupplementsTemplate({
                         onThicknessChange={setNutritionalRowThickness}
                       />
                     </td>
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-0 py-0">
                       <FormattableTableInput
                         value={row.per100g}
                         onChange={(value) =>
@@ -575,12 +521,22 @@ export function SupplementsTemplate({
                         onThicknessChange={setNutritionalRowThickness}
                       />
                     </td>
-                    <td className="px-1 py-0 w-8"></td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-0 py-0">
+                      <button
+                        onClick={() => deleteNutritionalRow(row.id)}
+                        className="text-red-500 hover:text-red-700 text-xs"
+                      >
+                        × Delete {row.nutrient || "Row"}
+                      </button>
+                    </td>
                   </tr>
                 </React.Fragment>
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
 

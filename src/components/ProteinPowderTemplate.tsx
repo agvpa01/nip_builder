@@ -558,203 +558,136 @@ export function ProteinPowderTemplate({
   ]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Toolbar */}
-      <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Protein Powder NIP</h3>
-          <button
-            onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Current Variant Indicator */}
-        {activeVariantId && (
-          <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-green-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  Currently editing:{" "}
-                  <span className="font-semibold">
-                    {product.variants?.find(
-                      (v: { _id: string }) => v._id === activeVariantId
-                    )?.title || "Unknown Variant"}
-                  </span>
-                  {product.variants?.find(
-                    (v: { _id: string; sku?: string }) =>
-                      v._id === activeVariantId
-                  )?.sku && (
-                    <span className="text-green-600 ml-1">
-                      (
-                      {
-                        product.variants.find(
-                          (v: { _id: string; sku?: string }) =>
-                            v._id === activeVariantId
-                        ).sku
-                      }
-                      )
-                    </span>
-                  )}
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-bold text-gray-900">
+              Protein Powder NIP Builder
+            </h2>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {product?.title}
+              </h3>
+              {activeVariantId && (
+                <p className="text-sm text-gray-600">
+                  Variant:{" "}
+                  {product?.variants?.find(
+                    (v: any) => v._id === activeVariantId
+                  )?.title || "Unknown"}
                 </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Variant Selection */}
-        {product?.variants && product.variants.length > 1 && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Variant:
-            </label>
-            <select
-              value={activeVariantId || ""}
-              onChange={(e) => setActiveVariantId(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {product.variants.map(
-                (v: { _id: string; title?: string; sku?: string }) => (
-                  <option key={v._id} value={v._id}>
-                    {v.title || "Unnamed Variant"} {v.sku ? `- ${v.sku}` : ""}
-                  </option>
-                )
               )}
-            </select>
-            {productNips && productNips.length > 0 && (
-              <div className="mt-2 text-xs text-gray-600">
-                Existing NIPs:{" "}
-                {productNips.filter((nip) => nip.variantId === activeVariantId)
-                  .length > 0
-                  ? "Found"
-                  : "None"}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Text Formatting Tools */}
-        {selectedTextId && selectedText && (
-          <div className="mb-6 p-3 bg-blue-50 rounded border">
-            <h4 className="text-sm font-medium mb-2">Format Selected Text</h4>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => applyFormatting(selectedTextId, "bold")}
-                className="px-3 py-1 text-sm bg-white border rounded hover:bg-gray-50 font-bold"
-              >
-                B
-              </button>
-              <button
-                onClick={() => applyFormatting(selectedTextId, "italic")}
-                className="px-3 py-1 text-sm bg-white border rounded hover:bg-gray-50 italic"
-              >
-                I
-              </button>
             </div>
           </div>
-        )}
-
-        {/* Actions */}
-        {isSaved ? (
-          <div className="space-y-4 mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-center">
-              <div className="text-green-600 text-lg font-semibold mb-2">
-                ✓ NIP Saved Successfully!
-              </div>
-              <p className="text-green-700 text-sm mb-4">
-                Your Protein Powder NIP has been saved for {product?.title}
-                {activeVariantId && (
-                  <span>
-                    {" - "}
-                    {product?.variants?.find(
-                      (v: any) => v._id === activeVariantId
-                    )?.name ||
-                      product?.variants?.find(
-                        (v: any) => v._id === activeVariantId
-                      )?.title ||
-                      "Selected Variant"}
-                  </span>
-                )}
-              </p>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setIsSaved(false)}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-              >
-                Continue Editing
-              </button>
-              <button
-                onClick={() => onSave(null)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 font-medium"
-              >
-                Back to NIPs
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2 mb-6">
-            <button
-              onClick={handleSave}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-            >
-              Save NIP
-            </button>
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowPreview(true)}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+              className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
             >
               Preview
             </button>
             <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+            >
+              Update NIP
+            </button>
+            <button
               onClick={onCancel}
-              className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+              className="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
             >
               Cancel
             </button>
+            <button
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 text-xl ml-2"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Success Message */}
+        {isSaved && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-green-600 text-sm font-semibold mb-2">
+              ✓ NIP Saved Successfully!
+            </div>
+            <p className="text-green-700 text-xs">
+              Your Protein Powder NIP has been saved for {product?.title}
+            </p>
           </div>
         )}
 
-        {/* Add Buttons */}
-        <div className="space-y-2">
-          <button
-            onClick={addCustomTextSection}
-            className="w-full px-3 py-2 text-sm bg-green-50 hover:bg-green-100 border border-green-200 rounded"
-          >
-            + Add Custom Text Section
-          </button>
-          <button
-            onClick={addNutritionalRow}
-            className="w-full px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded"
-          >
-            + Add Nutritional Row
-          </button>
-          <button
-            onClick={addAminoAcidRow}
-            className="w-full px-3 py-2 text-sm bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded"
-          >
-            + Add Amino Acid Row
-          </button>
+        <div className="flex items-center justify-between">
+          {/* Variant Selection */}
+          {product?.variants && product.variants.length > 1 && (
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">
+                Select Variant:
+              </label>
+              <select
+                value={activeVariantId || ""}
+                onChange={(e) => setActiveVariantId(e.target.value)}
+                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                {product.variants.map(
+                  (v: { _id: string; title?: string; sku?: string }) => (
+                    <option key={v._id} value={v._id}>
+                      {v.title || "Unnamed Variant"} {v.sku ? `- ${v.sku}` : ""}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">
+              Quick Actions:
+            </span>
+            <button
+              onClick={addCustomTextSection}
+              className="px-3 py-1 text-xs bg-green-50 hover:bg-green-100 border border-green-200 rounded"
+            >
+              + Add Text Section
+            </button>
+            <button
+              onClick={addNutritionalRow}
+              className="px-3 py-1 text-xs bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded"
+            >
+              + Add Nutritional Row
+            </button>
+            <button
+              onClick={addAminoAcidRow}
+              className="px-3 py-1 text-xs bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded"
+            >
+              + Add Ingredient
+            </button>
+            {selectedTextId && selectedText && (
+              <>
+                <button
+                  onClick={() => applyFormatting(selectedTextId, "bold")}
+                  className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded font-bold"
+                >
+                  B
+                </button>
+                <button
+                  onClick={() => applyFormatting(selectedTextId, "italic")}
+                  className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded italic"
+                >
+                  I
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Left Column: Text Sections */}
         <div className="flex-1 p-6 bg-white border-r border-gray-200 overflow-y-auto">
           <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
@@ -787,7 +720,7 @@ export function ProteinPowderTemplate({
               </button>
             </div>
 
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border-2 border-black rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-semibold text-lg">
                 NUTRITIONAL INFORMATION
               </div>
@@ -807,20 +740,33 @@ export function ProteinPowderTemplate({
               </div>
               <table className="w-full table-fixed border-collapse border-2 border-black border-t-0">
                 <colgroup>
-                  <col className="w-full" />
-                  <col className="w-8" />
+                  <col className="w-2/3" />
+                  <col className="w-1/6" />
+                  <col className="w-1/6" />
                 </colgroup>
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="text-left px-2 py-1 text-xs font-medium">
+                      Nutrient
+                    </th>
+                    <th className="text-right px-2 py-1 text-xs font-medium">
+                      Per Serve
+                    </th>
+                    <th className="text-right px-2 py-1 text-xs font-medium">
+                      Per 100g
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   {nutritionalRows.map((row) => {
                     if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
 
                     return (
                       <React.Fragment key={row.id}>
-                        <tr className="border-b border-gray-200">
-                          <td
-                            colSpan={2}
-                            className="px-3 py-2 font-medium text-sm"
-                          >
+                        <tr
+                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                        >
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.nutrient}
                               onChange={(value) =>
@@ -838,11 +784,7 @@ export function ProteinPowderTemplate({
                               }
                             />
                           </td>
-                        </tr>
-                        <tr
-                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
-                        >
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.perServe}
                               onChange={(value) =>
@@ -860,7 +802,7 @@ export function ProteinPowderTemplate({
                               }
                             />
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-0 py-0">
                             <FormattableTableInput
                               value={row.per100g}
                               onChange={(value) =>
@@ -880,7 +822,7 @@ export function ProteinPowderTemplate({
                           </td>
                         </tr>
                         <tr>
-                          <td colSpan={2} className="px-3 py-2">
+                          <td colSpan={3} className="px-0 py-0">
                             <button
                               onClick={() => deleteNutritionalRow(row.id)}
                               className="text-red-500 hover:text-red-700 text-xs"
@@ -909,85 +851,85 @@ export function ProteinPowderTemplate({
               </button>
             </div>
 
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border-2 border-black rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-semibold text-lg">
                 TYPICAL AMINO ACID PROFILE
               </div>
-              <div className="text-right px-3 py-3 text-sm border-2 border-b border-black">
+              <div className="text-right px-3 py-3 text-sm border-b-2 z border-black">
                 Per 100g of Protein
               </div>
 
-              <table className="w-full table-fixed border-b-2 border-black">
-                <colgroup>
-                  <col className="w-3/4" />
-                  <col className="w-1/6" />
-                  <col className="w-8" />
-                </colgroup>
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left px-3 py-2 text-sm font-medium">
-                      Amino Acid
-                    </th>
-                    <th className="text-right px-3 py-2 text-sm font-medium">
-                      Amount
-                    </th>
-                    <th className="w-8"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {aminoAcidRows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
-                    >
-                      <td className="px-3 py-2">
-                        <FormattableTableInput
-                          value={row.aminoAcid}
-                          onChange={(value) =>
-                            updateAminoAcidRow(row.id, "aminoAcid", value)
-                          }
-                          className="w-full text-sm bg-transparent border-none outline-none"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={row.thickness || "normal"}
-                          onThicknessChange={(thickness) =>
-                            updateAminoAcidRowThickness(row.id, thickness)
-                          }
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <FormattableTableInput
-                          value={row.amount}
-                          onChange={(value) =>
-                            updateAminoAcidRow(row.id, "amount", value)
-                          }
-                          className="w-full text-sm bg-transparent border-none outline-none text-right"
-                          disabled={
-                            product?.variants &&
-                            product.variants.length > 1 &&
-                            !activeVariantId
-                          }
-                          rowThickness={row.thickness || "normal"}
-                          onThicknessChange={(thickness) =>
-                            updateAminoAcidRowThickness(row.id, thickness)
-                          }
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <button
-                          onClick={() => deleteAminoAcidRow(row.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          ×
-                        </button>
-                      </td>
+              <div className="p-2">
+                <table className="w-full table-fixed border-b-2 border-black">
+                  <colgroup>
+                    <col className="w-2/3" />
+                    <col className="w-1/3" />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="text-left px-2 py-1 text-xs font-medium">
+                        Amino Acid
+                      </th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Amount
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {aminoAcidRows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                      >
+                        <td className="px-0 py-2">
+                          <FormattableTableInput
+                            value={row.aminoAcid}
+                            onChange={(value) =>
+                              updateAminoAcidRow(row.id, "aminoAcid", value)
+                            }
+                            className="w-full text-sm bg-transparent border-none outline-none"
+                            disabled={
+                              product?.variants &&
+                              product.variants.length > 1 &&
+                              !activeVariantId
+                            }
+                            rowThickness={row.thickness || "normal"}
+                            onThicknessChange={(thickness) =>
+                              updateAminoAcidRowThickness(row.id, thickness)
+                            }
+                          />
+                        </td>
+                        <td className="px-0 py-0 relative">
+                          <div className="flex items-center">
+                            <FormattableTableInput
+                              value={row.amount}
+                              onChange={(value) =>
+                                updateAminoAcidRow(row.id, "amount", value)
+                              }
+                              className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
+                              disabled={
+                                product?.variants &&
+                                product.variants.length > 1 &&
+                                !activeVariantId
+                              }
+                              rowThickness={row.thickness || "normal"}
+                              onThicknessChange={(thickness) =>
+                                updateAminoAcidRowThickness(row.id, thickness)
+                              }
+                            />
+                            <button
+                              onClick={() => deleteAminoAcidRow(row.id)}
+                              className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

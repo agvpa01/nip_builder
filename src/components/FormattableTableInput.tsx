@@ -476,13 +476,13 @@ export function FormattableTableInput({
             }
           }, 0);
         }}
-        className={`${className} pr-20 min-h-[1.5rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+        className={`${className} pr-20 min-h-[1rem] outline-none ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
         style={{
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
           overflowWrap: "break-word",
           overflow: "auto",
-          lineHeight: "1.5",
+          lineHeight: "1.2",
           fontFamily: "inherit",
           maxWidth: "100%",
           maxHeight: "200px",
