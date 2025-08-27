@@ -382,7 +382,7 @@ export function ComplexSupplementsTemplate({
     `;
 
     // Add serving information and column headers
-    const servingRow = nutritionalRows.find(row => row.id === 'serving-info');
+    const servingRow = nutritionalRows.find((row) => row.id === "serving-info");
     if (servingRow) {
       html += `
         <!-- Serving Information -->
@@ -401,7 +401,7 @@ export function ComplexSupplementsTemplate({
         </div>
       `;
     }
-    
+
     html += `
             <colgroup>
               <col style="width: 50%;" />
@@ -411,9 +411,9 @@ export function ComplexSupplementsTemplate({
 
     // Add nutritional rows (skip serving-info row)
     nutritionalRows.forEach((row, index) => {
-      if (row.id === 'serving-info') return; // Skip serving info row as it's displayed above
-      
-      const bgColor = index % 2 === 0 ? 'white' : '#f9f9f9';
+      if (row.id === "serving-info") return; // Skip serving info row as it's displayed above
+
+      const bgColor = index % 2 === 0 ? "white" : "#f9f9f9";
       html += `
             <tr style="background-color: ${bgColor}; border-bottom: 1px solid black;">
               <td colspan="2" style="padding: 8px 12px; font-size: 12px; font-weight: 500; border-bottom: 1px solid #ddd;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
@@ -730,13 +730,15 @@ export function ComplexSupplementsTemplate({
             </h3>
             <div className="border border-gray-300 rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-bold text-lg">
-                 NUTRITIONAL INFORMATION
-               </div>
+                NUTRITIONAL INFORMATION
+              </div>
               {/* Serving Information */}
               {(() => {
-                const servingRow = nutritionalRows.find(row => row.id === 'serving-info');
+                const servingRow = nutritionalRows.find(
+                  (row) => row.id === "serving-info"
+                );
                 return servingRow ? (
-                  <div className="px-3 py-3 border-2 border-black border-b border-black bg-white">
+                  <div className="px-3 py-3 border-2 border-b border-black bg-white">
                     <div className="flex justify-between text-xs font-bold">
                       <span>{servingRow.nutrient}</span>
                       <span>{servingRow.perServe}</span>
@@ -745,7 +747,7 @@ export function ComplexSupplementsTemplate({
                 ) : null;
               })()}
               {/* Column Headers */}
-              <div className="px-3 py-3 border-2 border-black border-t-0 border-b-2 border-black bg-white">
+              <div className="px-3 py-3 border-2 border-t-0 border-b-2 border-black bg-white">
                 <div className="flex justify-between text-xs font-bold">
                   <span className="flex-1 text-right">Per Serve</span>
                   <span className="flex-1 text-right">Per 100g</span>
@@ -758,11 +760,13 @@ export function ComplexSupplementsTemplate({
                 </colgroup>
                 <tbody>
                   {nutritionalRows.map((row) => {
-                    if (row.id === 'serving-info') return null; // Skip serving info row
-                    
+                    if (row.id === "serving-info") return null; // Skip serving info row
+
                     return (
                       <React.Fragment key={row.id}>
-                        <tr className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}>
+                        <tr
+                          className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
+                        >
                           <td className="px-3 py-2" colSpan={2}>
                             <FormattableTableInput
                               value={row.nutrient}
@@ -835,8 +839,8 @@ export function ComplexSupplementsTemplate({
             </h3>
             <div className="border border-gray-300 rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-bold text-lg">
-                 COMPOSITIONAL INFORMATION
-               </div>
+                COMPOSITIONAL INFORMATION
+              </div>
               <table className="w-full table-fixed border-b-2 border-black">
                 <colgroup>
                   <col className="w-2/5" />

@@ -792,14 +792,14 @@ export function ProteinPowderTemplate({
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}
-              <div className="px-3 py-3 border-2 border-black border-b border-black bg-white">
+              <div className="px-3 py-3 border-2 border-b border-black bg-white">
                 <div className="flex justify-between text-xs font-bold">
                   <span>Serving Size: 30 grams</span>
                   <span>Servings per Pack: 33</span>
                 </div>
               </div>
               {/* Column Headers */}
-              <div className="px-3 py-3 border-2 border-black border-t-0 border-b-2 border-black bg-white">
+              <div className="px-3 py-3 border-2 border-t-0 border-b-2 border-black bg-white">
                 <div className="flex justify-between text-xs font-bold">
                   <span className="flex-1 text-right">Per Serve</span>
                   <span className="flex-1 text-right">Per 100g</span>
@@ -913,7 +913,7 @@ export function ProteinPowderTemplate({
               <div className="bg-black text-white text-center font-semibold text-lg">
                 TYPICAL AMINO ACID PROFILE
               </div>
-              <div className="text-right px-3 py-3 text-sm border-2 border-black border-b border-black">
+              <div className="text-right px-3 py-3 text-sm border-2 border-b border-black">
                 Per 100g of Protein
               </div>
 
