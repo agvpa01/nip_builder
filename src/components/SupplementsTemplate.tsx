@@ -296,12 +296,16 @@ export function SupplementsTemplate({
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold text-gray-800">Supplements NIP Builder</h1>
+            <h1 className="text-xl font-bold text-gray-800">
+              Supplements NIP Builder
+            </h1>
             <div className="text-sm text-gray-600">
               {product?.title}
               {activeVariantId && (
                 <span className="ml-2">
-                  - {product.variants?.find((v: any) => v._id === activeVariantId)?.title || "Selected Variant"}
+                  -{" "}
+                  {product.variants?.find((v: any) => v._id === activeVariantId)
+                    ?.title || "Selected Variant"}
                 </span>
               )}
             </div>
@@ -331,7 +335,9 @@ export function SupplementsTemplate({
         {/* Success Message */}
         {isSaved && (
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-green-600 font-semibold">✓ NIP Saved Successfully!</div>
+            <div className="text-green-600 font-semibold">
+              ✓ NIP Saved Successfully!
+            </div>
             <p className="text-green-700 text-sm mt-1">
               Your Supplements NIP has been saved for {product?.title}
             </p>
@@ -362,7 +368,9 @@ export function SupplementsTemplate({
 
         {/* Quick Actions */}
         <div className="mt-4">
-          <div className="text-sm font-medium text-gray-700 mb-2">Quick Actions:</div>
+          <div className="text-sm font-medium text-gray-700 mb-2">
+            Quick Actions:
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={addNutritionalRow}
@@ -390,9 +398,8 @@ export function SupplementsTemplate({
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar for serving info */}
         <div className="w-80 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-
           <h3 className="text-lg font-semibold mb-4">Serving Information</h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -423,120 +430,128 @@ export function SupplementsTemplate({
 
         {/* Main Content Area */}
         <div className="flex-1 p-6 bg-white overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            Nutritional Information
+          </h3>
 
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-medium">Nutritional Information</h4>
-          <button
-            onClick={addNutritionalRow}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            + Add Row
-          </button>
-        </div>
-
-        <div className="border-2 border-black rounded-lg overflow-hidden">
-          <div className="bg-black text-white text-center font-bold text-lg">
-            NUTRITIONAL INFORMATION
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium">Nutritional Information</h4>
+            <button
+              onClick={addNutritionalRow}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              + Add Row
+            </button>
           </div>
-          {/* Serving Information */}
-          <div className="px-3 py-3 border-b border-black bg-white">
-            <div className="flex justify-between text-xs font-bold">
-              <span>Serving Size: {servingSize}</span>
-              <span>Servings per Bottle: {servingsPerBottle}</span>
+
+          <div className="border-2 border-black rounded-lg overflow-hidden">
+            <div className="bg-black text-white text-center font-bold text-lg">
+              NUTRITIONAL INFORMATION
             </div>
-          </div>
-          {/* Column Headers */}
-          <div className="px-3 py-3 border-b-2 border-black bg-white">
-            <div className="flex justify-between text-sm font-bold">
-              <span className="flex-1 text-right">Per Serve</span>
-              <span className="flex-1 text-right">Per 100g</span>
+            {/* Serving Information */}
+            <div className="px-3 py-3 border-b border-black bg-white">
+              <div className="flex justify-between text-xs font-bold">
+                <span>Serving Size: {servingSize}</span>
+                <span>Servings per Bottle: {servingsPerBottle}</span>
+              </div>
             </div>
-          </div>
+            {/* Column Headers */}
+            <div className="px-3 py-3 border-b-2 border-black bg-white">
+              <div className="flex justify-between text-sm font-bold">
+                <span className="flex-1 text-right">Per Serve</span>
+                <span className="flex-1 text-right">Per 100g</span>
+              </div>
+            </div>
 
-          <table className="w-full table-fixed border-collapse">
-            <colgroup>
-              <col className="w-2/3" />
-              <col className="w-1/6" />
-              <col className="w-1/6" />
-            </colgroup>
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="text-left px-2 py-1 text-xs font-medium">Nutrient</th>
-                <th className="text-right px-2 py-1 text-xs font-medium">Per Serve</th>
-                <th className="text-right px-2 py-1 text-xs font-medium">Per 100g</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nutritionalRows.map((row, index) => (
-                <React.Fragment key={row.id}>
-                  <tr
-                    className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black`}
-                  >
-                    <td className="px-0 py-0">
-                      <FormattableTableInput
-                        value={row.nutrient}
-                        onChange={(value) =>
-                          updateNutritionalRow(row.id, "nutrient", value)
-                        }
-                        className="w-full text-sm bg-transparent border-none outline-none font-medium"
-                        disabled={
-                          product?.variants &&
-                          product.variants.length > 1 &&
-                          !activeVariantId
-                        }
-                        rowThickness={nutritionalRowThickness}
-                        onThicknessChange={setNutritionalRowThickness}
-                      />
-                    </td>
-                    <td className="px-0 py-0">
-                      <FormattableTableInput
-                        value={row.perServe}
-                        onChange={(value) =>
-                          updateNutritionalRow(row.id, "perServe", value)
-                        }
-                        className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
-                        disabled={
-                          product?.variants &&
-                          product.variants.length > 1 &&
-                          !activeVariantId
-                        }
-                        rowThickness={nutritionalRowThickness}
-                        onThicknessChange={setNutritionalRowThickness}
-                      />
-                    </td>
-                    <td className="px-0 py-0">
-                      <FormattableTableInput
-                        value={row.per100g}
-                        onChange={(value) =>
-                          updateNutritionalRow(row.id, "per100g", value)
-                        }
-                        className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
-                        disabled={
-                          product?.variants &&
-                          product.variants.length > 1 &&
-                          !activeVariantId
-                        }
-                        rowThickness={nutritionalRowThickness}
-                        onThicknessChange={setNutritionalRowThickness}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={3} className="px-0 py-0">
-                      <button
-                        onClick={() => deleteNutritionalRow(row.id)}
-                        className="text-red-500 hover:text-red-700 text-xs"
-                      >
-                        × Delete {row.nutrient || "Row"}
-                      </button>
-                    </td>
-                  </tr>
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <table className="w-full table-fixed border-collapse">
+              <colgroup>
+                <col className="w-2/3" />
+                <col className="w-1/6" />
+                <col className="w-1/6" />
+              </colgroup>
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="text-left px-2 py-1 text-xs font-medium">
+                    Nutrient
+                  </th>
+                  <th className="text-right px-2 py-1 text-xs font-medium">
+                    Per Serve
+                  </th>
+                  <th className="text-right px-2 py-1 text-xs font-medium">
+                    Per 100g
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {nutritionalRows.map((row, index) => (
+                  <React.Fragment key={row.id}>
+                    <tr
+                      className={`${getBorderClass(nutritionalRowThickness)} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black`}
+                    >
+                      <td className="px-0 py-0">
+                        <FormattableTableInput
+                          value={row.nutrient}
+                          onChange={(value) =>
+                            updateNutritionalRow(row.id, "nutrient", value)
+                          }
+                          className="w-full text-sm bg-transparent border-none outline-none font-medium"
+                          disabled={
+                            product?.variants &&
+                            product.variants.length > 1 &&
+                            !activeVariantId
+                          }
+                          rowThickness={nutritionalRowThickness}
+                          onThicknessChange={setNutritionalRowThickness}
+                        />
+                      </td>
+                      <td className="px-0 py-0">
+                        <FormattableTableInput
+                          value={row.perServe}
+                          onChange={(value) =>
+                            updateNutritionalRow(row.id, "perServe", value)
+                          }
+                          className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
+                          disabled={
+                            product?.variants &&
+                            product.variants.length > 1 &&
+                            !activeVariantId
+                          }
+                          rowThickness={nutritionalRowThickness}
+                          onThicknessChange={setNutritionalRowThickness}
+                        />
+                      </td>
+                      <td className="px-0 py-0">
+                        <FormattableTableInput
+                          value={row.per100g}
+                          onChange={(value) =>
+                            updateNutritionalRow(row.id, "per100g", value)
+                          }
+                          className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
+                          disabled={
+                            product?.variants &&
+                            product.variants.length > 1 &&
+                            !activeVariantId
+                          }
+                          rowThickness={nutritionalRowThickness}
+                          onThicknessChange={setNutritionalRowThickness}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={3} className="px-0 py-0">
+                        <button
+                          onClick={() => deleteNutritionalRow(row.id)}
+                          className="text-red-500 hover:text-red-700 text-xs"
+                        >
+                          × Delete {row.nutrient || "Row"}
+                        </button>
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

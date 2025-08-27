@@ -57,6 +57,7 @@ export function FormattableTableInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const formattingRef = useRef<HTMLDivElement>(null);
   const isUndoRedoOperation = useRef(false);
+  const isUserInputRef = useRef(false);
 
   // Handle dropdown positioning
   useEffect(() => {
@@ -345,45 +346,73 @@ export function FormattableTableInput({
     [getDisplayHtml, value]
   );
 
-  // Update the contentEditable div when the value changes externally
+  // Initialize the contentEditable div when component mounts
   useEffect(() => {
     const element = inputRef.current;
-    if (element && element.innerHTML !== displayHtml) {
-      const selection = window.getSelection();
-      const hadFocus = document.activeElement === element;
-      const cursorPosition =
-        hadFocus && selection?.rangeCount
-          ? selection.getRangeAt(0).startOffset
-          : 0;
+    if (element) {
+      // Always set the initial HTML to ensure proper formatting
+      element.innerHTML = displayHtml;
+    }
+  }, []);
 
+  // Update contentEditable innerHTML when value changes from external sources (not user input)
+  useEffect(() => {
+    const element = inputRef.current;
+    if (element && !isUserInputRef.current && !isUndoRedoOperation.current) {
+      // Store current cursor position
+      const selection = window.getSelection();
+      let cursorPosition = 0;
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.startContainer, range.startOffset);
+        cursorPosition = preCaretRange.toString().length;
+      }
+
+      // Update innerHTML
       element.innerHTML = displayHtml;
 
-      // Restore focus and cursor position if the element had focus
-      if (hadFocus) {
-        element.focus();
-        if (selection) {
-          try {
-            const range = document.createRange();
-            const textNode = element.firstChild;
-            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-              const maxOffset = Math.min(
-                cursorPosition,
-                textNode.textContent?.length || 0
-              );
-              range.setStart(textNode, maxOffset);
-              range.setEnd(textNode, maxOffset);
-            } else {
-              range.setStart(element, 0);
-              range.setEnd(element, 0);
-            }
-            selection.removeAllRanges();
-            selection.addRange(range);
-          } catch (e) {
-            // Ignore cursor positioning errors
+      // Restore cursor position
+      if (selection && element.textContent) {
+        const textLength = element.textContent.length;
+        const targetPosition = Math.min(cursorPosition, textLength);
+        
+        const walker = document.createTreeWalker(
+          element,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+        
+        let currentPosition = 0;
+        let targetNode: Node | null = null;
+        let targetOffset = 0;
+        
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          const nodeLength = node.textContent?.length || 0;
+          
+          if (currentPosition + nodeLength >= targetPosition) {
+            targetNode = node;
+            targetOffset = targetPosition - currentPosition;
+            break;
           }
+          
+          currentPosition += nodeLength;
+        }
+        
+        if (targetNode) {
+          const range = document.createRange();
+          range.setStart(targetNode, targetOffset);
+          range.setEnd(targetNode, targetOffset);
+          selection.removeAllRanges();
+          selection.addRange(range);
         }
       }
     }
+    
+    // Reset the flag after processing
+    isUserInputRef.current = false;
   }, [displayHtml]);
 
   return (
@@ -392,23 +421,17 @@ export function FormattableTableInput({
         ref={inputRef as any}
         contentEditable={!disabled}
         suppressContentEditableWarning={true}
-        dangerouslySetInnerHTML={{ __html: displayHtml }}
         onInput={(e) => {
           if (disabled) return;
+          
+          // Mark this as user input to prevent useEffect from interfering
+          isUserInputRef.current = true;
+          
           const target = e.target as HTMLElement;
           const newHtml = target.innerHTML;
 
-          // Check if user typed HTML tags literally
-          const textContent = target.textContent || "";
-
-          let newValue: string;
-          if (textContent.includes("<b>") || textContent.includes("<i>")) {
-            // User typed HTML tags literally, use the text content as the value
-            newValue = textContent;
-          } else {
-            // Normal case, convert from HTML
-            newValue = convertToStorageFormat(newHtml);
-          }
+          // Convert from HTML to storage format
+          const newValue = convertToStorageFormat(newHtml);
 
           onChange(newValue);
         }}
@@ -442,6 +465,10 @@ export function FormattableTableInput({
           // Handle tab key press for inserting tabs (text indentation)
           if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey) {
             e.preventDefault();
+            
+            // Mark this as user input to prevent useEffect from interfering
+            isUserInputRef.current = true;
+            
             // Insert 4 spaces for indentation (better than tab character for display)
             const selection = window.getSelection();
             if (selection && selection.rangeCount > 0) {

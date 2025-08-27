@@ -396,18 +396,21 @@ export function ProteinPowderTemplate({
               <span>Servings per Pack: 33</span>
             </div>
           </div>
-          <!-- Column Headers -->
-          <div style="padding: 12px; border: 2px solid black; border-top: none; border-bottom: 2px solid black; background: white;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
-              <span style="flex: 1; text-align: right;">Per Serve</span>
-              <span style="flex: 1; text-align: right;">Per 100g</span>
-            </div>
-          </div>
+
           <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black; border-top: none;">
             <colgroup>
-              <col style="width: 50%;" />
-              <col style="width: 50%;" />
+              <col style="width: 40%;" />
+              <col style="width: 30%;" />
+              <col style="width: 30%;" />
             </colgroup>
+            <thead>
+              <tr style="background: #f9fafb; border-bottom: 1px solid #d1d5db;">
+                <th style="text-align: left; padding: 4px 8px; font-size: 12px; font-weight: 500;"></th>
+                <th style="text-align: right; padding: 4px 8px; font-size: 12px; font-weight: 500;">Per Serve</th>
+                <th style="text-align: right; padding: 4px 8px; font-size: 12px; font-weight: 500;">Per 100g</th>
+              </tr>
+            </thead>
+            <tbody>
     `;
 
     // Add nutritional rows (skip serving-info row as it's now displayed separately)
@@ -418,10 +421,8 @@ export function ProteinPowderTemplate({
         row.thickness || "normal"
       );
       html += `
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td colspan="2" style="padding: 8px 12px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-            </tr>
             <tr style="border-bottom: ${rowThicknessBorder};">
+              <td style="padding: 8px 12px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
               <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
               <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
@@ -429,6 +430,7 @@ export function ProteinPowderTemplate({
     });
 
     html += `
+            </tbody>
           </table>
         </div>
         
@@ -725,117 +727,130 @@ export function ProteinPowderTemplate({
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}
-              <div className="px-3 py-3 border-2 border-b border-black bg-white">
+              <div className="px-3 py-3  bg-white">
                 <div className="flex justify-between text-xs font-bold">
                   <span>Serving Size: 30 grams</span>
                   <span>Servings per Pack: 33</span>
                 </div>
               </div>
-              {/* Column Headers */}
-              <div className="px-3 py-3 border-2 border-t-0 border-b-2 border-black bg-white">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="flex-1 text-right">Per Serve</span>
-                  <span className="flex-1 text-right">Per 100g</span>
-                </div>
-              </div>
-              <table className="w-full table-fixed border-collapse border-2 border-black border-t-0">
-                <colgroup>
-                  <col className="w-2/3" />
-                  <col className="w-1/6" />
-                  <col className="w-1/6" />
-                </colgroup>
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="text-left px-2 py-1 text-xs font-medium">
-                      Nutrient
-                    </th>
-                    <th className="text-right px-2 py-1 text-xs font-medium">
-                      Per Serve
-                    </th>
-                    <th className="text-right px-2 py-1 text-xs font-medium">
-                      Per 100g
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {nutritionalRows.map((row) => {
-                    if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
 
-                    return (
-                      <React.Fragment key={row.id}>
-                        <tr
-                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
-                        >
-                          <td className="px-0 py-0">
-                            <FormattableTableInput
-                              value={row.nutrient}
-                              onChange={(value) =>
-                                updateNutritionalRow(row.id, "nutrient", value)
-                              }
-                              className="w-full text-sm bg-transparent border-none outline-none font-medium"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(thickness) =>
-                                updateNutritionalRowThickness(row.id, thickness)
-                              }
-                            />
-                          </td>
-                          <td className="px-0 py-0">
-                            <FormattableTableInput
-                              value={row.perServe}
-                              onChange={(value) =>
-                                updateNutritionalRow(row.id, "perServe", value)
-                              }
-                              className="w-full text-sm bg-transparent border-none outline-none text-right"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(thickness) =>
-                                updateNutritionalRowThickness(row.id, thickness)
-                              }
-                            />
-                          </td>
-                          <td className="px-0 py-0">
-                            <FormattableTableInput
-                              value={row.per100g}
-                              onChange={(value) =>
-                                updateNutritionalRow(row.id, "per100g", value)
-                              }
-                              className="w-full text-sm bg-transparent border-none outline-none text-right"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(thickness) =>
-                                updateNutritionalRowThickness(row.id, thickness)
-                              }
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colSpan={3} className="px-0 py-0">
-                            <button
-                              onClick={() => deleteNutritionalRow(row.id)}
-                              className="text-red-500 hover:text-red-700 text-xs"
-                            >
-                              × Delete {row.nutrient || "Row"}
-                            </button>
-                          </td>
-                        </tr>
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="p-2">
+                <table className="w-full table-fixed border-collapse">
+                  <colgroup>
+                    <col className="w-1/2" />
+                    <col className="w-1/4" />
+                    <col className="w-1/4" />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="text-left px-2 py-1 text-xs font-medium"></th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Per Serve
+                      </th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Per 100g
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nutritionalRows.map((row) => {
+                      if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
+
+                      return (
+                        <React.Fragment key={row.id}>
+                          <tr
+                            className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                          >
+                            <td className="px-0 py-2  ">
+                              <FormattableTableInput
+                                value={row.nutrient}
+                                onChange={(value) =>
+                                  updateNutritionalRow(
+                                    row.id,
+                                    "nutrient",
+                                    value
+                                  )
+                                }
+                                className="w-full text-sm bg-transparent border-none outline-none font-medium"
+                                disabled={
+                                  product?.variants &&
+                                  product.variants.length > 1 &&
+                                  !activeVariantId
+                                }
+                                rowThickness={row.thickness || "normal"}
+                                onThicknessChange={(thickness) =>
+                                  updateNutritionalRowThickness(
+                                    row.id,
+                                    thickness
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-0 py-0">
+                              <FormattableTableInput
+                                value={row.perServe}
+                                onChange={(value) =>
+                                  updateNutritionalRow(
+                                    row.id,
+                                    "perServe",
+                                    value
+                                  )
+                                }
+                                className="w-full text-sm bg-transparent border-none outline-none text-right"
+                                disabled={
+                                  product?.variants &&
+                                  product.variants.length > 1 &&
+                                  !activeVariantId
+                                }
+                                rowThickness={row.thickness || "normal"}
+                                onThicknessChange={(thickness) =>
+                                  updateNutritionalRowThickness(
+                                    row.id,
+                                    thickness
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-0 py-0 relative">
+                              <div className="flex items-center">
+                                <FormattableTableInput
+                                  value={row.per100g}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "per100g",
+                                      value
+                                    )
+                                  }
+                                  className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(thickness) =>
+                                    updateNutritionalRowThickness(
+                                      row.id,
+                                      thickness
+                                    )
+                                  }
+                                />
+                                <button
+                                  onClick={() => deleteNutritionalRow(row.id)}
+                                  className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
