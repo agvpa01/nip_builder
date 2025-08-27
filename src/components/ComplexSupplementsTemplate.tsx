@@ -7,6 +7,10 @@ import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
+import {
+  createDragDropHandlers,
+  getDragHandleStyles,
+} from "../lib/dragDropUtils";
 
 interface ComplexSupplementsTemplateProps {
   product: any;
@@ -161,6 +165,14 @@ export function ComplexSupplementsTemplate({
     "normal" | "thick" | "medium-thick" | "large-thick" | "extra-large-thick"
   >("normal");
 
+  // Drag and drop state
+  const [draggedNutritionalIndex, setDraggedNutritionalIndex] = useState<
+    number | null
+  >(null);
+  const [draggedIngredientIndex, setDraggedIngredientIndex] = useState<
+    number | null
+  >(null);
+
   // Utility function to get border class based on thickness
   const getBorderClass = (
     thickness:
@@ -302,6 +314,38 @@ export function ComplexSupplementsTemplate({
     setIngredientRows((prev) => prev.filter((row) => row.id !== id));
   }, []);
 
+  // Handle nutritional rows reorder
+  const handleNutritionalRowsReorder = useCallback(
+    (reorderedRows: NutritionalRow[]) => {
+      setNutritionalRows(reorderedRows);
+    },
+    []
+  );
+
+  // Handle ingredient rows reorder
+  const handleIngredientRowsReorder = useCallback(
+    (reorderedRows: IngredientRow[]) => {
+      setIngredientRows(reorderedRows);
+    },
+    []
+  );
+
+  // Create drag handlers for nutritional rows
+  const nutritionalDragHandlers = createDragDropHandlers(
+    nutritionalRows,
+    handleNutritionalRowsReorder,
+    draggedNutritionalIndex,
+    setDraggedNutritionalIndex
+  );
+
+  // Create drag handlers for ingredient rows
+  const ingredientDragHandlers = createDragDropHandlers(
+    ingredientRows,
+    handleIngredientRowsReorder,
+    draggedIngredientIndex,
+    setDraggedIngredientIndex
+  );
+
   // Handle text selection for rich text editing
   const handleTextSelect = useCallback(
     (textareaId: string, textarea: HTMLTextAreaElement) => {
@@ -393,7 +437,7 @@ export function ComplexSupplementsTemplate({
       const rowThicknessBorder = getThicknessBorderStyle(
         nutritionalRowThickness
       );
-      
+
       if (row.id === "serving-info") {
         // Display serving info as a special row
         html += `
@@ -740,10 +784,24 @@ export function ComplexSupplementsTemplate({
                     </tr>
                   </thead>
                   <tbody>
-                    {nutritionalRows.map((row) => (
+                    {nutritionalRows.map((row, index) => (
                       <tr
                         key={row.id}
-                        className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50`}
+                        draggable
+                        onDragStart={(e) =>
+                          nutritionalDragHandlers.onDragStart(e, index)
+                        }
+                        onDragOver={nutritionalDragHandlers.onDragOver}
+                        onDrop={(e) => nutritionalDragHandlers.onDrop(e, index)}
+                        onDragEnd={nutritionalDragHandlers.onDragEnd}
+                        className={`${getBorderClass(nutritionalRowThickness)} hover:bg-gray-50 cursor-move ${
+                          draggedNutritionalIndex === index ? "opacity-50" : ""
+                        }`}
+                        style={
+                          draggedNutritionalIndex === index
+                            ? getDragHandleStyles()
+                            : {}
+                        }
                       >
                         <td className="px-0 py-2">
                           <FormattableTableInput
@@ -764,19 +822,39 @@ export function ComplexSupplementsTemplate({
                         <td className="px-0 py-0 relative">
                           <div className="flex items-center">
                             <FormattableTableInput
-                              value={row.id === "serving-info" ? `${row.nutrient} | ${row.perServe}` : `${row.perServe} / ${row.per100g}`}
+                              value={
+                                row.id === "serving-info"
+                                  ? `${row.nutrient} | ${row.perServe}`
+                                  : `${row.perServe} / ${row.per100g}`
+                              }
                               onChange={(value) => {
                                 if (row.id === "serving-info") {
                                   const parts = value.split(" | ");
                                   if (parts.length === 2) {
-                                    updateNutritionalRow(row.id, "nutrient", parts[0]);
-                                    updateNutritionalRow(row.id, "perServe", parts[1]);
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "nutrient",
+                                      parts[0]
+                                    );
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "perServe",
+                                      parts[1]
+                                    );
                                   }
                                 } else {
                                   const parts = value.split(" / ");
                                   if (parts.length === 2) {
-                                    updateNutritionalRow(row.id, "perServe", parts[0]);
-                                    updateNutritionalRow(row.id, "per100g", parts[1]);
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "perServe",
+                                      parts[0]
+                                    );
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "per100g",
+                                      parts[1]
+                                    );
                                   }
                                 }
                               }}
@@ -814,7 +892,7 @@ export function ComplexSupplementsTemplate({
               <div className="bg-black text-white text-center font-bold text-lg">
                 COMPOSITIONAL INFORMATION
               </div>
-              <div className="p-5 bg-blue-200">
+              <div className="p-2">
                 <table className="w-full table-fixed border-b-2 border-black">
                   <colgroup>
                     <col className="w-2/3" />
@@ -831,12 +909,26 @@ export function ComplexSupplementsTemplate({
                     </tr>
                   </thead>
                   <tbody>
-                    {ingredientRows.map((row) => (
+                    {ingredientRows.map((row, index) => (
                       <tr
                         key={row.id}
-                        className={`${getBorderClass(ingredientRowThickness)} hover:bg-gray-50`}
+                        draggable
+                        onDragStart={(e) =>
+                          ingredientDragHandlers.onDragStart(e, index)
+                        }
+                        onDragOver={ingredientDragHandlers.onDragOver}
+                        onDrop={(e) => ingredientDragHandlers.onDrop(e, index)}
+                        onDragEnd={ingredientDragHandlers.onDragEnd}
+                        className={`${getBorderClass(ingredientRowThickness)} py-2 hover:bg-gray-50 cursor-move ${
+                          draggedIngredientIndex === index ? "opacity-50" : ""
+                        }`}
+                        style={
+                          draggedIngredientIndex === index
+                            ? getDragHandleStyles()
+                            : {}
+                        }
                       >
-                        <td className="px-0 py-0">
+                        <td className="px-0 py-2">
                           <FormattableTableInput
                             value={row.ingredient}
                             onChange={(value) =>

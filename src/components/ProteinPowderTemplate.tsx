@@ -7,6 +7,10 @@ import { PreviewModal } from "./PreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
+import {
+  createDragDropHandlers,
+  getDragHandleStyles,
+} from "../lib/dragDropUtils";
 
 interface ProteinPowderTemplateProps {
   product: any;
@@ -172,6 +176,14 @@ export function ProteinPowderTemplate({
     { id: "bcaas", aminoAcid: "BCAAs* = 5.832 mg per serve", amount: "" },
   ]);
 
+  // Drag and drop state management
+  const [draggedNutritionalIndex, setDraggedNutritionalIndex] = useState<
+    number | null
+  >(null);
+  const [draggedAminoAcidIndex, setDraggedAminoAcidIndex] = useState<
+    number | null
+  >(null);
+
   // Individual row thickness update functions
   const updateNutritionalRowThickness = useCallback(
     (
@@ -297,11 +309,6 @@ export function ProteinPowderTemplate({
     []
   );
 
-  // Delete nutritional row
-  const deleteNutritionalRow = useCallback((id: string) => {
-    setNutritionalRows((prev) => prev.filter((row) => row.id !== id));
-  }, []);
-
   // Add amino acid row
   const addAminoAcidRow = useCallback(() => {
     const newRow: AminoAcidRow = {
@@ -326,6 +333,38 @@ export function ProteinPowderTemplate({
   const deleteAminoAcidRow = useCallback((id: string) => {
     setAminoAcidRows((prev) => prev.filter((row) => row.id !== id));
   }, []);
+
+  // Handle nutritional rows reorder
+  const handleNutritionalRowsReorder = useCallback(
+    (reorderedRows: NutritionalRow[]) => {
+      setNutritionalRows(reorderedRows);
+    },
+    []
+  );
+
+  // Handle amino acid rows reorder
+  const handleAminoAcidRowsReorder = useCallback(
+    (reorderedRows: AminoAcidRow[]) => {
+      setAminoAcidRows(reorderedRows);
+    },
+    []
+  );
+
+  // Create drag handlers for nutritional rows
+  const nutritionalDragHandlers = createDragDropHandlers(
+    nutritionalRows,
+    handleNutritionalRowsReorder,
+    draggedNutritionalIndex,
+    setDraggedNutritionalIndex
+  );
+
+  // Create drag handlers for amino acid rows
+  const aminoAcidDragHandlers = createDragDropHandlers(
+    aminoAcidRows,
+    handleAminoAcidRowsReorder,
+    draggedAminoAcidIndex,
+    setDraggedAminoAcidIndex
+  );
 
   // Handle text selection for formatting
   const handleTextSelect = useCallback((textareaRef: HTMLTextAreaElement) => {
@@ -753,13 +792,31 @@ export function ProteinPowderTemplate({
                     </tr>
                   </thead>
                   <tbody>
-                    {nutritionalRows.map((row) => {
+                    {nutritionalRows.map((row, index) => {
                       if (row.id === "serving-info") return null; // Skip serving info row as it's displayed separately
 
                       return (
                         <React.Fragment key={row.id}>
                           <tr
-                            className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                            draggable
+                            onDragStart={(e) =>
+                              nutritionalDragHandlers.onDragStart(e, index)
+                            }
+                            onDragOver={nutritionalDragHandlers.onDragOver}
+                            onDrop={(e) =>
+                              nutritionalDragHandlers.onDrop(e, index)
+                            }
+                            onDragEnd={nutritionalDragHandlers.onDragEnd}
+                            className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 cursor-move ${
+                              draggedNutritionalIndex === index
+                                ? "opacity-50"
+                                : ""
+                            }`}
+                            style={
+                              draggedNutritionalIndex === index
+                                ? getDragHandleStyles()
+                                : {}
+                            }
                           >
                             <td className="px-0 py-2  ">
                               <FormattableTableInput
@@ -811,38 +868,26 @@ export function ProteinPowderTemplate({
                                 }
                               />
                             </td>
-                            <td className="px-0 py-0 relative">
-                              <div className="flex items-center">
-                                <FormattableTableInput
-                                  value={row.per100g}
-                                  onChange={(value) =>
-                                    updateNutritionalRow(
-                                      row.id,
-                                      "per100g",
-                                      value
-                                    )
-                                  }
-                                  className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
-                                  disabled={
-                                    product?.variants &&
-                                    product.variants.length > 1 &&
-                                    !activeVariantId
-                                  }
-                                  rowThickness={row.thickness || "normal"}
-                                  onThicknessChange={(thickness) =>
-                                    updateNutritionalRowThickness(
-                                      row.id,
-                                      thickness
-                                    )
-                                  }
-                                />
-                                <button
-                                  onClick={() => deleteNutritionalRow(row.id)}
-                                  className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
-                                >
-                                  ×
-                                </button>
-                              </div>
+                            <td className="px-0 py-0">
+                              <FormattableTableInput
+                                value={row.per100g}
+                                onChange={(value) =>
+                                  updateNutritionalRow(row.id, "per100g", value)
+                                }
+                                className="w-full text-sm bg-transparent border-none outline-none text-right"
+                                disabled={
+                                  product?.variants &&
+                                  product.variants.length > 1 &&
+                                  !activeVariantId
+                                }
+                                rowThickness={row.thickness || "normal"}
+                                onThicknessChange={(thickness) =>
+                                  updateNutritionalRowThickness(
+                                    row.id,
+                                    thickness
+                                  )
+                                }
+                              />
                             </td>
                           </tr>
                         </React.Fragment>
@@ -891,10 +936,24 @@ export function ProteinPowderTemplate({
                     </tr>
                   </thead>
                   <tbody>
-                    {aminoAcidRows.map((row) => (
+                    {aminoAcidRows.map((row, index) => (
                       <tr
                         key={row.id}
-                        className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50`}
+                        draggable
+                        onDragStart={(e) =>
+                          aminoAcidDragHandlers.onDragStart(e, index)
+                        }
+                        onDragOver={aminoAcidDragHandlers.onDragOver}
+                        onDrop={(e) => aminoAcidDragHandlers.onDrop(e, index)}
+                        onDragEnd={aminoAcidDragHandlers.onDragEnd}
+                        className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 cursor-move ${
+                          draggedAminoAcidIndex === index ? "opacity-50" : ""
+                        }`}
+                        style={
+                          draggedAminoAcidIndex === index
+                            ? getDragHandleStyles()
+                            : {}
+                        }
                       >
                         <td className="px-0 py-2">
                           <FormattableTableInput

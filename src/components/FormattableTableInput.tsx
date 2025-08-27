@@ -377,30 +377,30 @@ export function FormattableTableInput({
       if (selection && element.textContent) {
         const textLength = element.textContent.length;
         const targetPosition = Math.min(cursorPosition, textLength);
-        
+
         const walker = document.createTreeWalker(
           element,
           NodeFilter.SHOW_TEXT,
           null
         );
-        
+
         let currentPosition = 0;
         let targetNode: Node | null = null;
         let targetOffset = 0;
-        
+
         while (walker.nextNode()) {
           const node = walker.currentNode;
           const nodeLength = node.textContent?.length || 0;
-          
+
           if (currentPosition + nodeLength >= targetPosition) {
             targetNode = node;
             targetOffset = targetPosition - currentPosition;
             break;
           }
-          
+
           currentPosition += nodeLength;
         }
-        
+
         if (targetNode) {
           const range = document.createRange();
           range.setStart(targetNode, targetOffset);
@@ -410,7 +410,7 @@ export function FormattableTableInput({
         }
       }
     }
-    
+
     // Reset the flag after processing
     isUserInputRef.current = false;
   }, [displayHtml]);
@@ -423,10 +423,10 @@ export function FormattableTableInput({
         suppressContentEditableWarning={true}
         onInput={(e) => {
           if (disabled) return;
-          
+
           // Mark this as user input to prevent useEffect from interfering
           isUserInputRef.current = true;
-          
+
           const target = e.target as HTMLElement;
           const newHtml = target.innerHTML;
 
@@ -465,10 +465,10 @@ export function FormattableTableInput({
           // Handle tab key press for inserting tabs (text indentation)
           if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey) {
             e.preventDefault();
-            
+
             // Mark this as user input to prevent useEffect from interfering
             isUserInputRef.current = true;
-            
+
             // Insert 4 spaces for indentation (better than tab character for display)
             const selection = window.getSelection();
             if (selection && selection.rangeCount > 0) {
