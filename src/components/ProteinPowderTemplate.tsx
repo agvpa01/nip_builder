@@ -309,6 +309,11 @@ export function ProteinPowderTemplate({
     []
   );
 
+  // Delete nutritional row
+  const deleteNutritionalRow = useCallback((id: string) => {
+    setNutritionalRows((prev) => prev.filter((row) => row.id !== id));
+  }, []);
+
   // Add amino acid row
   const addAminoAcidRow = useCallback(() => {
     const newRow: AminoAcidRow = {
@@ -425,7 +430,7 @@ export function ProteinPowderTemplate({
       <div class="right-column" style="flex: 1; padding: 20px; padding-left: 10px;">
         <!-- Nutritional Information Table -->
         <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
             NUTRITIONAL INFORMATION
           </div>
           <!-- Serving Information -->
@@ -475,7 +480,7 @@ export function ProteinPowderTemplate({
         
         <!-- Amino Acid Profile Table -->
         <div class="amino-acid-profile" style="border-radius: 8px; overflow: hidden;">
-          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
             TYPICAL AMINO ACID PROFILE
           </div>
           <div style="text-align: right; padding: 12px; font-size: 12px; border: 2px solid black; border-bottom: 1px solid black;">
@@ -762,7 +767,7 @@ export function ProteinPowderTemplate({
             </div>
 
             <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-semibold text-lg">
+              <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}
@@ -868,26 +873,38 @@ export function ProteinPowderTemplate({
                                 }
                               />
                             </td>
-                            <td className="px-0 py-0">
-                              <FormattableTableInput
-                                value={row.per100g}
-                                onChange={(value) =>
-                                  updateNutritionalRow(row.id, "per100g", value)
-                                }
-                                className="w-full text-sm bg-transparent border-none outline-none text-right"
-                                disabled={
-                                  product?.variants &&
-                                  product.variants.length > 1 &&
-                                  !activeVariantId
-                                }
-                                rowThickness={row.thickness || "normal"}
-                                onThicknessChange={(thickness) =>
-                                  updateNutritionalRowThickness(
-                                    row.id,
-                                    thickness
-                                  )
-                                }
-                              />
+                            <td className="px-0 py-0 relative">
+                              <div className="flex items-center">
+                                <FormattableTableInput
+                                  value={row.per100g}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "per100g",
+                                      value
+                                    )
+                                  }
+                                  className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(thickness) =>
+                                    updateNutritionalRowThickness(
+                                      row.id,
+                                      thickness
+                                    )
+                                  }
+                                />
+                                <button
+                                  onClick={() => deleteNutritionalRow(row.id)}
+                                  className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         </React.Fragment>
@@ -912,7 +929,7 @@ export function ProteinPowderTemplate({
             </div>
 
             <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-semibold text-lg">
+              <div className="bg-black text-white text-center font-bold text-2xl py-0 tracking-[0.5em] w-full">
                 TYPICAL AMINO ACID PROFILE
               </div>
               <div className="text-right px-3 py-3 text-sm border-b-2 z border-black">

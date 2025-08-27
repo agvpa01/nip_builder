@@ -208,7 +208,7 @@ export function SupplementsTemplate({
     <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
       <!-- Nutritional Information Table -->
       <div class="nutritional-info">
-        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
+        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
           NUTRITIONAL INFORMATION
         </div>
         <!-- Serving Information -->
@@ -488,11 +488,10 @@ export function SupplementsTemplate({
 
         {/* Main Content Area */}
         <div className="flex-1 p-6 bg-white overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">
-            Nutritional Information
-          </h3>
-
-          <div className="flex items-center justify-between mb-2">
+          <div className="w-[40%] flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold mb-4">
+              Nutritional Information
+            </h3>
             <button
               onClick={addNutritionalRow}
               className="text-sm text-blue-600 hover:text-blue-800"
@@ -503,7 +502,7 @@ export function SupplementsTemplate({
 
           <div>
             <div className="w-[40%] border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold text-lg">
+              <div className="bg-black text-white text-center font-bold text-2xl py-0 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}

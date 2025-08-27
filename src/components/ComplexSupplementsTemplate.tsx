@@ -419,7 +419,7 @@ export function ComplexSupplementsTemplate({
     <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; background: white; padding: 20px;">
       <!-- Nutritional Information Table -->
       <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-        <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
+        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
           NUTRITIONAL INFORMATION
         </div>
         <div style="text-align: right; padding: 12px; font-size: 12px; border: 2px solid black; border-bottom: 1px solid black;">
@@ -462,7 +462,7 @@ export function ComplexSupplementsTemplate({
 
       <!-- Compositional Information Table -->
       <div class="supplement-facts" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px;">
+        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
           COMPOSITIONAL INFORMATION
         </div>
         <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black;">
@@ -756,11 +756,17 @@ export function ComplexSupplementsTemplate({
         <div className="flex-1 p-6 bg-white overflow-y-auto">
           {/* Nutritional Information Table */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">
-              Nutritional Information
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium">Nutritional Information</h4>
+              <button
+                onClick={addNutritionalRow}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Row
+              </button>
+            </div>
             <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold text-lg">
+              <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
               <div className="text-right px-3 py-3 text-sm border-b-2 border-black">
@@ -885,11 +891,17 @@ export function ComplexSupplementsTemplate({
 
           {/* Compositional Information Table */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">
-              Compositional Information
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium">Compositional Information</h4>
+              <button
+                onClick={addIngredientRow}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Row
+              </button>
+            </div>
             <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold text-lg">
+              <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
                 COMPOSITIONAL INFORMATION
               </div>
               <div className="p-2">
