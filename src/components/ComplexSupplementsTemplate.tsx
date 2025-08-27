@@ -3,7 +3,7 @@ import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { DraggableTextSection } from "./DraggableTextSection";
-import { PreviewModal } from "./PreviewModal";
+import { TabbedPreviewModal } from "./TabbedPreviewModal";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
@@ -981,12 +981,12 @@ export function ComplexSupplementsTemplate({
         </div>
       </div>
 
-      {/* Preview Modal */}
+      {/* Tabbed Preview Modal */}
       {showPreview && (
-        <PreviewModal
-          title="Complex Supplements NIP Preview"
+        <TabbedPreviewModal
+          title="Complex Supplements NIP"
           isOpen={showPreview}
-          htmlContent={generateHtml()}
+          productId={product._id}
           onClose={() => setShowPreview(false)}
         />
       )}

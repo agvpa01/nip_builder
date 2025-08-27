@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import { PreviewModal } from "./PreviewModal";
+import { TabbedPreviewModal } from "./TabbedPreviewModal";
 import { Id } from "../../convex/_generated/dataModel";
 import { convertTabsForHtml } from "../lib/tabUtils";
 
@@ -791,12 +791,12 @@ export function NipBuilder({
         </div>
       </div>
 
-      {/* Preview Modal */}
+      {/* Tabbed Preview Modal */}
       {showPreview && (
-        <PreviewModal
-          title="NIP Preview"
+        <TabbedPreviewModal
+          title="NIP"
           isOpen={showPreview}
-          htmlContent={generateHTML()}
+          productId={product._id}
           onClose={() => setShowPreview(false)}
         />
       )}
