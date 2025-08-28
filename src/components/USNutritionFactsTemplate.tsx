@@ -3,6 +3,7 @@ import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { FormattableTableInput } from "./FormattableTableInput";
+import { TabbedPreviewModal } from "./TabbedPreviewModal";
 import { convertFormattingForHtml, convertTabsForHtml } from "../lib/tabUtils";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { createDragDropHandlers, getDragHandleStyles } from "../lib/dragDropUtils";
@@ -529,6 +530,12 @@ export function USNutritionFactsTemplate({
             {currentVariantNip ? "Update" : "Save"} NIP
           </button>
           <button
+            onClick={() => setShowPreview(true)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Preview
+          </button>
+          <button
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
@@ -536,6 +543,15 @@ export function USNutritionFactsTemplate({
           </button>
         </div>
       </div>
+      {/* Tabbed Preview Modal */}
+      {showPreview && (
+        <TabbedPreviewModal
+          title="US Nutrition Facts"
+          isOpen={showPreview}
+          productId={product._id}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   );
 }
