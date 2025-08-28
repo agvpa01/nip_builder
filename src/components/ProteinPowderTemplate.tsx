@@ -408,7 +408,7 @@ export function ProteinPowderTemplate({
   // Generate HTML output
   const generateHtml = useCallback(() => {
     let html = `
-    <div class="protein-powder-nip" style="display: flex; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background: white;">
+    <div class="protein-powder-nip" style="display: flex; font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: white;">
       <!-- Left Column: Text Sections -->
       <div class="left-column" style="flex: 1; padding: 20px; padding-right: 10px;">
     `;
@@ -430,63 +430,85 @@ export function ProteinPowderTemplate({
       <div class="right-column" style="flex: 1; padding: 20px; padding-left: 10px;">
         <!-- Nutritional Information Table -->
         <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px; padding: 8px; padding-bottom: 6px;">
             NUTRITIONAL INFORMATION
           </div>
           <!-- Serving Information -->
-          <div style="padding: 12px; border: 2px solid black; border-bottom: 1px solid black; background: white;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
-              <span>Serving Size: 30 grams</span>
+          <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black; border-bottom: none;">
+          <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
+            <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
+              <span style="margin-bottom: 3px;">Serving Size: 30 grams</span>
               <span>Servings per Pack: 33</span>
             </div>
           </div>
+          </div>
 
-          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black; border-top: none;">
+          <div style="padding: 10px; padding-top:0px; border: 2px solid black; border-top: none; margin-bottom:10px; border-radius: 0 0 8px 8px; overflow: hidden;">
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
             <colgroup>
               <col style="width: 40%;" />
               <col style="width: 30%;" />
               <col style="width: 30%;" />
             </colgroup>
             <thead>
-              <tr style="background: #f9fafb; border-bottom: 1px solid #d1d5db;">
-                <th style="text-align: left; padding: 4px 8px; font-size: 12px; font-weight: 500;"></th>
-                <th style="text-align: right; padding: 4px 8px; font-size: 12px; font-weight: 500;">Per Serve</th>
-                <th style="text-align: right; padding: 4px 8px; font-size: 12px; font-weight: 500;">Per 100g</th>
+              <tr style="background: #f9fafb; border-bottom: 5px solid black;">
+                <th style="text-align: left; padding: 4px 0px; font-size: 12px; font-weight: 500;"></th>
+                <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per Serve</th>
+                <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per 100g</th>
               </tr>
             </thead>
             <tbody>
     `;
 
     // Add nutritional rows (skip serving-info row as it's now displayed separately)
-    nutritionalRows.forEach((row) => {
+    nutritionalRows.forEach((row, index) => {
       if (row.id === "serving-info") return; // Skip serving info row
 
       const rowThicknessBorder = getThicknessBorderStyle(
         row.thickness || "normal"
       );
-      html += `
-            <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 8px 12px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+
+      if ((index+1) === nutritionalRows.length) {
+        html += `
+            <tr style="border-bottom: none;">
+              <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+              <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+              <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
       `;
+      }
+      else {
+html += `
+            <tr style="border-bottom: ${rowThicknessBorder};">
+              <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+              <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+              <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+            </tr>
+      `;
+      }
+      
     });
 
     html += `
             </tbody>
           </table>
         </div>
+
         
         <!-- Amino Acid Profile Table -->
         <div class="amino-acid-profile" style="border-radius: 8px; overflow: hidden;">
-          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
+          <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 16px; letter-spacing: 1px; padding: 8px; padding-bottom: 6px;">
             TYPICAL AMINO ACID PROFILE
           </div>
-          <div style="text-align: right; padding: 12px; font-size: 12px; border: 2px solid black; border-bottom: 1px solid black;">
+
+          <div style="padding: 10px; padding-top:5px; padding-bottom:5px; border: 2px solid black; border-bottom:none;">
+          <div style="text-align: right; font-size: 12px; border-bottom: 5px solid black;">
             Per 100g of Protein
           </div>
-          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black; border-top: none;">
+          </div>
+
+          <div style="padding: 10px; padding-top:0px; border: 2px solid black; border-top: none; margin-bottom:10px; border-radius: 0 0 8px 8px; overflow: hidden;">
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
             <colgroup>
               <col style="width: 75%;" />
               <col style="width: 25%;" />
@@ -498,17 +520,20 @@ export function ProteinPowderTemplate({
       const rowThicknessBorder = getThicknessBorderStyle(
         row.thickness || "normal"
       );
+
+
       if (row.amount) {
         html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
-              <td style="padding: 8px 12px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
-                <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
+              <td style="padding: 3px 0px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+                <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
             </tr>
         `;
       } else {
         html += `
-            <tr style="border-bottom: ${rowThicknessBorder};">
-              <td colspan="2" style="padding: 8px 12px; font-size: 12px; font-weight: bold; text-align: center; background: black; color: white;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+            <tr style="border-bottom: none;">
+              <td style="padding: 3px 0px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(row.aminoAcid))}</td>
+                <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
             </tr>
         `;
       }
@@ -516,7 +541,7 @@ export function ProteinPowderTemplate({
 
     html += `
           </table>
-        </div>
+          </div>
       </div>
     </div>
     `;
@@ -767,7 +792,7 @@ export function ProteinPowderTemplate({
             </div>
 
             <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
+              <div className="bg-black text-white text-center font-bold text-2xl px-2 pt-2 pb-2 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}
