@@ -98,6 +98,18 @@ export const getNipPublicUrl = query({
   },
 });
 
+// Get public URL for a specific NIP by its ID
+export const getNipPublicUrlById = query({
+  args: { nipId: v.id("nips") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { nipId }) => {
+    const nip = await ctx.db.get(nipId);
+    if (!nip || !nip.htmlFileId) return null;
+    const url = await ctx.storage.getUrl(nip.htmlFileId);
+    return url;
+  },
+});
+
 // Helper function to generate filename from onlineStoreUrl
 function generateFilename(onlineStoreUrl: string, variantId?: string): string {
   // Extract the product handle from the URL

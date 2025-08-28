@@ -45,6 +45,57 @@ function PublicNipLink({ productId }: { productId: Id<"products"> }) {
   );
 }
 
+// New: Dropdown to view AU or US public NIP (latest per type)
+function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
+  const nips = useQuery(api.nips.getNipsByProduct, { productId });
+  const auTypes = ["protein_powder", "complex_supplements", "supplements"];
+
+  const auLatest = nips
+    ?.filter((n: any) => auTypes.includes(n.templateType) && n.htmlFileId)
+    .sort((a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0];
+  const usLatest = nips
+    ?.filter((n: any) => n.templateType === "us_nutrition_facts" && n.htmlFileId)
+    .sort((a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0];
+
+  const auUrl = useQuery(
+    api.nips.getNipPublicUrlById as any,
+    auLatest ? { nipId: auLatest._id } : "skip"
+  );
+  const usUrl = useQuery(
+    api.nips.getNipPublicUrlById as any,
+    usLatest ? { nipId: usLatest._id } : "skip"
+  );
+
+  if (!nips || (!auLatest && !usLatest)) return null;
+
+  return (
+    <div className="relative inline-block text-left">
+      <details className="group">
+        <summary className="list-none cursor-pointer text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1 bg-purple-50 rounded hover:bg-purple-100 transition-colors inline-flex items-center gap-1">
+          View Public NIP
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.25 7.5L10 12.25 14.75 7.5z"/></svg>
+        </summary>
+        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-10 py-1">
+          <button
+            disabled={!auUrl}
+            onClick={() => auUrl && window.open(auUrl, "_blank")}
+            className={`w-full text-left px-3 py-1 text-xs ${auUrl ? "hover:bg-gray-50 text-gray-800" : "text-gray-400 cursor-not-allowed"}`}
+          >
+            AU Version {auUrl ? "" : "(none)"}
+          </button>
+          <button
+            disabled={!usUrl}
+            onClick={() => usUrl && window.open(usUrl, "_blank")}
+            className={`w-full text-left px-3 py-1 text-xs ${usUrl ? "hover:bg-gray-50 text-gray-800" : "text-gray-400 cursor-not-allowed"}`}
+          >
+            US Version {usUrl ? "" : "(none)"}
+          </button>
+        </div>
+      </details>
+    </div>
+  );
+}
+
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const loggedInUser = useQuery(api.auth.loggedInUser);
@@ -1463,7 +1514,7 @@ export function AdminDashboard() {
                                       </button>
                                     </>
                                   )} */}
-                                  <PublicNipLink productId={product._id} />
+                                  <PublicNipDropdown productId={product._id} />
                                   {/* Delete NIPs button - only show if product has NIPs */}
                                   {allNips &&
                                     allNips.some(
