@@ -205,65 +205,73 @@ export function SupplementsTemplate({
   // Generate HTML output
   const generateHtml = useCallback(() => {
     let html = `
-    <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
-      <!-- Nutritional Information Table -->
-      <div class="nutritional-info">
-        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
-          NUTRITIONAL INFORMATION
-        </div>
-        <!-- Serving Information -->
-        <div style="padding: 12px; border-bottom: 1px solid black; background: white;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
-            <span>Serving Size: ${servingSize}</span>
-            <span>Servings per Bottle: ${servingsPerBottle}</span>
-          </div>
-        </div>
-        <!-- Column Headers -->
-        <div style="padding: 0; border-bottom: 2px solid black; background: white;">
-          <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-            <colgroup>
-              <col style="width: 50%;" />
-              <col style="width: 25%;" />
-              <col style="width: 25%;" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th style="padding: 12px; font-size: 14px; font-weight: bold; text-align: left;">Nutrient</th>
-                <th style="padding: 12px; font-size: 14px; font-weight: bold; text-align: right;">Per Serve</th>
-                <th style="padding: 12px; font-size: 14px; font-weight: bold; text-align: right;">Per 100g</th>
-              </tr>
-            </thead>
-          </table>
-        </div>
-        <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-            <colgroup>
-              <col style="width: 50%;" />
-              <col style="width: 25%;" />
-              <col style="width: 25%;" />
-            </colgroup>
-            <tbody>
-    `;
-
-    // Add nutritional rows
-    nutritionalRows.forEach((row, index) => {
-      const bgColor = index % 2 === 0 ? "white" : "#f9f9f9";
-      const thicknessBorder = getThicknessBorderStyle(
-        row.thickness || "normal"
-      );
-      html += `
-          <tr style="background-color: ${bgColor}; border-bottom: ${thicknessBorder};">
-            <td style="padding: 8px 12px; font-size: 14px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-            <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 500; border-right: 1px solid black;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-            <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
-          </tr>
-       `;
-    });
-
+     <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
+    <!-- Nutritional Information Table -->
+            <div class="nutritional-info">
+              <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px; padding: 8px; padding-bottom: 6px;">
+                NUTRITIONAL INFORMATION
+              </div>
+              <!-- Serving Information -->
+              <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px;">
+              <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
+                <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
+                  <span style="margin-bottom: 3px;">Serving Size: 30 grams</span>
+                  <span>Servings per Pack: 33</span>
+                </div>
+              </div>
+              </div>
+    
+              <div style="padding: 10px; padding-top:0px;">
+              <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                <colgroup>
+                  <col style="width: 40%;" />
+                  <col style="width: 30%;" />
+                  <col style="width: 30%;" />
+                </colgroup>
+                <thead>
+                  <tr style="background: #f9fafb; border-bottom: 5px solid black;">
+                    <th style="text-align: left; padding: 4px 0px; font-size: 12px; font-weight: 500;"></th>
+                    <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per Serve</th>
+                    <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per 100g</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+    
+        // Add nutritional rows (skip serving-info row as it's now displayed separately)
+        nutritionalRows.forEach((row, index) => {
+          if (row.id === "serving-info") return; // Skip serving info row
+    
+          const rowThicknessBorder = getThicknessBorderStyle(
+            row.thickness || "normal"
+          );
+    
+          if ((index+1) === nutritionalRows.length) {
+            html += `
+                <tr style="border-bottom: none;">
+                  <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+                </tr>
+          `;
+          }
+          else {
     html += `
-            </tbody>
-        </table>
-      </div>
-    </div>
+                <tr style="border-bottom: ${rowThicknessBorder};">
+                  <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+                </tr>
+          `;
+          }
+          
+        });
+    
+        html += `
+                </tbody>
+              </table>
+            </div>
+            </div>
     `;
 
     return html;
