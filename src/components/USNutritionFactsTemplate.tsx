@@ -6,6 +6,7 @@ import { FormattableTableInput } from "./FormattableTableInput";
 import { convertFormattingForHtml, convertTabsForHtml } from "../lib/tabUtils";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { createDragDropHandlers, getDragHandleStyles } from "../lib/dragDropUtils";
+import { DraggableTextSection } from "./DraggableTextSection";
 
 interface USNutritionFactsTemplateProps {
   product: any;
@@ -77,6 +78,90 @@ export function USNutritionFactsTemplate({
     { id: "potassium", nutrient: "Potassium", amount: "120mg", percentDv: "2%" },
   ]);
 
+  // Text sections (match AU builders functionality)
+  interface TextSection { id: string; title: string; content: string; isCustom: boolean }
+  const [textSections, setTextSections] = useState<TextSection[]>([
+    {
+      id: "directions",
+      title: "DIRECTIONS:",
+      content:
+        "Add 1 scoop (30g) to 200mL water or milk. Shake 20 seconds until dispersed.",
+      isCustom: false,
+    },
+    { id: "serving-size", title: "SERVING SIZE:", content: "30 grams", isCustom: false },
+    {
+      id: "allergen",
+      title: "ALLERGEN ADVICE:",
+      content: "Contains Milk and less than 1% Soy Lecithin (as instantiser).",
+      isCustom: false,
+    },
+    {
+      id: "storage",
+      title: "STORAGE:",
+      content: "Keep sealed in a cool, dry place out of direct sunlight.",
+      isCustom: false,
+    },
+  ]);
+  const addCustomTextSection = useCallback(() => {
+    const newSection: TextSection = {
+      id: `custom-${Date.now()}`,
+      title: "CUSTOM SECTION:",
+      content: "Enter your custom content here...",
+      isCustom: true,
+    };
+    setTextSections((prev) => [...prev, newSection]);
+  }, []);
+  const updateTextSection = useCallback(
+    (id: string, field: "title" | "content", value: string) => {
+      setTextSections((prev) =>
+        prev.map((section) => (section.id === id ? { ...section, [field]: value } : section))
+      );
+    },
+    []
+  );
+  const deleteTextSection = useCallback((id: string) => {
+    setTextSections((prev) => prev.filter((section) => section.id !== id));
+  }, []);
+  const handleTextSectionsReorder = useCallback((reordered: TextSection[]) => {
+    setTextSections(reordered);
+  }, []);
+
+  // Text selection + formatting like AU builders
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionStart, setSelectionStart] = useState(0);
+  const [selectionEnd, setSelectionEnd] = useState(0);
+  const handleTextSelect = useCallback((textareaId: string, textarea: HTMLTextAreaElement) => {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const txt = textarea.value.substring(start, end);
+    if (txt.length > 0) {
+      setSelectedTextId(textareaId);
+      setSelectedText(txt);
+      setSelectionStart(start);
+      setSelectionEnd(end);
+    } else {
+      setSelectedTextId(null);
+      setSelectedText("");
+    }
+  }, []);
+  const applyFormatting = useCallback(
+    (format: "bold" | "italic") => {
+      if (!selectedTextId || !selectedText) return;
+      const section = textSections.find((s) => s.id === selectedTextId);
+      if (!section) return;
+      const beforeText = section.content.substring(0, selectionStart);
+      const selected = section.content.substring(selectionStart, selectionEnd);
+      const afterText = section.content.substring(selectionEnd);
+      const tag = format === "bold" ? "strong" : "em";
+      const formatted = `<${tag}>${selected}</${tag}>`;
+      updateTextSection(selectedTextId, "content", beforeText + formatted + afterText);
+      setSelectedTextId(null);
+      setSelectedText("");
+    },
+    [selectedTextId, selectedText, selectionStart, selectionEnd, textSections, updateTextSection]
+  );
+
   // Drag n drop
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const rowDragHandlers = createDragDropHandlers<USRow>(
@@ -98,6 +183,7 @@ export function USNutritionFactsTemplate({
         if (c.servingSize) setServingSize(c.servingSize);
         if (c.calories) setCalories(c.calories);
         if (Array.isArray(c.rows)) setRows(c.rows);
+        if (Array.isArray(c.textSections)) setTextSections(c.textSections);
       } catch (e) {
         console.error("Error loading US NIP content", e);
       }
@@ -180,9 +266,25 @@ export function USNutritionFactsTemplate({
       <div style="padding: 8px 10px; font-size: 10px; border-top: 1px solid black;">
         *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
       </div>
+
+      <!-- Text Sections (AU functionality) -->
+      <div class="text-sections" style="padding: 12px 10px;">
+    `;
+
+    textSections.forEach((section) => {
+      html += `
+        <div class="text-section" style="margin-bottom: 10px;">
+          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
+        </div>
+      `;
+    });
+
+    html += `
+      </div>
     </div>`;
     return html;
-  }, [rows, servingsPerContainer, servingSize, calories]);
+  }, [rows, servingsPerContainer, servingSize, calories, textSections]);
 
   const handleSave = useCallback(async () => {
     if (!product) {
@@ -199,6 +301,7 @@ export function USNutritionFactsTemplate({
         servingSize,
         calories,
         rows,
+        textSections,
       };
       const nipData = {
         productId: product._id,
@@ -273,48 +376,84 @@ export function USNutritionFactsTemplate({
       </div>
 
       <div className="flex-1 p-6 bg-white overflow-y-auto">
-        {/* Header editors */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          <input
-            className="border rounded px-2 py-1 text-sm"
-            value={servingsPerContainer}
-            onChange={(e) => setServingsPerContainer(e.target.value)}
-            placeholder="Servings per container"
-          />
-          <input
-            className="border rounded px-2 py-1 text-sm"
-            value={servingSize}
-            onChange={(e) => setServingSize(e.target.value)}
-            placeholder="Serving Size"
-          />
-          <input
-            className="border rounded px-2 py-1 text-sm"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            placeholder="Calories"
-          />
+        {/* Toolbar: matches AU quick actions */}
+        <div className="flex items-center space-x-2 mb-3">
+          <span className="text-sm font-medium text-gray-700">Quick Actions:</span>
+          <button onClick={addCustomTextSection} className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded">
+            + Add Text Section
+          </button>
+          <button onClick={addRow} className="px-3 py-1 text-xs bg-green-50 hover:bg-green-100 border border-green-200 rounded">
+            + Add Row
+          </button>
+          {selectedTextId && selectedText && (
+            <div className="flex items-center space-x-1 ml-4 pl-4 border-l border-gray-300">
+              <span className="text-xs text-gray-600">Format:</span>
+              <button onClick={() => applyFormatting("bold")} className="px-2 py-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 rounded">B</button>
+              <button onClick={() => applyFormatting("italic")} className="px-2 py-1 text-xs italic bg-gray-100 hover:bg-gray-200 rounded">I</button>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-medium">Nutrition Facts Rows</h4>
-          <button onClick={addRow} className="text-sm text-blue-600 hover:text-blue-800">+ Add Row</button>
-        </div>
+        {/* Two-column layout like AU builders */}
+        <div className="flex gap-6">
+          {/* Left: Text Sections */}
+          <div className="flex-1 p-4 bg-white border rounded">
+            <h3 className="text-lg font-semibold mb-3">Text Sections</h3>
+            <DraggableTextSection
+              sections={textSections}
+              onSectionsReorder={handleTextSectionsReorder}
+              onUpdateSection={updateTextSection}
+              onDeleteSection={deleteTextSection}
+              onTextSelect={(sectionId, element) => {
+                if (element instanceof HTMLTextAreaElement) {
+                  handleTextSelect(sectionId, element);
+                }
+              }}
+            />
+          </div>
 
-        <div className="border rounded">
-          <table className="w-full table-fixed border-collapse">
-            <colgroup>
-              <col className="w-2/3" />
-              <col className="w-1/3" />
-            </colgroup>
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="text-left px-2 py-1 text-xs font-medium">Nutrient & Amount</th>
-                <th className="text-right px-2 py-1 text-xs font-medium">% DV</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr
+          {/* Right: US Header editors + Table */}
+          <div className="flex-1">
+            {/* Header editors */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <input
+                className="border rounded px-2 py-1 text-sm"
+                value={servingsPerContainer}
+                onChange={(e) => setServingsPerContainer(e.target.value)}
+                placeholder="Servings per container"
+              />
+              <input
+                className="border rounded px-2 py-1 text-sm"
+                value={servingSize}
+                onChange={(e) => setServingSize(e.target.value)}
+                placeholder="Serving Size"
+              />
+              <input
+                className="border rounded px-2 py-1 text-sm"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                placeholder="Calories"
+              />
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium">Nutrition Facts Rows</h4>
+            </div>
+
+            <div className="border rounded">
+              <table className="w-full table-fixed border-collapse">
+              <colgroup>
+                <col className="w-2/3" />
+                <col className="w-1/3" />
+              </colgroup>
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="text-left px-2 py-1 text-xs font-medium">Nutrient & Amount</th>
+                  <th className="text-right px-2 py-1 text-xs font-medium">% DV</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr
                   key={row.id}
                   draggable
                   onDragStart={(e) => rowDragHandlers.onDragStart(e, index)}
@@ -369,8 +508,10 @@ export function USNutritionFactsTemplate({
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -391,4 +532,3 @@ export function USNutritionFactsTemplate({
     </div>
   );
 }
-
