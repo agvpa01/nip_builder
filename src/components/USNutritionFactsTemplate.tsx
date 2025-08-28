@@ -3,6 +3,7 @@ import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { FormattableTableInput } from "./FormattableTableInput";
+import { TabbedPreviewModal } from "./TabbedPreviewModal";
 import { convertFormattingForHtml, convertTabsForHtml } from "../lib/tabUtils";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { createDragDropHandlers, getDragHandleStyles } from '../lib/dragDropUtils'
@@ -505,60 +506,13 @@ export function USNutritionFactsTemplate({
           </button>
         </div> */}
       </div>
-      {/* Inline Preview Modal showing saved US NIP if available */}
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">US Nutrition Facts Preview</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const html = (currentVariantNip?.htmlContent as string) || generateHtml()
-                    const w = window.open('', '_blank')
-                    if (w) {
-                      w.document.write(html)
-                      w.document.close()
-                    }
-                  }}
-                  className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
-                >
-                  Open in New Tab
-                </button>
-                <button
-                  onClick={() => {
-                    const html = (currentVariantNip?.htmlContent as string) || generateHtml()
-                    navigator.clipboard.writeText(html)
-                  }}
-                  className="rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
-                >
-                  Copy HTML
-                </button>
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="flex h-8 w-8 items-center justify-center text-xl font-bold text-gray-500 hover:text-gray-700"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-auto">
-              <iframe
-                srcDoc={(currentVariantNip?.htmlContent as string) || generateHtml()}
-                className="h-[75vh] w-full border-0"
-                title="US Nutrition Facts Preview"
-              />
-            </div>
-            <div className="flex justify-end border-t bg-gray-50 p-4">
-              <button
-                onClick={() => setShowPreview(false)}
-                className="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <TabbedPreviewModal
+          title="US Nutrition Facts"
+          isOpen={showPreview}
+          productId={product._id}
+          onClose={() => setShowPreview(false)}
+        />
       )}
     </div>
   )
