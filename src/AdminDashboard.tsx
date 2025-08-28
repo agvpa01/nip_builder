@@ -76,20 +76,30 @@ function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.25 7.5L10 12.25 14.75 7.5z"/></svg>
         </summary>
         <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-10 py-1">
-          <button
-            disabled={!auUrl}
-            onClick={() => auUrl && window.open(auUrl, "_blank")}
-            className={`w-full text-left px-3 py-1 text-xs ${auUrl ? "hover:bg-gray-50 text-gray-800" : "text-gray-400 cursor-not-allowed"}`}
-          >
-            AU Version {auUrl ? "" : "(none)"}
-          </button>
-          <button
-            disabled={!usUrl}
-            onClick={() => usUrl && window.open(usUrl, "_blank")}
-            className={`w-full text-left px-3 py-1 text-xs ${usUrl ? "hover:bg-gray-50 text-gray-800" : "text-gray-400 cursor-not-allowed"}`}
-          >
-            US Version {usUrl ? "" : "(none)"}
-          </button>
+          {auUrl ? (
+            <a
+              href={auUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
+            >
+              AU Version
+            </a>
+          ) : (
+            <span className="block w-full px-3 py-1 text-xs text-gray-400">AU Version (none)</span>
+          )}
+          {usUrl ? (
+            <a
+              href={usUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
+            >
+              US Version
+            </a>
+          ) : (
+            <span className="block w-full px-3 py-1 text-xs text-gray-400">US Version (none)</span>
+          )}
         </div>
       </details>
     </div>
