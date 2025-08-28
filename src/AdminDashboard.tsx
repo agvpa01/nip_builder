@@ -1404,7 +1404,7 @@ export function AdminDashboard() {
                         {filteredNipsProducts.map((product: any) => (
                           <div
                             key={product._id}
-                            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:scale-[1.02]"
+                            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:scale-[1.02]"
                             onClick={() => handleProductSelection(product)}
                           >
                             {/* Product Header */}
