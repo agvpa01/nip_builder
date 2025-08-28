@@ -77,6 +77,14 @@ export function ProteinPowderTemplate({
     (nip) => nip.variantId === activeVariantId
   );
 
+  // Existence flags for AU (this builder) and US Nutrition Facts
+  const auExists = !!productNips?.some(
+    (n: any) => n.variantId === activeVariantId && n.templateType === "protein_powder"
+  );
+  const usExists = !!productNips?.some(
+    (n: any) => n.variantId === activeVariantId && n.templateType === "us_nutrition_facts"
+  );
+
   // Initialize default text sections
   const [textSections, setTextSections] = useState<TextSection[]>([
     {
@@ -713,6 +721,38 @@ html += `
               </select>
             </div>
           )}
+
+          {/* AU/US Builder chooser with existence status */}
+          <div className="hidden sm:flex items-center gap-2">
+            <a
+              href={`?builder=au${activeVariantId ? `&variant=${activeVariantId}` : ""}`}
+              className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
+              title="Switch to Australian NIP Builder"
+            >
+              AU Builder
+              <span
+                className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
+                  auExists ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {auExists ? "Exists" : "None"}
+              </span>
+            </a>
+            <a
+              href={`?builder=us${activeVariantId ? `&variant=${activeVariantId}` : ""}`}
+              className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
+              title="Switch to US Nutrition Facts Builder"
+            >
+              US Builder
+              <span
+                className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
+                  usExists ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {usExists ? "Exists" : "None"}
+              </span>
+            </a>
+          </div>
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-2">
