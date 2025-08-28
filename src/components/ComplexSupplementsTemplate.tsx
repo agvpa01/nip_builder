@@ -28,12 +28,11 @@ interface TextSection {
 }
 
 interface NutritionalRow {
-  [x: string]: string;
   id: string;
   nutrient: string;
   perServe: string;
   per100g: string;
-  thickness:
+  thickness?:
     | "normal"
     | "thick"
     | "medium-thick"
@@ -280,7 +279,11 @@ export function ComplexSupplementsTemplate({
 
   // Update nutritional row
   const updateNutritionalRow = useCallback(
-    (id: string, field: keyof NutritionalRow, value: string) => {
+    <K extends keyof NutritionalRow>(
+      id: string,
+      field: K,
+      value: NutritionalRow[K]
+    ) => {
       setNutritionalRows((prev) =>
         prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
       );
@@ -799,10 +802,10 @@ export function ComplexSupplementsTemplate({
                                   onChange={(value) => updateNutritionalRow(row.id, "perServe", value)}
                                   className="w-full text-sm bg-transparent border-none outline-none text-right"
                                   disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
-                                  rowThickness={row.thickness || "normal"}
-                                  onThicknessChange={(t) =>
-                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
-                                  }
+                              rowThickness={row.thickness || "normal"}
+                              onThicknessChange={(t) =>
+                                updateNutritionalRow(row.id, "thickness", t)
+                              }
                                 />
                               </td>
                               <td className="px-0 py-2 relative">
