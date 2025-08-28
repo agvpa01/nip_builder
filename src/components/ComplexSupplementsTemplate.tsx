@@ -169,9 +169,7 @@ export function ComplexSupplementsTemplate({
   const [draggedNutritionalIndex, setDraggedNutritionalIndex] = useState<
     number | null
   >(null);
-  const [draggedIngredientIndex, setDraggedIngredientIndex] = useState<
-    number | null
-  >(null);
+  
 
   // Utility function to get border class based on thickness
   const getBorderClass = (
@@ -288,31 +286,7 @@ export function ComplexSupplementsTemplate({
     setNutritionalRows((prev) => prev.filter((row) => row.id !== id));
   }, []);
 
-  // Add ingredient row
-  const addIngredientRow = useCallback(() => {
-    const newRow: IngredientRow = {
-      id: `ingredient-${Date.now()}`,
-      ingredient: "New Ingredient",
-      amount: "0mg",
-      dailyValue: "0%",
-    };
-    setIngredientRows((prev) => [...prev, newRow]);
-  }, []);
-
-  // Update ingredient row
-  const updateIngredientRow = useCallback(
-    (id: string, field: keyof IngredientRow, value: string) => {
-      setIngredientRows((prev) =>
-        prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
-      );
-    },
-    []
-  );
-
-  // Delete ingredient row
-  const deleteIngredientRow = useCallback((id: string) => {
-    setIngredientRows((prev) => prev.filter((row) => row.id !== id));
-  }, []);
+  
 
   // Handle nutritional rows reorder
   const handleNutritionalRowsReorder = useCallback(
@@ -322,13 +296,7 @@ export function ComplexSupplementsTemplate({
     []
   );
 
-  // Handle ingredient rows reorder
-  const handleIngredientRowsReorder = useCallback(
-    (reorderedRows: IngredientRow[]) => {
-      setIngredientRows(reorderedRows);
-    },
-    []
-  );
+  
 
   // Create drag handlers for nutritional rows
   const nutritionalDragHandlers = createDragDropHandlers(
@@ -338,13 +306,7 @@ export function ComplexSupplementsTemplate({
     setDraggedNutritionalIndex
   );
 
-  // Create drag handlers for ingredient rows
-  const ingredientDragHandlers = createDragDropHandlers(
-    ingredientRows,
-    handleIngredientRowsReorder,
-    draggedIngredientIndex,
-    setDraggedIngredientIndex
-  );
+  
 
   // Handle text selection for rich text editing
   const handleTextSelect = useCallback(
@@ -411,9 +373,7 @@ export function ComplexSupplementsTemplate({
     const nutritionalThicknessBorder = getThicknessBorderStyle(
       nutritionalRowThickness
     );
-    const ingredientThicknessBorder = getThicknessBorderStyle(
-      ingredientRowThickness
-    );
+    
 
     let html = `
     <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 450px; margin: 0 auto; background: white; padding: 20px;">
@@ -460,42 +420,6 @@ export function ComplexSupplementsTemplate({
         </table>
       </div>
 
-      <!-- Compositional Information Table -->
-      <div class="supplement-facts" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-        <div class="table-header" style="background-color: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px;">
-          COMPOSITIONAL INFORMATION
-        </div>
-        <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: 2px solid black;">
-          <colgroup>
-            <col style="width: 40%;" />
-            <col style="width: 25%;" />
-            <col style="width: 25%;" />
-          </colgroup>
-          <tr style="border-bottom: ${ingredientThicknessBorder};">
-            <td style="padding: 8px 12px; font-size: 12px; font-weight: bold;">Ingredient</td>
-            <td style="padding: 8px 12px; font-size: 12px; text-align: right; font-weight: bold;">Amount</td>
-            <td style="padding: 8px 12px; font-size: 12px; text-align: right; font-weight: bold;">Daily Value</td>
-          </tr>
-    `;
-
-    // Add ingredient rows
-    ingredientRows.forEach((row) => {
-      html += `
-            <tr style="border-bottom: ${ingredientThicknessBorder};">
-              <td style="padding: 8px 12px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(row.ingredient))}</td>
-              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.amount))}</td>
-              <td style="padding: 8px 12px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.dailyValue))}</td>
-            </tr>
-    `;
-    });
-
-    html += `
-          <tr>
-            <td colspan="3" style="padding: 8px 12px; font-size: 11px; font-style: italic; text-align: center;">* Daily Value not established</td>
-          </tr>
-        </table>
-      </div>
-      
       <!-- Text Sections -->
       <div class="text-sections">
     `;
@@ -519,9 +443,7 @@ export function ComplexSupplementsTemplate({
   }, [
     textSections,
     nutritionalRows,
-    ingredientRows,
     nutritionalRowThickness,
-    ingredientRowThickness,
   ]);
 
   // Save NIP
@@ -701,12 +623,7 @@ export function ComplexSupplementsTemplate({
           >
             + Add Nutritional Row
           </button>
-          <button
-            onClick={addIngredientRow}
-            className="px-3 py-1 text-xs bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded"
-          >
-            + Add Ingredient
-          </button>
+          
           {selectedText && (
             <div className="flex items-center space-x-1 ml-4 pl-4 border-l border-gray-300">
               <span className="text-xs text-gray-600">Format:</span>
@@ -889,107 +806,7 @@ export function ComplexSupplementsTemplate({
             </div>
           </div>
 
-          {/* Compositional Information Table */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium">Compositional Information</h4>
-              <button
-                onClick={addIngredientRow}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                + Add Row
-              </button>
-            </div>
-            <div className="border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
-                COMPOSITIONAL INFORMATION
-              </div>
-              <div className="p-2">
-                <table className="w-full table-fixed border-b-2 border-black">
-                  <colgroup>
-                    <col className="w-2/3" />
-                    <col className="w-1/3" />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="text-left px-2 py-1 text-xs font-medium">
-                        Ingredient
-                      </th>
-                      <th className="text-right px-2 py-1 text-xs font-medium">
-                        Amount
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ingredientRows.map((row, index) => (
-                      <tr
-                        key={row.id}
-                        draggable
-                        onDragStart={(e) =>
-                          ingredientDragHandlers.onDragStart(e, index)
-                        }
-                        onDragOver={ingredientDragHandlers.onDragOver}
-                        onDrop={(e) => ingredientDragHandlers.onDrop(e, index)}
-                        onDragEnd={ingredientDragHandlers.onDragEnd}
-                        className={`${getBorderClass(ingredientRowThickness)} py-2 hover:bg-gray-50 cursor-move ${
-                          draggedIngredientIndex === index ? "opacity-50" : ""
-                        }`}
-                        style={
-                          draggedIngredientIndex === index
-                            ? getDragHandleStyles()
-                            : {}
-                        }
-                      >
-                        <td className="px-0 py-2">
-                          <FormattableTableInput
-                            value={row.ingredient}
-                            onChange={(value) =>
-                              updateIngredientRow(row.id, "ingredient", value)
-                            }
-                            className="w-full text-sm border-none outline-none bg-transparent"
-                            disabled={
-                              product?.variants &&
-                              product.variants.length > 1 &&
-                              !activeVariantId
-                            }
-                            rowThickness={ingredientRowThickness}
-                            onThicknessChange={setIngredientRowThickness}
-                          />
-                        </td>
-                        <td className="px-0 py-0 relative">
-                          <div className="flex items-center">
-                            <FormattableTableInput
-                              value={row.amount}
-                              onChange={(value) =>
-                                updateIngredientRow(row.id, "amount", value)
-                              }
-                              className="flex-1 text-sm text-right border-none outline-none bg-transparent pr-6"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={ingredientRowThickness}
-                              onThicknessChange={setIngredientRowThickness}
-                            />
-                            <button
-                              onClick={() => deleteIngredientRow(row.id)}
-                              className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-3 py-3 text-center text-sm text-gray-600 italic border-t">
-                * Daily Value not established
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
 
