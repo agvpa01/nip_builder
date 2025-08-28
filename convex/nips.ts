@@ -189,9 +189,11 @@ export const createNip = mutation({
     productId: v.id("products"),
     variantId: v.optional(v.id("productVariants")),
     templateType: v.string(),
+    region: v.optional(v.string()),
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
     htmlFileId: v.optional(v.id("_storage")),
+    tabbedHtmlFileId: v.optional(v.id("_storage")),
   },
   returns: v.id("nips"),
   handler: async (ctx, args) => {
@@ -329,7 +331,7 @@ export const createNipWithTabbedFile = action({
         templateType: args.templateType,
         content: args.content,
         htmlContent: args.htmlContent,
-        htmlFileId: tabbedFileId,
+        tabbedHtmlFileId: tabbedFileId,
       });
 
       return {
@@ -427,7 +429,7 @@ export const updateNipWithTabbedFile = action({
         templateType: args.templateType,
         content: args.content,
         htmlContent: args.htmlContent,
-        htmlFileId: tabbedFileId,
+        tabbedHtmlFileId: tabbedFileId,
       });
 
       return {
@@ -453,6 +455,8 @@ export const updateNip = mutation({
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
     htmlFileId: v.optional(v.id("_storage")),
+    tabbedHtmlFileId: v.optional(v.id("_storage")),
+    region: v.optional(v.string()),
   },
   returns: v.id("nips"),
   handler: async (
@@ -465,17 +469,23 @@ export const updateNip = mutation({
       content,
       htmlContent,
       htmlFileId,
+      tabbedHtmlFileId,
+      region,
     }
   ) => {
-    await ctx.db.patch(nipId, {
+    const patch: any = {
       productId,
       variantId,
       templateType,
       content,
       htmlContent,
-      htmlFileId,
       updatedAt: Date.now(),
-    });
+    };
+    if (typeof htmlFileId !== "undefined") patch.htmlFileId = htmlFileId;
+    if (typeof tabbedHtmlFileId !== "undefined")
+      patch.tabbedHtmlFileId = tabbedHtmlFileId;
+    if (typeof region !== "undefined") patch.region = region;
+    await ctx.db.patch(nipId, patch);
 
     return nipId;
   },

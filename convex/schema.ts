@@ -30,9 +30,11 @@ const applicationTables = {
     productId: v.id("products"),
     variantId: v.optional(v.id("productVariants")),
     templateType: v.string(), // "protein_powder", "complex_supplements", "supplements"
+    region: v.optional(v.string()), // "AU" or "US"
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
     htmlFileId: v.optional(v.id("_storage")), // Reference to stored HTML file
+    tabbedHtmlFileId: v.optional(v.id("_storage")), // Optional tabbed file reference
     createdAt: v.number(),
     updatedAt: v.number(),
   })
