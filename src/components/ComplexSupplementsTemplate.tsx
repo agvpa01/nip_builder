@@ -424,27 +424,29 @@ export function ComplexSupplementsTemplate({
           nutritionalRows.forEach((row, index) => {
             if (row.id === "serving-info") return; // Skip serving info row
       
-            const rowThicknessBorder = getThicknessBorderStyle(
-              row.thickness || "normal"
-            );
+          const rowThicknessBorder = getThicknessBorderStyle(
+            row.thickness || "normal"
+          );
       
-            if ((index+1) === nutritionalRows.length) {
+            const perServeEmpty = !row.perServe || row.perServe.trim() === "";
+            const per100gEmpty = !row.per100g || row.per100g.trim() === "";
+            const isLast = index + 1 === nutritionalRows.length;
+            const borderStyle = isLast ? "none" : rowThicknessBorder;
+
+            if (perServeEmpty && per100gEmpty) {
               html += `
-                  <tr style="border-bottom: none;">
+                  <tr style="border-bottom: ${borderStyle};">
+                    <td colspan="3" style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                  </tr>
+              `;
+            } else {
+              html += `
+                  <tr style="border-bottom: ${borderStyle};">
                     <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
                     <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
                     <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
                   </tr>
-            `;
-            }
-            else {
-      html += `
-                  <tr style="border-bottom: ${rowThicknessBorder};">
-                    <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-                    <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-                    <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
-                  </tr>
-            `;
+              `;
             }
             
           });
@@ -739,65 +741,95 @@ export function ComplexSupplementsTemplate({
                     </tr>
                   </thead>
                   <tbody>
-                    {nutritionalRows.map((row, index) => (
-                      <tr
-                        key={row.id}
-                        draggable
-                        onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
-                        onDragOver={nutritionalDragHandlers.onDragOver}
-                        onDrop={(e) => nutritionalDragHandlers.onDrop(e, index)}
-                        onDragEnd={nutritionalDragHandlers.onDragEnd}
-                        className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 cursor-move ${
-                          draggedNutritionalIndex === index ? "opacity-50" : ""
-                        }`}
-                        style={draggedNutritionalIndex === index ? getDragHandleStyles() : {}}
-                      >
-                        <td className="px-0 py-2">
-                          <FormattableTableInput
-                            value={row.nutrient}
-                            onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
-                            className="w-full text-sm bg-transparent border-none outline-none"
-                            disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
-                            rowThickness={row.thickness || "normal"}
-                            onThicknessChange={(t) =>
-                              updateNutritionalRow(row.id, "thickness", t as unknown as string)
-                            }
-                          />
-                        </td>
-                        <td className="px-0 py-2">
-                          <FormattableTableInput
-                            value={row.perServe}
-                            onChange={(value) => updateNutritionalRow(row.id, "perServe", value)}
-                            className="w-full text-sm bg-transparent border-none outline-none text-right"
-                            disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
-                            rowThickness={row.thickness || "normal"}
-                            onThicknessChange={(t) =>
-                              updateNutritionalRow(row.id, "thickness", t as unknown as string)
-                            }
-                          />
-                        </td>
-                        <td className="px-0 py-2 relative">
-                          <div className="flex items-center">
-                            <FormattableTableInput
-                              value={row.per100g}
-                              onChange={(value) => updateNutritionalRow(row.id, "per100g", value)}
-                              className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
-                              disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(t) =>
-                                updateNutritionalRow(row.id, "thickness", t as unknown as string)
-                              }
-                            />
-                            <button
-                              onClick={() => deleteNutritionalRow(row.id)}
-                              className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {nutritionalRows.map((row, index) => {
+                      const perServeEmpty = !row.perServe || row.perServe.trim() === "";
+                      const per100gEmpty = !row.per100g || row.per100g.trim() === "";
+                      const spanAll = perServeEmpty && per100gEmpty;
+                      return (
+                        <tr
+                          key={row.id}
+                          draggable
+                          onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
+                          onDragOver={nutritionalDragHandlers.onDragOver}
+                          onDrop={(e) => nutritionalDragHandlers.onDrop(e, index)}
+                          onDragEnd={nutritionalDragHandlers.onDragEnd}
+                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 cursor-move ${
+                            draggedNutritionalIndex === index ? "opacity-50" : ""
+                          }`}
+                          style={draggedNutritionalIndex === index ? getDragHandleStyles() : {}}
+                        >
+                          {spanAll ? (
+                            <td className="px-0 py-2" colSpan={3}>
+                              <div className="flex items-center">
+                                <FormattableTableInput
+                                  value={row.nutrient}
+                                  onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
+                                  className="w-full text-sm bg-transparent border-none outline-none"
+                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(t) =>
+                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                  }
+                                />
+                                <button
+                                  onClick={() => deleteNutritionalRow(row.id)}
+                                  className="ml-2 text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </td>
+                          ) : (
+                            <>
+                              <td className="px-0 py-2">
+                                <FormattableTableInput
+                                  value={row.nutrient}
+                                  onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
+                                  className="w-full text-sm bg-transparent border-none outline-none"
+                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(t) =>
+                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                  }
+                                />
+                              </td>
+                              <td className="px-0 py-2">
+                                <FormattableTableInput
+                                  value={row.perServe}
+                                  onChange={(value) => updateNutritionalRow(row.id, "perServe", value)}
+                                  className="w-full text-sm bg-transparent border-none outline-none text-right"
+                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(t) =>
+                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                  }
+                                />
+                              </td>
+                              <td className="px-0 py-2 relative">
+                                <div className="flex items-center">
+                                  <FormattableTableInput
+                                    value={row.per100g}
+                                    onChange={(value) => updateNutritionalRow(row.id, "per100g", value)}
+                                    className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
+                                    disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                    rowThickness={row.thickness || "normal"}
+                                    onThicknessChange={(t) =>
+                                      updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                    }
+                                  />
+                                  <button
+                                    onClick={() => deleteNutritionalRow(row.id)}
+                                    className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
