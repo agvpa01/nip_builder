@@ -69,19 +69,20 @@ function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
   if (!nips || (!auLatest && !usLatest)) return null;
 
   return (
-    <div className="relative inline-block text-left">
-      <details className="group">
-        <summary className="list-none cursor-pointer text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1 bg-purple-50 rounded hover:bg-purple-100 transition-colors inline-flex items-center gap-1">
+    <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
+      <details className="group" onClick={(e) => e.stopPropagation()}>
+        <summary className="list-none cursor-pointer text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1 bg-purple-50 rounded hover:bg-purple-100 transition-colors inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           View Public NIP
           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.25 7.5L10 12.25 14.75 7.5z"/></svg>
         </summary>
-        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-10 py-1">
+        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-10 py-1" onClick={(e) => e.stopPropagation()}>
           {auUrl ? (
             <a
               href={auUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
+              onClick={(e) => e.stopPropagation()}
             >
               AU Version
             </a>
@@ -94,6 +95,7 @@ function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
+              onClick={(e) => e.stopPropagation()}
             >
               US Version
             </a>
