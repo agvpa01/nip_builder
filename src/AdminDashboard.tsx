@@ -230,8 +230,27 @@ export function AdminDashboard() {
   const chooseRegion = (region: "AU" | "US") => {
     setShowRegionPicker(false);
     if (region === "AU") {
-      setShowTemplateSelection(true);
-      setActiveTab("template-selection");
+      // If an AU template already exists for this variant, load the most recent automatically
+      const v = getVariantForRegion();
+      const auExisting = (allNips || []).filter(
+        (n: any) =>
+          n.productId === selectedProduct?._id &&
+          (!v || n.variantId === v._id) &&
+          auTemplateTypes.includes(n.templateType)
+      );
+      if (auExisting.length > 0) {
+        const latest = auExisting.sort(
+          (a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
+        )[0];
+        setCurrentNip(latest);
+        setSelectedTemplate(latest.templateType);
+        setShowNipBuilder(true);
+        setActiveTab("nip-builder");
+      } else {
+        // No AU template yet; go to AU template selection
+        setShowTemplateSelection(true);
+        setActiveTab("template-selection");
+      }
     } else {
       // US Nutrition Facts builder
       const existing = allNips?.find(
