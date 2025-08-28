@@ -3,7 +3,6 @@ import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { FormattableTableInput } from "./FormattableTableInput";
-import { TabbedPreviewModal } from "./TabbedPreviewModal";
 import { convertFormattingForHtml, convertTabsForHtml } from "../lib/tabUtils";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { createDragDropHandlers, getDragHandleStyles } from "../lib/dragDropUtils";
@@ -543,14 +542,60 @@ export function USNutritionFactsTemplate({
           </button>
         </div>
       </div>
-      {/* Tabbed Preview Modal */}
+      {/* Inline Preview Modal showing saved US NIP if available */}
       {showPreview && (
-        <TabbedPreviewModal
-          title="US Nutrition Facts"
-          isOpen={showPreview}
-          productId={product._id}
-          onClose={() => setShowPreview(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">US Nutrition Facts Preview</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const html = (currentVariantNip?.htmlContent as string) || generateHtml();
+                    const w = window.open("", "_blank");
+                    if (w) {
+                      w.document.write(html);
+                      w.document.close();
+                    }
+                  }}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Open in New Tab
+                </button>
+                <button
+                  onClick={() => {
+                    const html = (currentVariantNip?.htmlContent as string) || generateHtml();
+                    navigator.clipboard.writeText(html);
+                  }}
+                  className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Copy HTML
+                </button>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl font-bold w-8 h-8 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <iframe
+                srcDoc={(currentVariantNip?.htmlContent as string) || generateHtml()}
+                className="w-full h-[75vh] border-0"
+                title="US Nutrition Facts Preview"
+              />
+            </div>
+            <div className="p-4 border-t bg-gray-50 flex justify-end">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
