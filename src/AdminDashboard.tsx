@@ -2367,6 +2367,57 @@ export function AdminDashboard() {
             </div>
           </div>
       )}
+
+      {/* Region Picker Modal */}
+      {showRegionPicker && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-xl w-full overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Choose NIP Version</h2>
+              <button
+                onClick={() => setShowRegionPicker(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => chooseRegion("AU")}
+                className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-base font-semibold">Australian (AU)</div>
+                    <div className="text-xs text-gray-600">Protein Powder, Complex, Supplements</div>
+                  </div>
+                  <span className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasAnyAu ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    {hasAnyAu ? "Exists" : "None"}
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => chooseRegion("US")}
+                className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-base font-semibold">United States (US)</div>
+                    <div className="text-xs text-gray-600">Nutrition Facts</div>
+                  </div>
+                  <span className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasUs ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    {hasUs ? "Exists" : "None"}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </div>
   );
