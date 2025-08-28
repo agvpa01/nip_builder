@@ -33,7 +33,7 @@ interface NutritionalRow {
   nutrient: string;
   perServe: string;
   per100g: string;
-  thickness?:
+  thickness:
     | "normal"
     | "thick"
     | "medium-thick"
@@ -406,8 +406,8 @@ export function ComplexSupplementsTemplate({
                 <div style="padding: 10px; padding-top:0px; border: 2px solid black; border-top: none; margin-bottom:10px; border-radius: 0 0 8px 8px; overflow: hidden;">
                 <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
                   <colgroup>
-                    <col style="width: 40%;" />
-                    <col style="width: 30%;" />
+                    <col style="width: 45%;" />
+                    <col style="width: 25%;" />
                     <col style="width: 30%;" />
                   </colgroup>
                   <thead>
@@ -768,7 +768,7 @@ export function ComplexSupplementsTemplate({
                                   disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
                                   rowThickness={row.thickness || "normal"}
                                   onThicknessChange={(t) =>
-                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                    updateNutritionalRow(row.id, "thickness", t)
                                   }
                                 />
                                 <button
@@ -789,7 +789,7 @@ export function ComplexSupplementsTemplate({
                                   disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
                                   rowThickness={row.thickness || "normal"}
                                   onThicknessChange={(t) =>
-                                    updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                    updateNutritionalRow(row.id, "thickness", t)
                                   }
                                 />
                               </td>
@@ -814,7 +814,7 @@ export function ComplexSupplementsTemplate({
                                     disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
                                     rowThickness={row.thickness || "normal"}
                                     onThicknessChange={(t) =>
-                                      updateNutritionalRow(row.id, "thickness", t as unknown as string)
+                                      updateNutritionalRow(row.id, "thickness", t)
                                     }
                                   />
                                   <button
