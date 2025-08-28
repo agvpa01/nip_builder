@@ -28,7 +28,7 @@ interface USRow {
   nutrient: string;
   amount: string;
   percentDv: string; // e.g., "0%"; empty if not applicable
-  indent?: boolean; // sub-item (e.g., Saturated Fat)
+  indentLevel?: number; // auto from leading tabs/spaces (4 spaces = 1 level)
   italic?: boolean; // e.g., Trans Fat label
   bold?: boolean; // e.g., Protein row
   thickness?: Thickness;
@@ -63,14 +63,14 @@ export function USNutritionFactsTemplate({
 
   const [rows, setRows] = useState<USRow[]>([
     { id: "fat-total", nutrient: "Total Fat", amount: "0g", percentDv: "0%", thickness: "large-thick", bold: true },
-    { id: "fat-sat", nutrient: "Saturated Fat", amount: "0g", percentDv: "0%", indent: true },
-    { id: "fat-trans", nutrient: "Trans Fat", amount: "0g", percentDv: "", indent: true, italic: true },
+    { id: "fat-sat", nutrient: "Saturated Fat", amount: "0g", percentDv: "0%", indentLevel: 1 },
+    { id: "fat-trans", nutrient: "Trans Fat", amount: "0g", percentDv: "", indentLevel: 1, italic: true },
     { id: "chol", nutrient: "Cholesterol", amount: "0mg", percentDv: "0%" },
     { id: "sodium", nutrient: "Sodium", amount: "60mg", percentDv: "3%", thickness: "medium-thick" },
     { id: "carb-total", nutrient: "Total Carbohydrate", amount: "2g", percentDv: "1%", thickness: "medium-thick", bold: true },
-    { id: "fiber", nutrient: "Dietary Fiber", amount: "0g", percentDv: "0%", indent: true },
-    { id: "sugars-total", nutrient: "Total Sugars", amount: "1g", percentDv: "", indent: true, bold: true },
-    { id: "sugars-added", nutrient: "Includes Added Sugars", amount: "0g", percentDv: "", indent: true },
+    { id: "fiber", nutrient: "Dietary Fiber", amount: "0g", percentDv: "0%", indentLevel: 1 },
+    { id: "sugars-total", nutrient: "Total Sugars", amount: "1g", percentDv: "", indentLevel: 1, bold: true },
+    { id: "sugars-added", nutrient: "Includes Added Sugars", amount: "0g", percentDv: "", indentLevel: 2 },
     { id: "protein", nutrient: "Protein", amount: "26g", percentDv: "", thickness: "large-thick", bold: true },
     { id: "vit-d", nutrient: "Vitamin D", amount: "0mcg", percentDv: "0%" },
     { id: "calcium", nutrient: "Calcium", amount: "130mg", percentDv: "10%" },
@@ -251,7 +251,8 @@ export function USNutritionFactsTemplate({
     rows.forEach((row, index) => {
       const isLast = index === rows.length - 1;
       const border = isLast ? "1px solid black" : getThicknessBorderStyle(row.thickness || "normal");
-      const nameStyle = [row.bold ? "font-weight:700;" : "", row.italic ? "font-style:italic;" : "", row.indent ? "padding-left:16px;" : ""].join("");
+      const indentPx = ((row.indentLevel ?? 0) * 16);
+      const nameStyle = [row.bold ? "font-weight:700;" : "", row.italic ? "font-style:italic;" : "", indentPx ? `padding-left:${indentPx}px;` : ""].join("");
       html += `
           <tr style="border-bottom: ${border};">
             <td style="padding: 6px 10px; font-size: 12px; ${nameStyle}">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))} ${row.amount ? convertFormattingForHtml(convertTabsForHtml(row.amount)) : ""}</td>
@@ -467,20 +468,26 @@ export function USNutritionFactsTemplate({
                 >
                   <td className="px-1 py-1">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4"
-                        checked={!!row.indent}
-                        onChange={(e) => updateRow(row.id, "indent", e.target.checked)}
-                        title="Indent"
-                      />
+                      <div style={{ paddingLeft: `${(row.indentLevel ?? 0) * 16}px` }} className="flex-1">
                       <FormattableTableInput
                         value={row.nutrient}
-                        onChange={(v) => updateRow(row.id, "nutrient", v)}
-                        className={`flex-1 text-sm bg-transparent border-none outline-none ${row.bold ? "font-bold" : ""} ${row.italic ? "italic" : ""}`}
+                        onChange={(v) => {
+                          // Update text and derive indent from leading spaces/tabs (4 spaces = 1 level)
+                          updateRow(row.id, "nutrient", v);
+                          const match = /^([\t ]+)/.exec(v || "");
+                          let spaces = 0;
+                          if (match) {
+                            const lead = match[1];
+                            for (const ch of lead) spaces += ch === "\t" ? 4 : 1;
+                          }
+                          const level = Math.max(0, Math.floor(spaces / 4));
+                          updateRow(row.id, "indentLevel", level as any);
+                        }}
+                        className={`w-full text-sm bg-transparent border-none outline-none ${row.bold ? "font-bold" : ""} ${row.italic ? "italic" : ""}`}
                         rowThickness={row.thickness || "normal"}
                         onThicknessChange={(t) => updateRow(row.id, "thickness", t)}
                       />
+                      </div>
                       <FormattableTableInput
                         value={row.amount}
                         onChange={(v) => updateRow(row.id, "amount", v)}
