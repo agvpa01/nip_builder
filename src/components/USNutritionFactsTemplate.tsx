@@ -511,6 +511,7 @@ export function USNutritionFactsTemplate({
           title="US Nutrition Facts"
           isOpen={showPreview}
           productId={product._id}
+          templateType="us_nutrition_facts"
           onClose={() => setShowPreview(false)}
         />
       )}

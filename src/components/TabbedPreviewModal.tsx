@@ -8,6 +8,7 @@ interface TabbedPreviewModalProps {
   onClose: () => void;
   productId: Id<"products">;
   title: string;
+  templateType?: string;
 }
 
 export function TabbedPreviewModal({
@@ -15,10 +16,11 @@ export function TabbedPreviewModal({
   onClose,
   productId,
   title,
+  templateType,
 }: TabbedPreviewModalProps) {
   const tabbedNipData = useQuery(
     api.nips.generateTabbedProductHtml,
-    isOpen ? { productId } : "skip"
+    isOpen ? { productId, templateType } : "skip"
   );
 
   if (!isOpen) return null;

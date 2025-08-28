@@ -557,6 +557,7 @@ export const deleteAllNipsForProduct = mutation({
 export const generateTabbedProductHtml = query({
   args: {
     productId: v.id("products"),
+    templateType: v.optional(v.string()),
   },
   returns: v.object({
     success: v.boolean(),
@@ -564,14 +565,19 @@ export const generateTabbedProductHtml = query({
     html: v.string(),
     variantCount: v.number(),
   }),
-  handler: async (ctx, { productId }) => {
+  handler: async (ctx, { productId, templateType }) => {
     // Get all NIPs for this product
     const nips = await ctx.db
       .query("nips")
       .withIndex("by_product", (q) => q.eq("productId", productId))
       .collect();
 
-    if (nips.length === 0) {
+    // Optionally filter by templateType (e.g., US only)
+    const filtered = templateType
+      ? nips.filter((n) => n.templateType === templateType)
+      : nips;
+
+    if (filtered.length === 0) {
       return {
         success: false,
         message: "No NIPs found for this product",
@@ -592,9 +598,9 @@ export const generateTabbedProductHtml = query({
     }
 
     // Build variant data for tabs
-    const variantData = [];
-    for (let i = 0; i < nips.length; i++) {
-      const nip = nips[i];
+    const variantData = [] as { id: string; name: string; templateType: string; htmlContent: string }[];
+    for (let i = 0; i < filtered.length; i++) {
+      const nip = filtered[i];
 
       // Get variant information if available
       let variantName = "Default Variant";
