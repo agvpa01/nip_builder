@@ -7,6 +7,7 @@ import { NipBuilder } from "./components/NipBuilder";
 import { ProteinPowderTemplate } from "./components/ProteinPowderTemplate";
 import { SupplementsTemplate } from "./components/SupplementsTemplate";
 import { ComplexSupplementsTemplate } from "./components/ComplexSupplementsTemplate";
+import { USNutritionFactsTemplate } from "./components/USNutritionFactsTemplate";
 import { Id } from "../convex/_generated/dataModel";
 
 // Component to show public NIP link
@@ -77,6 +78,7 @@ export function AdminDashboard() {
   const [showNipBuilder, setShowNipBuilder] = useState(false);
   const [currentNip, setCurrentNip] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [showRegionPicker, setShowRegionPicker] = useState(false);
 
   // NIP queries
   const allNips = useQuery(api.nips.getAllNips);
@@ -173,26 +175,18 @@ export function AdminDashboard() {
       setSelectedTemplate(null);
       setShowTemplateSelection(false);
       setShowNipBuilder(false);
+      setShowRegionPicker(true);
     },
     []
   );
 
   // Effect to handle NIP existence check after product selection
   useEffect(() => {
-    if (selectedProduct && checkNipExists !== undefined) {
-      if (checkNipExists?.exists) {
-        // NIP exists, automatically load the existing template and data
-        setCurrentNip(checkNipExists.nip);
-        setSelectedTemplate(checkNipExists.nip?.templateType || null);
-        setShowNipBuilder(true);
-        setActiveTab("nip-builder");
-      } else {
-        // No NIP exists, show template selection
-        setShowTemplateSelection(true);
-        setActiveTab("template-selection");
-      }
+    // After selecting a product, first ask AU vs US regardless of existing NIPs
+    if (selectedProduct) {
+      setShowRegionPicker(true);
     }
-  }, [selectedProduct, selectedVariant, checkNipExists]);
+  }, [selectedProduct]);
 
   const handleTemplateSelection = (templateType: string) => {
     setShowTemplateSelection(false);
@@ -209,6 +203,48 @@ export function AdminDashboard() {
       },
       htmlOutput: "",
     });
+  };
+
+  // Region picker helpers
+  const auTemplateTypes = [
+    "protein_powder",
+    "complex_supplements",
+    "supplements",
+  ];
+  const getVariantForRegion = () => selectedVariant || selectedProduct?.variants?.[0];
+  const hasNipFor = (templateType: string) =>
+    allNips?.some(
+      (n: any) =>
+        n.productId === selectedProduct?._id &&
+        (!getVariantForRegion() || n.variantId === getVariantForRegion()._id) &&
+        n.templateType === templateType
+    ) || false;
+  const hasAnyAu = allNips?.some(
+    (n: any) =>
+      n.productId === selectedProduct?._id &&
+      (!getVariantForRegion() || n.variantId === getVariantForRegion()._id) &&
+      auTemplateTypes.includes(n.templateType)
+  );
+  const hasUs = hasNipFor("us_nutrition_facts");
+
+  const chooseRegion = (region: "AU" | "US") => {
+    setShowRegionPicker(false);
+    if (region === "AU") {
+      setShowTemplateSelection(true);
+      setActiveTab("template-selection");
+    } else {
+      // US Nutrition Facts builder
+      const existing = allNips?.find(
+        (n: any) =>
+          n.productId === selectedProduct?._id &&
+          (!getVariantForRegion() || n.variantId === getVariantForRegion()._id) &&
+          n.templateType === "us_nutrition_facts"
+      );
+      setCurrentNip(existing || null);
+      setSelectedTemplate("us_nutrition_facts");
+      setShowNipBuilder(true);
+      setActiveTab("nip-builder");
+    }
   };
 
   const handleBackToNips = () => {
@@ -1717,6 +1753,20 @@ export function AdminDashboard() {
                 }}
                 onCancel={handleBackToNips}
               />
+            ) : selectedTemplate === "us_nutrition_facts" ? (
+              <USNutritionFactsTemplate
+                product={selectedProduct}
+                variant={selectedVariant}
+                currentNip={currentNip}
+                onSave={(nip) => {
+                  if (nip === null) {
+                    handleBackToNips();
+                  } else {
+                    setCurrentNip(nip);
+                  }
+                }}
+                onCancel={handleBackToNips}
+              />
             ) : (
               <NipBuilder
                 product={selectedProduct}
@@ -2316,7 +2366,7 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
-        )}
+      )}
       </div>
     </div>
   );
