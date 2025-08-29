@@ -110,6 +110,37 @@ export const getNipPublicUrlById = query({
   },
 });
 
+// Get public URL for the latest tabbed HTML for a product (optionally per templateType)
+export const getTabbedNipPublicUrl = query({
+  args: {
+    productId: v.id("products"),
+    templateType: v.optional(v.string()),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { productId, templateType }) => {
+    let nips = await ctx.db
+      .query("nips")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .collect();
+
+    if (templateType) {
+      nips = nips.filter((n: any) => n.templateType === templateType);
+    }
+
+    // Get the most recent record that has a tabbedHtmlFileId
+    const withTabbed = nips
+      .filter((n: any) => n.tabbedHtmlFileId)
+      .sort(
+        (a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
+      )[0];
+
+    if (!withTabbed) return null;
+
+    const url = await ctx.storage.getUrl(withTabbed.tabbedHtmlFileId!);
+    return url;
+  },
+});
+
 // Helper function to generate filename from onlineStoreUrl
 function generateFilename(onlineStoreUrl: string, variantId?: string): string {
   // Extract the product handle from the URL
@@ -289,6 +320,7 @@ export const createNipWithTabbedFile = action({
         variantCount: number;
       } = await ctx.runQuery(api.nips.generateTabbedProductHtml, {
         productId: args.productId,
+        templateType: args.templateType,
       });
 
       if (!tabbedHtmlResult.success) {
@@ -387,6 +419,7 @@ export const updateNipWithTabbedFile = action({
         variantCount: number;
       } = await ctx.runQuery(api.nips.generateTabbedProductHtml, {
         productId: args.productId,
+        templateType: args.templateType,
       });
 
       if (!tabbedHtmlResult.success) {

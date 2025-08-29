@@ -57,11 +57,20 @@ function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
     ?.filter((n: any) => n.templateType === "us_nutrition_facts" && n.htmlFileId)
     .sort((a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0];
 
-  const auUrl = useQuery(
+  // Prefer tabbed AU URL if available; otherwise fall back to latest variant file
+  const auTabbedUrl = useQuery(
+    api.nips.getTabbedNipPublicUrl as any,
+    nips ? { productId, templateType: "protein_powder" } : "skip"
+  );
+  const auUrl = auTabbedUrl || useQuery(
     api.nips.getNipPublicUrlById as any,
     auLatest ? { nipId: auLatest._id } : "skip"
   );
-  const usUrl = useQuery(
+  const usTabbedUrl = useQuery(
+    api.nips.getTabbedNipPublicUrl as any,
+    nips ? { productId, templateType: "us_nutrition_facts" } : "skip"
+  );
+  const usUrl = usTabbedUrl || useQuery(
     api.nips.getNipPublicUrlById as any,
     usLatest ? { nipId: usLatest._id } : "skip"
   );
