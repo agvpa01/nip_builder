@@ -849,6 +849,7 @@ export function ComplexSupplementsTemplate({
           title="Complex Supplements NIP"
           isOpen={showPreview}
           productId={product._id}
+          templateType="complex_supplements"
           onClose={() => setShowPreview(false)}
         />
       )}

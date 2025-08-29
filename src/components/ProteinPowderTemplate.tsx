@@ -1097,6 +1097,7 @@ html += `
           title="Protein Powder NIP"
           isOpen={showPreview}
           productId={product._id}
+          templateType="protein_powder"
           onClose={() => setShowPreview(false)}
         />
       )}

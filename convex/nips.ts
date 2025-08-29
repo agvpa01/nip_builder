@@ -601,6 +601,10 @@ export const generateTabbedProductHtml = query({
     const variantData = [] as { id: string; name: string; templateType: string; htmlContent: string }[];
     for (let i = 0; i < filtered.length; i++) {
       const nip = filtered[i];
+      // Skip entries without HTML to avoid blank tabs
+      if (!nip.htmlContent || (typeof nip.htmlContent === "string" && nip.htmlContent.trim() === "")) {
+        continue;
+      }
 
       // Get variant information if available
       let variantName = "Default Variant";
@@ -619,6 +623,15 @@ export const generateTabbedProductHtml = query({
       });
     }
 
+    // If no variants with HTML, abort
+    if (variantData.length === 0) {
+      return {
+        success: false,
+        message: "No NIPs with HTML content found for this product",
+        html: "",
+        variantCount: 0,
+      };
+    }
     // Check if we have only one variant - if so, generate simple HTML without tabs
     if (variantData.length === 1) {
       const singleVariant = variantData[0];

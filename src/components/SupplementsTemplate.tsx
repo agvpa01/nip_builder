@@ -654,6 +654,7 @@ export function SupplementsTemplate({
           title="Supplements NIP"
           isOpen={showPreview}
           productId={product._id}
+          templateType="supplements"
           onClose={() => setShowPreview(false)}
         />
       )}
