@@ -58,7 +58,7 @@ export function SupplementsTemplate({
 
   // Get current variant NIP
   const currentVariantNip = productNips?.find(
-    (nip) => nip.variantId === activeVariantId
+    (nip) => nip.variantId === activeVariantId && nip.templateType === "supplements",
   );
 
   // Text sections removed - keeping only nutritional information table
@@ -655,6 +655,7 @@ export function SupplementsTemplate({
           isOpen={showPreview}
           productId={product._id}
           templateType="supplements"
+          variants={product.variants}
           onClose={() => setShowPreview(false)}
         />
       )}

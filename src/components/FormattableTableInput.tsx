@@ -22,6 +22,7 @@ interface FormattableTableInputProps {
   className?: string;
   placeholder?: string;
   disabled?: boolean;
+  allowNewLines?: boolean; // allow Enter to insert line breaks
   rowThickness?:
     | "normal"
     | "thick"
@@ -44,6 +45,7 @@ export function FormattableTableInput({
   className = "",
   placeholder = "",
   disabled = false,
+  allowNewLines = false,
   rowThickness = "normal",
   onThicknessChange,
 }: FormattableTableInputProps) {
@@ -214,23 +216,28 @@ export function FormattableTableInput({
   // Convert HTML to display format for contentEditable with enhanced styling
   const getDisplayHtml = useCallback((htmlValue: string) => {
     return htmlValue
+      .replace(/\n/g, '<br>')
       .replace(/<b>/g, '<strong style="font-weight: bold;">')
-      .replace(/<\/b>/g, "</strong>")
+      .replace(/<\/b>/g, '</strong>')
       .replace(/<i>/g, '<em style="font-style: italic;">')
-      .replace(/<\/i>/g, "</em>");
+      .replace(/<\/i>/g, '</em>');
   }, []);
 
   // Convert display format back to storage format
   const convertToStorageFormat = useCallback((displayHtml: string) => {
     return displayHtml
-      .replace(/<strong[^>]*>/g, "<b>")
-      .replace(/<\/strong>/g, "</b>")
-      .replace(/<em[^>]*>/g, "<i>")
-      .replace(/<\/em>/g, "</i>")
-      .replace(/<div>/g, "")
-      .replace(/<\/div>/g, "")
-      .replace(/<br>/g, "")
-      .replace(/&nbsp;/g, " ");
+      .replace(/<strong[^>]*>/g, '<b>')
+      .replace(/<\/strong>/g, '</b>')
+      .replace(/<em[^>]*>/g, '<i>')
+      .replace(/<\/em>/g, '</i>')
+      // Convert common line break HTML to newlines
+      .replace(/<div><br\s*\/?><\/div>/g, '\n')
+      .replace(/<div>(.*?)<\/div>/g, '$1\n')
+      .replace(/<br\s*\/?>(?!\n)/g, '\n')
+      // Clean remaining tags and entities we don't use
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\r/g, '')
+      .trimEnd();
   }, []);
 
   // Apply formatting to selected text or entire value
@@ -456,9 +463,30 @@ export function FormattableTableInput({
             return; // Navigation was handled, don't process other keys
           }
 
-          // Handle Enter key to prevent line breaks
+          // Handle Enter key for new lines when allowed
           if (e.key === "Enter") {
+            if (!allowNewLines) {
+              e.preventDefault();
+              return;
+            }
             e.preventDefault();
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              // Insert a line break
+              const br = document.createElement("br");
+              range.deleteContents();
+              range.insertNode(br);
+              // Move cursor after the <br>
+              range.setStartAfter(br);
+              range.setEndAfter(br);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              // Trigger onChange with updated HTML
+              const newHtml = (inputRef.current as any)?.innerHTML || "";
+              const newValue = convertToStorageFormat(newHtml);
+              onChange(newValue);
+            }
             return;
           }
 

@@ -69,7 +69,7 @@ export function ComplexSupplementsTemplate({
 
   // Get current variant NIP
   const currentVariantNip = productNips?.find(
-    (nip) => nip.variantId === activeVariantId
+    (nip) => nip.variantId === activeVariantId && nip.templateType === "complex_supplements",
   );
 
   // Initialize text sections with only Ingredients
@@ -850,6 +850,7 @@ export function ComplexSupplementsTemplate({
           isOpen={showPreview}
           productId={product._id}
           templateType="complex_supplements"
+          variants={product.variants}
           onClose={() => setShowPreview(false)}
         />
       )}

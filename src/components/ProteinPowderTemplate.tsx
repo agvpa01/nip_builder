@@ -72,17 +72,20 @@ export function ProteinPowderTemplate({
     product ? { productId: product._id } : "skip"
   );
 
-  // Get current variant NIP
+  // Get current variant NIP for AU protein powder template (match by variant and template)
   const currentVariantNip = productNips?.find(
-    (nip) => nip.variantId === activeVariantId
+    (nip) =>
+      nip.variantId === activeVariantId && nip.templateType === "protein_powder"
   );
 
   // Existence flags for AU (this builder) and US Nutrition Facts
   const auExists = !!productNips?.some(
-    (n: any) => n.variantId === activeVariantId && n.templateType === "protein_powder"
+    (n: any) =>
+      n.variantId === activeVariantId && n.templateType === "protein_powder"
   );
   const usExists = !!productNips?.some(
-    (n: any) => n.variantId === activeVariantId && n.templateType === "us_nutrition_facts"
+    (n: any) =>
+      n.variantId === activeVariantId && n.templateType === "us_nutrition_facts"
   );
 
   // Initialize default text sections
@@ -476,7 +479,7 @@ export function ProteinPowderTemplate({
         row.thickness || "normal"
       );
 
-      if ((index+1) === nutritionalRows.length) {
+      if (index + 1 === nutritionalRows.length) {
         html += `
             <tr style="border-bottom: none;">
               <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
@@ -484,9 +487,8 @@ export function ProteinPowderTemplate({
               <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
             </tr>
       `;
-      }
-      else {
-html += `
+      } else {
+        html += `
             <tr style="border-bottom: ${rowThicknessBorder};">
               <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
               <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
@@ -494,7 +496,6 @@ html += `
             </tr>
       `;
       }
-      
     });
 
     html += `
@@ -528,7 +529,6 @@ html += `
       const rowThicknessBorder = getThicknessBorderStyle(
         row.thickness || "normal"
       );
-
 
       if (row.amount) {
         html += `
@@ -678,12 +678,6 @@ html += `
             >
               Cancel
             </button>
-            <button
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 text-xl ml-2"
-            >
-              ✕
-            </button>
           </div>
         </div>
 
@@ -732,7 +726,9 @@ html += `
               AU Builder
               <span
                 className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                  auExists ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  auExists
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
                 }`}
               >
                 {auExists ? "Exists" : "None"}
@@ -746,7 +742,9 @@ html += `
               US Builder
               <span
                 className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                  usExists ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  usExists
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
                 }`}
               >
                 {usExists ? "Exists" : "None"}
@@ -1097,7 +1095,8 @@ html += `
           title="Protein Powder NIP"
           isOpen={showPreview}
           productId={product._id}
-          templateType="protein_powder"
+          region="AU"
+          variants={product.variants}
           onClose={() => setShowPreview(false)}
         />
       )}

@@ -73,9 +73,11 @@ export function NipBuilder({
     ? product.variants?.find((v: any) => v._id === activeVariantId)
     : product.variants?.[0];
 
-  // Get NIP for current variant
+  // Get NIP for current variant and current template type (align with US behavior)
   const currentVariantNip =
-    productNips?.find((nip) => nip.variantId === activeVariantId) || currentNip;
+    productNips?.find(
+      (nip) => nip.variantId === activeVariantId && nip.templateType === currentNip.templateType,
+    ) || currentNip;
 
   // Auto-select first variant when product loads with variants
   useEffect(() => {
@@ -91,7 +93,7 @@ export function NipBuilder({
 
       // Load existing NIP data for the first variant if it exists
       const firstVariantNip = productNips?.find(
-        (nip) => nip.variantId === firstVariant._id
+        (nip) => nip.variantId === firstVariant._id && nip.templateType === currentNip.templateType,
       );
       if (firstVariantNip) {
         setSections((firstVariantNip.content?.sections || []) as Section[]);
@@ -232,7 +234,7 @@ export function NipBuilder({
     (variantId: string) => {
       setActiveVariantId(variantId);
       const variantNip = productNips?.find(
-        (nip) => nip.variantId === variantId
+        (nip) => nip.variantId === variantId && nip.templateType === currentNip.templateType,
       );
       if (variantNip) {
         setSections((variantNip.content?.sections || []) as Section[]);
