@@ -386,6 +386,7 @@ export const generateTabbedProductHtml = query({
   args: {
     productId: v.id('products'),
     templateType: v.optional(v.string()),
+    region: v.optional(v.string()),
   },
   returns: v.object({
     success: v.boolean(),
@@ -393,15 +394,20 @@ export const generateTabbedProductHtml = query({
     html: v.string(),
     variantCount: v.number(),
   }),
-  handler: async (ctx, { productId, templateType }) => {
+  handler: async (ctx, { productId, templateType, region }) => {
     // Get all NIPs for this product
     const nips = await ctx.db
       .query('nips')
       .withIndex('by_product', (q) => q.eq('productId', productId))
       .collect()
 
-    // Optionally filter by templateType (e.g., US only)
-    const filtered = templateType ? nips.filter((n) => n.templateType === templateType) : nips
+    // Optionally filter by templateType first; otherwise by region; else use all
+    let filtered = nips
+    if (templateType) {
+      filtered = nips.filter((n) => n.templateType === templateType)
+    } else if (region) {
+      filtered = nips.filter((n) => (n as any).region === region)
+    }
 
     if (filtered.length === 0) {
       return {
