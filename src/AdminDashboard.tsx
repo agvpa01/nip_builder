@@ -8,114 +8,9 @@ import { ProteinPowderTemplate } from "./components/ProteinPowderTemplate";
 import { SupplementsTemplate } from "./components/SupplementsTemplate";
 import { ComplexSupplementsTemplate } from "./components/ComplexSupplementsTemplate";
 import { USNutritionFactsTemplate } from "./components/USNutritionFactsTemplate";
+import { USSupplementsTemplate } from "./components/USSupplementsTemplate";
 import { Id } from "../convex/_generated/dataModel";
 
-// Component to show public NIP link
-function PublicNipLink({ productId }: { productId: Id<"products"> }) {
-  const nips = useQuery(api.nips.getNipsByProduct, { productId });
-
-  // Get the most recently updated NIP with an htmlFileId (fallback to creation time)
-  const firstNip = nips
-    ?.filter((nip) => nip.htmlFileId)
-    .sort((a, b) => {
-      // Prioritize updatedAt if available, otherwise use _creationTime
-      const aTime = a.updatedAt || a.createdAt;
-      const bTime = b.updatedAt || b.createdAt;
-      return bTime - aTime;
-    })[0];
-
-  const publicUrl = useQuery(
-    api.nips.getNipPublicUrl,
-    firstNip ? { productId, variantId: firstNip.variantId } : "skip"
-  );
-
-  if (!publicUrl || !firstNip) {
-    return null;
-  }
-
-  return (
-    <a
-      href={publicUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1 bg-purple-50 rounded hover:bg-purple-100 transition-colors"
-    >
-      View Public NIP →
-    </a>
-  );
-}
-
-// New: Dropdown to view AU or US public NIP (latest per type)
-function PublicNipDropdown({ productId }: { productId: Id<"products"> }) {
-  const nips = useQuery(api.nips.getNipsByProduct, { productId });
-  const auTypes = ["protein_powder", "complex_supplements", "supplements"];
-
-  const auLatest = nips
-    ?.filter((n: any) => auTypes.includes(n.templateType) && n.htmlFileId)
-    .sort((a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0];
-  const usLatest = nips
-    ?.filter((n: any) => n.templateType === "us_nutrition_facts" && n.htmlFileId)
-    .sort((a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0];
-
-  // Prefer tabbed AU URL if available; otherwise fall back to latest variant file
-  const auTabbedUrl = useQuery(
-    api.nips.getTabbedNipPublicUrl as any,
-    nips ? { productId, templateType: "protein_powder" } : "skip"
-  );
-  const auUrl = auTabbedUrl || useQuery(
-    api.nips.getNipPublicUrlById as any,
-    auLatest ? { nipId: auLatest._id } : "skip"
-  );
-  const usTabbedUrl = useQuery(
-    api.nips.getTabbedNipPublicUrl as any,
-    nips ? { productId, templateType: "us_nutrition_facts" } : "skip"
-  );
-  const usUrl = usTabbedUrl || useQuery(
-    api.nips.getNipPublicUrlById as any,
-    usLatest ? { nipId: usLatest._id } : "skip"
-  );
-
-  if (!nips || (!auLatest && !usLatest)) return null;
-
-  return (
-    <div className="relative inline-block text-left" onClick={(e) => e.stopPropagation()}>
-      <details className="group" onClick={(e) => e.stopPropagation()}>
-        <summary className="list-none cursor-pointer text-xs text-purple-600 hover:text-purple-800 font-medium px-2 py-1 bg-purple-50 rounded hover:bg-purple-100 transition-colors inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          View Public NIP
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5.25 7.5L10 12.25 14.75 7.5z"/></svg>
-        </summary>
-        <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-10 py-1" onClick={(e) => e.stopPropagation()}>
-          {auUrl ? (
-            <a
-              href={auUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
-              onClick={(e) => e.stopPropagation()}
-            >
-              AU Version
-            </a>
-          ) : (
-            <span className="block w-full px-3 py-1 text-xs text-gray-400">AU Version (none)</span>
-          )}
-          {usUrl ? (
-            <a
-              href={usUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-800"
-              onClick={(e) => e.stopPropagation()}
-            >
-              US Version
-            </a>
-          ) : (
-            <span className="block w-full px-3 py-1 text-xs text-gray-400">US Version (none)</span>
-          )}
-        </div>
-      </details>
-    </div>
-  );
-}
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -147,6 +42,9 @@ export function AdminDashboard() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [templateSelectionRegion, setTemplateSelectionRegion] = useState<
+    "AU" | "US" | null
+  >(null);
   const [showNipBuilder, setShowNipBuilder] = useState(false);
   const [currentNip, setCurrentNip] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -283,7 +181,8 @@ export function AdminDashboard() {
     "complex_supplements",
     "supplements",
   ];
-  const getVariantForRegion = () => selectedVariant || selectedProduct?.variants?.[0];
+  const getVariantForRegion = () =>
+    selectedVariant || selectedProduct?.variants?.[0];
   const hasNipFor = (templateType: string) =>
     allNips?.some(
       (n: any) =>
@@ -298,6 +197,8 @@ export function AdminDashboard() {
       auTemplateTypes.includes(n.templateType)
   );
   const hasUs = hasNipFor("us_nutrition_facts");
+  const hasUsSupp = hasNipFor("us_supplements");
+  const hasAnyUs = hasUs || hasUsSupp;
 
   const chooseRegion = (region: "AU" | "US") => {
     setShowRegionPicker(false);
@@ -312,7 +213,8 @@ export function AdminDashboard() {
       );
       if (auExisting.length > 0) {
         const latest = auExisting.sort(
-          (a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
+          (a: any, b: any) =>
+            (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
         )[0];
         setCurrentNip(latest);
         setSelectedTemplate(latest.templateType);
@@ -320,21 +222,35 @@ export function AdminDashboard() {
         setActiveTab("nip-builder");
       } else {
         // No AU template yet; go to AU template selection
+        setTemplateSelectionRegion("AU");
         setShowTemplateSelection(true);
         setActiveTab("template-selection");
       }
     } else {
-      // US Nutrition Facts builder
-      const existing = allNips?.find(
+      // If a US template exists (either type), load the most recent automatically
+      const v = getVariantForRegion();
+      const usExisting = (allNips || []).filter(
         (n: any) =>
           n.productId === selectedProduct?._id &&
-          (!getVariantForRegion() || n.variantId === getVariantForRegion()._id) &&
-          n.templateType === "us_nutrition_facts"
+          (!v || n.variantId === v._id) &&
+          (n.templateType === "us_nutrition_facts" ||
+            n.templateType === "us_supplements")
       );
-      setCurrentNip(existing || null);
-      setSelectedTemplate("us_nutrition_facts");
-      setShowNipBuilder(true);
-      setActiveTab("nip-builder");
+      if (usExisting.length > 0) {
+        const latest = usExisting.sort(
+          (a: any, b: any) =>
+            (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
+        )[0];
+        setCurrentNip(latest);
+        setSelectedTemplate(latest.templateType);
+        setShowNipBuilder(true);
+        setActiveTab("nip-builder");
+      } else {
+        // No US template yet; go to US template selection
+        setTemplateSelectionRegion("US");
+        setShowTemplateSelection(true);
+        setActiveTab("template-selection");
+      }
     }
   };
 
@@ -1535,7 +1451,6 @@ export function AdminDashboard() {
                                       </button>
                                     </>
                                   )} */}
-                                  <PublicNipDropdown productId={product._id} />
                                   {/* Delete NIPs button - only show if product has NIPs */}
                                   {allNips &&
                                     allNips.some(
@@ -1614,58 +1529,60 @@ export function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Protein Powder Template */}
-                <div
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
-                  onClick={() => handleTemplateSelection("protein_powder")}
-                >
-                  <div className="aspect-w-16 aspect-h-9 bg-gray-100">
-                    <div className="flex items-center justify-center h-48">
-                      <div className="text-center">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <p className="text-sm text-gray-500">
-                          Protein Powder Template Preview
+                {templateSelectionRegion !== "US" && (
+                  <>
+                    {/* Protein Powder Template */}
+                    <div
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
+                      onClick={() => handleTemplateSelection("protein_powder")}
+                    >
+                      <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                        {/* <div className="flex items-center justify-center h-48">
+                          <div className="text-center">
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            <p className="text-sm text-gray-500">
+                              Protein Powder Template Preview
+                            </p>
+                          </div>
+                        </div> */}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Protein Powder
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Optimized layout for protein powder products with
+                          serving information, amino acid profiles, and usage
+                          instructions.
                         </p>
+                        <div className="flex items-center justify-between">
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                            Select Template →
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Protein Powder
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Optimized layout for protein powder products with serving
-                      information, amino acid profiles, and usage instructions.
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                        Recommended
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                        Select Template →
-                      </button>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Complex Supplements Template */}
-                <div
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
-                  onClick={() => handleTemplateSelection("complex_supplements")}
-                >
-                  <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                    {/* Complex Supplements Template */}
+                    <div
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
+                      onClick={() =>
+                        handleTemplateSelection("complex_supplements")
+                      }
+                    >
+                      {/* <div className="aspect-w-16 aspect-h-9 bg-gray-100">
                     <div className="flex items-center justify-center h-48">
                       <div className="text-center">
                         <svg
@@ -1686,74 +1603,169 @@ export function AdminDashboard() {
                         </p>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Complex Supplements
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Detailed layout for multi-ingredient supplements with
-                      comprehensive ingredient breakdowns and benefits.
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                        Advanced
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                        Select Template →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Basic Supplements Template */}
-                <div
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
-                  onClick={() => handleTemplateSelection("supplements")}
-                >
-                  <div className="aspect-w-16 aspect-h-9 bg-gray-100">
-                    <div className="flex items-center justify-center h-48">
-                      <div className="text-center">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <p className="text-sm text-gray-500">
-                          Basic Supplements Template Preview
+                  </div> */}
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Pre-workout
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Detailed layout for multi-ingredient supplements with
+                          comprehensive ingredient breakdowns and benefits.
                         </p>
+                        <div className="flex items-center flex-end">
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                            Select Template →
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Basic Supplements
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Simple, clean layout for basic supplements with essential
-                      nutritional information and dosage guidelines.
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                        Simple
-                      </span>
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                        Select Template →
-                      </button>
+
+                    {/* Basic Supplements Template */}
+                    <div
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
+                      onClick={() => handleTemplateSelection("supplements")}
+                    >
+                      {/* <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                        <div className="flex items-center justify-center h-48">
+                          <div className="text-center">
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            <p className="text-sm text-gray-500">
+                              Basic Supplements Template Preview
+                            </p>
+                          </div>
+                        </div>
+                      </div> */}
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Basic Supplements
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Simple, clean layout for basic supplements with
+                          essential nutritional information and dosage
+                          guidelines.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                            Select Template →
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
+
+                {templateSelectionRegion === "US" && (
+                  <>
+                    {/* US Nutrition Facts */}
+                    <div
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
+                      onClick={() =>
+                        handleTemplateSelection("us_nutrition_facts")
+                      }
+                    >
+                      <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                        <div className="flex items-center justify-center h-48">
+                          <div className="text-center">
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 6h16M4 10h16M4 14h10M4 18h8"
+                              />
+                            </svg>
+                            <p className="text-sm text-gray-500">
+                              US Nutrition Facts Preview
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          US Nutrition Facts
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Standard US Nutrition Facts label with calories and
+                          %DV columns.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            US
+                          </span>
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                            Select Template →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* US Supplement Facts */}
+                    <div
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer hover:border-blue-300"
+                      onClick={() => handleTemplateSelection("us_supplements")}
+                    >
+                      <div className="aspect-w-16 aspect-h-9 bg-gray-100">
+                        <div className="flex items-center justify-center h-48">
+                          <div className="text-center">
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 6h16M4 10h16M4 14h12M4 18h8"
+                              />
+                            </svg>
+                            <p className="text-sm text-gray-500">
+                              US Supplement Facts Preview
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          US Supplement Facts
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          US Supplement Facts label with ingredients, amount per
+                          serving and %DV.
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            US
+                          </span>
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                            Select Template →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <div className="flex">
                   <svg
                     className="h-5 w-5 text-blue-400 mt-0.5"
@@ -1774,22 +1786,39 @@ export function AdminDashboard() {
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
                       <p>
-                        Choose the template that best matches your product type:
+                        First choose a region (AU or US), then select a template
+                        available for that region:
                       </p>
-                      <ul className="list-disc list-inside mt-1 space-y-1">
-                        <li>
-                          <strong>Protein Powder:</strong> Best for protein
-                          supplements with detailed amino acid profiles
-                        </li>
-                        <li>
-                          <strong>Complex Supplements:</strong> Ideal for
-                          multi-ingredient formulas with detailed breakdowns
-                        </li>
-                        <li>
-                          <strong>Basic Supplements:</strong> Perfect for
-                          single-ingredient or simple supplements
-                        </li>
-                      </ul>
+                      <div className="mt-2">
+                        <p className="font-semibold">Australian (AU):</p>
+                        <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>
+                            <strong>Protein Powder:</strong> Best for protein
+                            supplements with detailed amino acid profiles
+                          </li>
+                          <li>
+                            <strong>Pre-workout:</strong> Ideal for
+                            multi-ingredient formulas with detailed breakdowns
+                          </li>
+                          <li>
+                            <strong>Basic Supplements:</strong> Perfect for
+                            single-ingredient or simple supplements
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="mt-3">
+                        <p className="font-semibold">United States (US):</p>
+                        <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>
+                            <strong>Nutrition Facts:</strong> Standard US food
+                            label layout with calories and % Daily Value columns
+                          </li>
+                          <li>
+                            <strong>Supplement Facts:</strong> US supplement
+                            label with ingredients, amounts per serving, and %DV
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1846,6 +1875,20 @@ export function AdminDashboard() {
               />
             ) : selectedTemplate === "us_nutrition_facts" ? (
               <USNutritionFactsTemplate
+                product={selectedProduct}
+                variant={selectedVariant}
+                currentNip={currentNip}
+                onSave={(nip) => {
+                  if (nip === null) {
+                    handleBackToNips();
+                  } else {
+                    setCurrentNip(nip);
+                  }
+                }}
+                onCancel={handleBackToNips}
+              />
+            ) : selectedTemplate === "us_supplements" ? (
+              <USSupplementsTemplate
                 product={selectedProduct}
                 variant={selectedVariant}
                 currentNip={currentNip}
@@ -2457,58 +2500,81 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
-      )}
+        )}
 
-      {/* Region Picker Modal */}
-      {showRegionPicker && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-xl w-full overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Choose NIP Version</h2>
-              <button
-                onClick={() => setShowRegionPicker(false)}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="Close"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                onClick={() => chooseRegion("AU")}
-                className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-base font-semibold">Australian (AU)</div>
-                    <div className="text-xs text-gray-600">Protein Powder, Complex, Supplements</div>
+        {/* Region Picker Modal */}
+        {showRegionPicker && selectedProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-xl w-full overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Choose NIP Version
+                </h2>
+                <button
+                  onClick={() => setShowRegionPicker(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Close"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => chooseRegion("AU")}
+                  className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-base font-semibold">
+                        Australian (AU)
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Protein Powder, Complex, Supplements
+                      </div>
+                    </div>
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasAnyAu ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+                    >
+                      {hasAnyAu ? "Exists" : "None"}
+                    </span>
                   </div>
-                  <span className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasAnyAu ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                    {hasAnyAu ? "Exists" : "None"}
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => chooseRegion("US")}
-                className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-base font-semibold">United States (US)</div>
-                    <div className="text-xs text-gray-600">Nutrition Facts</div>
+                </button>
+                <button
+                  onClick={() => chooseRegion("US")}
+                  className="border rounded-lg p-4 text-left hover:border-blue-300 hover:bg-blue-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-base font-semibold">
+                        United States (US)
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Nutrition Facts and Supplement Facts
+                      </div>
+                    </div>
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasAnyUs ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+                    >
+                      {hasAnyUs ? "Exists" : "None"}
+                    </span>
                   </div>
-                  <span className={`ml-2 px-2 py-0.5 rounded text-[11px] ${hasUs ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                    {hasUs ? "Exists" : "None"}
-                  </span>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
+        )}
       </div>
     </div>
   );
