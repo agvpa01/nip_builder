@@ -1,511 +1,295 @@
-import { v } from "convex/values";
-import { query, mutation, action, internalMutation } from "./_generated/server";
-import { api } from "./_generated/api";
-import { Id } from "./_generated/dataModel";
+import { v } from 'convex/values'
+import { query, mutation, action } from './_generated/server'
+import { api } from './_generated/api'
+import { Id } from './_generated/dataModel'
+
+// Helper: infer region from template type
+function inferRegion(templateType: string): 'AU' | 'US' {
+  const auTemplates = new Set(['protein_powder', 'supplements', 'complex_supplements'])
+  if (templateType === 'us_nutrition_facts' || templateType === 'us_supplements') return 'US'
+  if (auTemplates.has(templateType)) return 'AU'
+  throw new Error(`Unknown templateType '${templateType}' for region inference`)
+}
 
 // Check if a NIP exists for a product (and optionally a variant)
 export const checkNipExists = query({
   args: {
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
   },
   handler: async (ctx, { productId, variantId }) => {
-    let nip;
+    let nip
 
     if (variantId) {
       // If variantId is provided, look for exact match
       nip = await ctx.db
-        .query("nips")
-        .withIndex("by_product_variant", (q) =>
-          q.eq("productId", productId).eq("variantId", variantId)
+        .query('nips')
+        .withIndex('by_product_variant', (q) =>
+          q.eq('productId', productId).eq('variantId', variantId),
         )
-        .first();
+        .first()
     } else {
       // If no variantId provided, find any NIP for this product
       nip = await ctx.db
-        .query("nips")
-        .withIndex("by_product", (q) => q.eq("productId", productId))
-        .first();
+        .query('nips')
+        .withIndex('by_product', (q) => q.eq('productId', productId))
+        .first()
     }
 
     return {
       exists: !!nip,
       nip: nip || null,
-    };
+    }
   },
-});
+})
 
 // Get all NIPs for a product (including all variants)
 export const getNipsByProduct = query({
   args: {
-    productId: v.id("products"),
+    productId: v.id('products'),
   },
   returns: v.array(v.any()),
   handler: async (ctx, { productId }) => {
     const nips = await ctx.db
-      .query("nips")
-      .withIndex("by_product", (q) => q.eq("productId", productId))
-      .collect();
+      .query('nips')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
 
-    return nips;
+    return nips
   },
-});
+})
 
 // Get all NIPs (for HTTP endpoint)
 export const getAllNips = query({
   args: {},
   returns: v.array(v.any()),
   handler: async (ctx) => {
-    const nips = await ctx.db.query("nips").collect();
-    return nips;
+    const nips = await ctx.db.query('nips').collect()
+    return nips
   },
-});
+})
 
-// Get public URL for a NIP
-export const getNipPublicUrl = query({
-  args: {
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
-  },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { productId, variantId }) => {
-    // Find the NIP record for this product and variant
-    let nips;
-    if (variantId) {
-      // Use the compound index when variantId is provided
-      nips = await ctx.db
-        .query("nips")
-        .withIndex("by_product_variant", (q) =>
-          q.eq("productId", productId).eq("variantId", variantId)
-        )
-        .first();
-    } else {
-      // Use the product index and filter for null variantId
-      nips = await ctx.db
-        .query("nips")
-        .withIndex("by_product", (q) => q.eq("productId", productId))
-        .filter((q) => q.eq(q.field("variantId"), undefined))
-        .first();
-    }
+// Removed storage-backed public URL queries.
 
-    if (!nips || !nips.htmlFileId) {
-      return null;
-    }
-
-    // Get the file URL from storage
-    const fileUrl = await ctx.storage.getUrl(nips.htmlFileId);
-    return fileUrl;
-  },
-});
-
-// Get public URL for a specific NIP by its ID
-export const getNipPublicUrlById = query({
-  args: { nipId: v.id("nips") },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { nipId }) => {
-    const nip = await ctx.db.get(nipId);
-    if (!nip || !nip.htmlFileId) return null;
-    const url = await ctx.storage.getUrl(nip.htmlFileId);
-    return url;
-  },
-});
-
-// Get public URL for the latest tabbed HTML for a product (optionally per templateType)
-export const getTabbedNipPublicUrl = query({
-  args: {
-    productId: v.id("products"),
-    templateType: v.optional(v.string()),
-  },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, { productId, templateType }) => {
-    let nips = await ctx.db
-      .query("nips")
-      .withIndex("by_product", (q) => q.eq("productId", productId))
-      .collect();
-
-    if (templateType) {
-      nips = nips.filter((n: any) => n.templateType === templateType);
-    }
-
-    // Get the most recent record that has a tabbedHtmlFileId
-    const withTabbed = nips
-      .filter((n: any) => n.tabbedHtmlFileId)
-      .sort(
-        (a: any, b: any) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
-      )[0];
-
-    if (!withTabbed) return null;
-
-    const url = await ctx.storage.getUrl(withTabbed.tabbedHtmlFileId!);
-    return url;
-  },
-});
-
-// Helper function to generate filename from onlineStoreUrl
-function generateFilename(onlineStoreUrl: string, variantId?: string): string {
-  // Extract the product handle from the URL
-  const urlParts = onlineStoreUrl.split("/");
-  const productHandle = urlParts[urlParts.length - 1] || "product";
-
-  // Clean the handle to be filesystem-safe
-  const cleanHandle = productHandle.replace(/[^a-zA-Z0-9-_]/g, "-");
-
-  // Add variant suffix if provided
-  const filename = variantId ? `${cleanHandle}-${variantId}` : cleanHandle;
-
-  return `${filename}.html`;
-}
-
-// Save HTML content to file storage
-export const saveHtmlFile = action({
-  args: {
-    htmlContent: v.string(),
-    filename: v.string(),
-  },
-  returns: v.id("_storage"),
-  handler: async (ctx, { htmlContent, filename }): Promise<Id<"_storage">> => {
-    // Convert HTML string to Blob
-    const htmlBlob = new Blob([htmlContent], { type: "text/html" });
-
-    // Store the file
-    const fileId: Id<"_storage"> = await ctx.storage.store(htmlBlob);
-
-    return fileId;
-  },
-});
+// Previously: saveHtmlFile action uploaded HTML to storage.
+// Removed per request. We now store HTML inline in the NIP document only.
 
 // Create a new NIP with file storage
 export const createNipWithFile = action({
   args: {
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
   },
-  returns: v.id("nips"),
-  handler: async (ctx, args): Promise<Id<"nips">> => {
-    // Get product info to generate filename
-    const products = await ctx.runQuery(api.products.getAllProducts);
-    const product = products.find((p) => p._id === args.productId);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    // Generate filename from onlineStoreUrl
-    const filename = generateFilename(product.onlineStoreUrl, args.variantId);
-
-    // Save HTML file to storage
-    const htmlFileId: Id<"_storage"> = await ctx.runAction(
-      api.nips.saveHtmlFile,
-      {
-        htmlContent: args.htmlContent,
-        filename,
-      }
-    );
-
-    // Create NIP record with file reference
-    const nipId: Id<"nips"> = await ctx.runMutation(api.nips.createNip, {
+  returns: v.id('nips'),
+  handler: async (ctx, args): Promise<Id<'nips'>> => {
+    // Create NIP record without uploading HTML to storage
+    const nipId: Id<'nips'> = await ctx.runMutation(api.nips.createNip, {
       ...args,
-      htmlFileId,
-    });
-
-    return nipId;
+    })
+    return nipId
   },
-});
+})
 
 // Create a new NIP (internal function)
 export const createNip = mutation({
   args: {
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     region: v.optional(v.string()),
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
-    htmlFileId: v.optional(v.id("_storage")),
-    tabbedHtmlFileId: v.optional(v.id("_storage")),
   },
-  returns: v.id("nips"),
+  returns: v.id('nips'),
   handler: async (ctx, args) => {
-    const now = Date.now();
+    const now = Date.now()
+    // Ensure region is set based on templateType if not provided
+    const ensuredRegion = (args.region as 'AU' | 'US' | undefined) ?? inferRegion(args.templateType)
 
-    const nipId = await ctx.db.insert("nips", {
+    const nipId = await ctx.db.insert('nips', {
       ...args,
+      region: ensuredRegion,
       createdAt: now,
       updatedAt: now,
-    });
+    })
 
-    return nipId;
+    return nipId
   },
-});
+})
 
 // Update an existing NIP with file storage
 export const updateNipWithFile = action({
   args: {
-    nipId: v.id("nips"),
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    nipId: v.id('nips'),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
   },
-  returns: v.id("nips"),
-  handler: async (ctx, args): Promise<Id<"nips">> => {
-    // Get product info to generate filename
-    const products = await ctx.runQuery(api.products.getAllProducts);
-    const product = products.find((p) => p._id === args.productId);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    // Generate filename from onlineStoreUrl
-    const filename = generateFilename(product.onlineStoreUrl, args.variantId);
-
-    // Save updated HTML file to storage
-    const htmlFileId: Id<"_storage"> = await ctx.runAction(
-      api.nips.saveHtmlFile,
-      {
-        htmlContent: args.htmlContent,
-        filename,
-      }
-    );
-
-    // Update NIP record with new file reference
-    const nipId: Id<"nips"> = await ctx.runMutation(api.nips.updateNip, {
+  returns: v.id('nips'),
+  handler: async (ctx, args): Promise<Id<'nips'>> => {
+    // Update NIP record without uploading HTML to storage
+    const nipId: Id<'nips'> = await ctx.runMutation(api.nips.updateNip, {
       ...args,
-      htmlFileId,
-    });
-
-    return nipId;
+    })
+    return nipId
   },
-});
+})
 
 // Create NIP with tabbed HTML file storage for all variants
 export const createNipWithTabbedFile = action({
   args: {
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     content: v.any(),
     htmlContent: v.string(),
   },
   returns: v.object({
-    nipId: v.id("nips"),
+    nipId: v.id('nips'),
     fileUrl: v.string(),
     success: v.boolean(),
     message: v.string(),
   }),
   handler: async (
     ctx,
-    args
+    args,
   ): Promise<{
-    nipId: Id<"nips">;
-    fileUrl: string;
-    success: boolean;
-    message: string;
+    nipId: Id<'nips'>
+    fileUrl: string
+    success: boolean
+    message: string
   }> => {
     try {
-      // First save the individual NIP
-      const nipId: Id<"nips"> = await ctx.runAction(
-        api.nips.createNipWithFile,
-        args
-      );
+      // First save the individual NIP (no storage upload)
+      const nipId: Id<'nips'> = await ctx.runMutation(api.nips.createNip, args)
 
       // Generate tabbed HTML for all variants of the product
       const tabbedHtmlResult: {
-        success: boolean;
-        message: string;
-        html: string;
-        variantCount: number;
+        success: boolean
+        message: string
+        html: string
+        variantCount: number
       } = await ctx.runQuery(api.nips.generateTabbedProductHtml, {
         productId: args.productId,
         templateType: args.templateType,
-      });
+      })
 
       if (!tabbedHtmlResult.success) {
         return {
           nipId,
-          fileUrl: "",
+          fileUrl: '',
           success: false,
           message: tabbedHtmlResult.message,
-        };
-      }
-
-      // Get product info to generate tabbed filename
-      const products: any[] = await ctx.runQuery(api.products.getAllProducts);
-      const product = products.find((p: any) => p._id === args.productId);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      // Generate tabbed filename (without variant suffix)
-      const tabbedFilename =
-        generateFilename(product.onlineStoreUrl) + "_tabbed";
-
-      // Save tabbed HTML file to storage
-      const tabbedFileId: Id<"_storage"> = await ctx.runAction(
-        api.nips.saveHtmlFile,
-        {
-          htmlContent: tabbedHtmlResult.html,
-          filename: tabbedFilename,
         }
-      );
+      }
 
-      // Get the public URL for the tabbed file
-      const fileUrl = await ctx.storage.getUrl(tabbedFileId);
-
-      // Update the NIP record with tabbed file reference
-      await ctx.runMutation(api.nips.updateNip, {
-        nipId,
-        productId: args.productId,
-        variantId: args.variantId,
-        templateType: args.templateType,
-        content: args.content,
-        htmlContent: args.htmlContent,
-        tabbedHtmlFileId: tabbedFileId,
-      });
+      // Optionally we could store tabbed HTML in the document in the future.
+      // For now, skip uploading and just return success without a file URL.
 
       return {
         nipId,
-        fileUrl: fileUrl || "",
+        fileUrl: '',
         success: true,
         message: `Tabbed NIP saved successfully with ${tabbedHtmlResult.variantCount} variant(s)`,
-      };
+      }
     } catch (error) {
-      console.error("Error creating NIP with tabbed file:", error);
-      throw error;
+      console.error('Error creating NIP with tabbed file:', error)
+      throw error
     }
   },
-});
+})
 
 // Update NIP with tabbed HTML file storage for all variants
 export const updateNipWithTabbedFile = action({
   args: {
-    nipId: v.id("nips"),
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    nipId: v.id('nips'),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     content: v.any(),
     htmlContent: v.string(),
   },
   returns: v.object({
-    nipId: v.id("nips"),
+    nipId: v.id('nips'),
     fileUrl: v.string(),
     success: v.boolean(),
     message: v.string(),
   }),
   handler: async (
     ctx,
-    args
+    args,
   ): Promise<{
-    nipId: Id<"nips">;
-    fileUrl: string;
-    success: boolean;
-    message: string;
+    nipId: Id<'nips'>
+    fileUrl: string
+    success: boolean
+    message: string
   }> => {
     try {
-      // First update the individual NIP
-      const nipId: Id<"nips"> = await ctx.runAction(
-        api.nips.updateNipWithFile,
-        args
-      );
+      // First update the individual NIP (no storage upload)
+      const nipId: Id<'nips'> = await ctx.runMutation(api.nips.updateNip, args)
 
       // Generate tabbed HTML for all variants of the product
       const tabbedHtmlResult: {
-        success: boolean;
-        message: string;
-        html: string;
-        variantCount: number;
+        success: boolean
+        message: string
+        html: string
+        variantCount: number
       } = await ctx.runQuery(api.nips.generateTabbedProductHtml, {
         productId: args.productId,
         templateType: args.templateType,
-      });
+      })
 
       if (!tabbedHtmlResult.success) {
         return {
           nipId,
-          fileUrl: "",
+          fileUrl: '',
           success: false,
           message: tabbedHtmlResult.message,
-        };
-      }
-
-      // Get product info to generate tabbed filename
-      const products: any[] = await ctx.runQuery(api.products.getAllProducts);
-      const product = products.find((p: any) => p._id === args.productId);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      // Generate tabbed filename (without variant suffix)
-      const tabbedFilename =
-        generateFilename(product.onlineStoreUrl) + "_tabbed";
-
-      // Save tabbed HTML file to storage
-      const tabbedFileId: Id<"_storage"> = await ctx.runAction(
-        api.nips.saveHtmlFile,
-        {
-          htmlContent: tabbedHtmlResult.html,
-          filename: tabbedFilename,
         }
-      );
+      }
 
-      // Get the public URL for the tabbed file
-      const fileUrl = await ctx.storage.getUrl(tabbedFileId);
-
-      // Update the NIP record with tabbed file reference
-      await ctx.runMutation(api.nips.updateNip, {
-        nipId: args.nipId,
-        productId: args.productId,
-        variantId: args.variantId,
-        templateType: args.templateType,
-        content: args.content,
-        htmlContent: args.htmlContent,
-        tabbedHtmlFileId: tabbedFileId,
-      });
+      // No storage upload; just return success without a file URL.
 
       return {
         nipId,
-        fileUrl: fileUrl || "",
+        fileUrl: '',
         success: true,
         message: `Tabbed NIP updated successfully with ${tabbedHtmlResult.variantCount} variant(s)`,
-      };
+      }
     } catch (error) {
-      console.error("Error updating NIP with tabbed file:", error);
-      throw error;
+      console.error('Error updating NIP with tabbed file:', error)
+      throw error
     }
   },
-});
+})
 
 // Update an existing NIP (internal function)
 export const updateNip = mutation({
   args: {
-    nipId: v.id("nips"),
-    productId: v.id("products"),
-    variantId: v.optional(v.id("productVariants")),
+    nipId: v.id('nips'),
+    productId: v.id('products'),
+    variantId: v.optional(v.id('productVariants')),
     templateType: v.string(),
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
-    htmlFileId: v.optional(v.id("_storage")),
-    tabbedHtmlFileId: v.optional(v.id("_storage")),
     region: v.optional(v.string()),
   },
-  returns: v.id("nips"),
+  returns: v.id('nips'),
   handler: async (
     ctx,
-    {
-      nipId,
-      productId,
-      variantId,
-      templateType,
-      content,
-      htmlContent,
-      htmlFileId,
-      tabbedHtmlFileId,
-      region,
-    }
+    { nipId, productId, variantId, templateType, content, htmlContent, region },
   ) => {
+    const existing = await ctx.db.get(nipId)
+    if (!existing) throw new Error('NIP not found')
+    const ensuredRegion =
+      (region as 'AU' | 'US' | undefined) ??
+      (existing.region as 'AU' | 'US' | undefined) ??
+      inferRegion(templateType)
     const patch: any = {
       productId,
       variantId,
@@ -513,32 +297,29 @@ export const updateNip = mutation({
       content,
       htmlContent,
       updatedAt: Date.now(),
-    };
-    if (typeof htmlFileId !== "undefined") patch.htmlFileId = htmlFileId;
-    if (typeof tabbedHtmlFileId !== "undefined")
-      patch.tabbedHtmlFileId = tabbedHtmlFileId;
-    if (typeof region !== "undefined") patch.region = region;
-    await ctx.db.patch(nipId, patch);
+      region: ensuredRegion,
+    }
+    await ctx.db.patch(nipId, patch)
 
-    return nipId;
+    return nipId
   },
-});
+})
 
 // Delete a NIP
 export const deleteNip = mutation({
   args: {
-    nipId: v.id("nips"),
+    nipId: v.id('nips'),
   },
   handler: async (ctx, { nipId }) => {
-    await ctx.db.delete(nipId);
-    return { success: true };
+    await ctx.db.delete(nipId)
+    return { success: true }
   },
-});
+})
 
 // Delete all NIPs for a product and its variants
 export const deleteAllNipsForProduct = mutation({
   args: {
-    productId: v.id("products"),
+    productId: v.id('products'),
   },
   returns: v.object({
     success: v.boolean(),
@@ -548,48 +329,62 @@ export const deleteAllNipsForProduct = mutation({
   handler: async (ctx, { productId }) => {
     // Get all NIPs for this product
     const nips = await ctx.db
-      .query("nips")
-      .withIndex("by_product", (q) => q.eq("productId", productId))
-      .collect();
+      .query('nips')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
 
     if (nips.length === 0) {
       return {
         success: false,
         deletedCount: 0,
-        message: "No NIPs found for this product",
-      };
-    }
-
-    // Delete all HTML files associated with these NIPs
-    for (const nip of nips) {
-      if (nip.htmlFileId) {
-        try {
-          await ctx.storage.delete(nip.htmlFileId);
-        } catch (error) {
-          // Continue even if file deletion fails
-          console.warn(`Failed to delete HTML file ${nip.htmlFileId}:`, error);
-        }
+        message: 'No NIPs found for this product',
       }
     }
 
     // Delete all NIP records
     for (const nip of nips) {
-      await ctx.db.delete(nip._id);
+      await ctx.db.delete(nip._id)
     }
 
     return {
       success: true,
       deletedCount: nips.length,
-      message: `Successfully deleted ${nips.length} NIP(s) and associated files for this product`,
-    };
+      message: `Successfully deleted ${nips.length} NIP(s) for this product`,
+    }
   },
-});
+})
+
+// One-off: Backfill region for existing NIPs with empty region
+export const backfillNipRegions = mutation({
+  args: {},
+  returns: v.object({ updated: v.number(), skipped: v.number() }),
+  handler: async (ctx) => {
+    const nips = await ctx.db.query('nips').collect()
+    let updated = 0
+    let skipped = 0
+    for (const n of nips) {
+      if (!n.region) {
+        try {
+          const region = inferRegion(n.templateType)
+          await ctx.db.patch(n._id, { region, updatedAt: Date.now() })
+          updated++
+        } catch (e) {
+          // Unknown template type; skip
+          skipped++
+        }
+      } else {
+        skipped++
+      }
+    }
+    return { updated, skipped }
+  },
+})
 
 // Generate combined HTML for all variants of a product
 // Generate tabbed HTML with JavaScript for variant switching
 export const generateTabbedProductHtml = query({
   args: {
-    productId: v.id("products"),
+    productId: v.id('products'),
     templateType: v.optional(v.string()),
   },
   returns: v.object({
@@ -601,73 +396,86 @@ export const generateTabbedProductHtml = query({
   handler: async (ctx, { productId, templateType }) => {
     // Get all NIPs for this product
     const nips = await ctx.db
-      .query("nips")
-      .withIndex("by_product", (q) => q.eq("productId", productId))
-      .collect();
+      .query('nips')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
 
     // Optionally filter by templateType (e.g., US only)
-    const filtered = templateType
-      ? nips.filter((n) => n.templateType === templateType)
-      : nips;
+    const filtered = templateType ? nips.filter((n) => n.templateType === templateType) : nips
 
     if (filtered.length === 0) {
       return {
         success: false,
-        message: "No NIPs found for this product",
-        html: "",
+        message: 'No NIPs found for this product',
+        html: '',
         variantCount: 0,
-      };
+      }
     }
 
     // Get product information
-    const product = await ctx.db.get(productId);
+    const product = await ctx.db.get(productId)
     if (!product) {
       return {
         success: false,
-        message: "Product not found",
-        html: "",
+        message: 'Product not found',
+        html: '',
         variantCount: 0,
-      };
+      }
     }
 
     // Build variant data for tabs
-    const variantData = [] as { id: string; name: string; templateType: string; htmlContent: string }[];
-    for (let i = 0; i < filtered.length; i++) {
-      const nip = filtered[i];
-      // Skip entries without HTML to avoid blank tabs
-      if (!nip.htmlContent || (typeof nip.htmlContent === "string" && nip.htmlContent.trim() === "")) {
-        continue;
-      }
+    // Group NIPs by variant and pick the latest non-empty HTML per variant
+    type VariantTab = { id: string; name: string; templateType: string; htmlContent: string }
+    const byVariant = new Map<string, any[]>()
+    for (const nip of filtered) {
+      const key = nip.variantId ? nip.variantId.toString() : 'no-variant'
+      const arr = byVariant.get(key) || []
+      arr.push(nip)
+      byVariant.set(key, arr)
+    }
 
-      // Get variant information if available
-      let variantName = "Default Variant";
-      if (nip.variantId) {
-        const variant = await ctx.db.get(nip.variantId);
-        if (variant) {
-          variantName = variant.title || `Variant ${i + 1}`;
-        }
-      }
+    const variantData: VariantTab[] = []
+    let tabIndex = 0
+    for (const [key, arr] of byVariant.entries()) {
+      // Choose the most recently updated/created NIP that has non-empty html
+      const latestWithHtml = arr
+        .filter(
+          (n) =>
+            !!n.htmlContent && (typeof n.htmlContent !== 'string' || n.htmlContent.trim() !== ''),
+        )
+        .sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0]
+
+      if (!latestWithHtml) continue
+
+      const fetchedVariant = latestWithHtml.variantId
+        ? await ctx.db.get(latestWithHtml.variantId as Id<'productVariants'>)
+        : null
+      const variantIndex = variantData.length + 1
+      const variantName =
+        fetchedVariant?.title && fetchedVariant.title.trim() !== ''
+          ? fetchedVariant.title
+          : `Variant ${variantIndex}`
 
       variantData.push({
-        id: `variant-${i}`,
+        id: `variant-${tabIndex++}`,
         name: variantName,
-        templateType: nip.templateType,
-        htmlContent: nip.htmlContent,
-      });
+        templateType: latestWithHtml.templateType,
+        htmlContent: latestWithHtml.htmlContent,
+      })
     }
 
     // If no variants with HTML, abort
     if (variantData.length === 0) {
       return {
         success: false,
-        message: "No NIPs with HTML content found for this product",
-        html: "",
+        message: 'No NIPs with HTML content found for this product',
+        html: '',
         variantCount: 0,
-      };
+      }
     }
     // Check if we have only one variant - if so, generate simple HTML without tabs
     if (variantData.length === 1) {
-      const singleVariant = variantData[0];
+      const singleVariant = variantData[0]
       const simpleHtml = `
         <!DOCTYPE html>
         <html lang="en">
@@ -744,14 +552,14 @@ export const generateTabbedProductHtml = query({
           </div>
         </body>
         </html>
-      `;
+      `
 
       return {
         success: true,
         message: `Simple HTML generated for single variant`,
         html: simpleHtml,
-        variantCount: nips.length,
-      };
+        variantCount: variantData.length,
+      }
     }
 
     // Generate tabbed HTML with embedded JavaScript for multiple variants
@@ -882,26 +690,26 @@ export const generateTabbedProductHtml = query({
             ${variantData
               .map(
                 (variant, index) =>
-                  `<button class="tab-button ${index === 0 ? "active" : ""}" onclick="showTab('${variant.id}')">${variant.name}</button>`
+                  `<button class="tab-button ${index === 0 ? 'active' : ''}" onclick="showTab('${variant.id}')">${variant.name}</button>`,
               )
-              .join("")}
+              .join('')}
           </div>
 
           ${variantData
             .map(
               (variant, index) => `
-            <div id="${variant.id}" class="tab-content ${index === 0 ? "active" : ""}">
+            <div id="${variant.id}" class="tab-content ${index === 0 ? 'active' : ''}">
               
               ${variant.htmlContent}
             </div>
-          `
+          `,
             )
-            .join("")}
+            .join('')}
         </div>
 
         <div class="footer">
           <p>Generated on ${new Date().toLocaleDateString()} - Interactive NIP for ${product.title}</p>
-          <p>Total Variants: ${nips.length}</p>
+          <p>Total Variants: ${variantData.length}</p>
         </div>
 
         <script>
@@ -939,20 +747,20 @@ export const generateTabbedProductHtml = query({
         </script>
       </body>
       </html>
-    `;
+    `
 
     return {
       success: true,
-      message: `Tabbed HTML generated for ${nips.length} variant(s)`,
+      message: `Tabbed HTML generated for ${variantData.length} variant(s)`,
       html: tabbedHtml,
-      variantCount: nips.length,
-    };
+      variantCount: variantData.length,
+    }
   },
-});
+})
 
 export const generateCombinedProductHtml = query({
   args: {
-    productId: v.id("products"),
+    productId: v.id('products'),
   },
   returns: v.object({
     success: v.boolean(),
@@ -962,37 +770,37 @@ export const generateCombinedProductHtml = query({
   }),
   handler: async (
     ctx,
-    { productId }
+    { productId },
   ): Promise<{
-    success: boolean;
-    message: string;
-    html: string;
-    variantCount: number;
+    success: boolean
+    message: string
+    html: string
+    variantCount: number
   }> => {
     // Get all NIPs for this product
     const nips = await ctx.db
-      .query("nips")
-      .withIndex("by_product", (q) => q.eq("productId", productId))
-      .collect();
+      .query('nips')
+      .withIndex('by_product', (q) => q.eq('productId', productId))
+      .collect()
 
     if (nips.length === 0) {
       return {
         success: false,
-        message: "No NIPs found for this product",
-        html: "",
+        message: 'No NIPs found for this product',
+        html: '',
         variantCount: 0,
-      };
+      }
     }
 
     // Get product information
-    const product = await ctx.db.get(productId);
+    const product = await ctx.db.get(productId)
     if (!product) {
       return {
         success: false,
-        message: "Product not found",
-        html: "",
+        message: 'Product not found',
+        html: '',
         variantCount: 0,
-      };
+      }
     }
 
     // Start building combined HTML
@@ -1002,33 +810,33 @@ export const generateCombinedProductHtml = query({
           <h1 style="font-size: 28px; font-weight: bold; margin: 0; color: #333;">${product.title}</h1>
           <p style="font-size: 16px; color: #666; margin: 10px 0 0 0;">Complete Nutritional Information Panel - All Variants</p>
         </div>
-    `;
+    `
 
     // Group NIPs by variant and add each variant's content
     for (let i = 0; i < nips.length; i++) {
-      const nip = nips[i];
+      const nip = nips[i]
 
       // Get variant information if available
-      let variantName = "Default Variant";
+      let variantName = 'Default Variant'
       if (nip.variantId) {
-        const variant = await ctx.db.get(nip.variantId);
+        const variant = await ctx.db.get(nip.variantId)
         if (variant) {
-          variantName = variant.title || `Variant ${i + 1}`;
+          variantName = variant.title || `Variant ${i + 1}`
         }
       }
 
       // Add variant section
       combinedHtml += `
-        <div class="variant-section" style="margin-bottom: 50px; ${i < nips.length - 1 ? "border-bottom: 2px solid #eee; padding-bottom: 40px;" : ""}">
+        <div class="variant-section" style="margin-bottom: 50px; ${i < nips.length - 1 ? 'border-bottom: 2px solid #eee; padding-bottom: 40px;' : ''}">
           <div class="variant-header" style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-left: 5px solid #007bff;">
             <h2 style="font-size: 20px; font-weight: bold; margin: 0; color: #007bff;">${variantName}</h2>
-            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">Template: ${nip.templateType.replace("_", " ")}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">Template: ${nip.templateType.replace('_', ' ')}</p>
           </div>
           <div class="variant-content" style="padding: 0 10px;">
             ${nip.htmlContent}
           </div>
         </div>
-      `;
+      `
     }
 
     // Close the combined HTML
@@ -1038,13 +846,13 @@ export const generateCombinedProductHtml = query({
           <p>Total Variants: ${nips.length}</p>
         </div>
       </div>
-    `;
+    `
 
     return {
       success: true,
       message: `Combined HTML generated for ${nips.length} variant(s)`,
       html: combinedHtml,
       variantCount: nips.length,
-    };
+    }
   },
-});
+})

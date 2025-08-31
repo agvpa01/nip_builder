@@ -33,15 +33,12 @@ const applicationTables = {
     region: v.optional(v.string()), // "AU" or "US"
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
-    htmlFileId: v.optional(v.id("_storage")), // Reference to stored HTML file
-    tabbedHtmlFileId: v.optional(v.id("_storage")), // Optional tabbed file reference
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_product", ["productId"])
     .index("by_variant", ["variantId"])
-    .index("by_product_variant", ["productId", "variantId"])
-    .index("by_html_file", ["htmlFileId"]),
+    .index("by_product_variant", ["productId", "variantId"]),
 };
 
 export default defineSchema({
