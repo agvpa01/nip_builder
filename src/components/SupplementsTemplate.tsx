@@ -3,6 +3,7 @@ import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { TabbedPreviewModal } from "./TabbedPreviewModal";
+import { DraggableTextSection } from "./DraggableTextSection";
 import { FormattableTableInput } from "./FormattableTableInput";
 import { getThicknessBorderStyle } from "../lib/utils";
 import { convertTabsForHtml, convertFormattingForHtml } from "../lib/tabUtils";
@@ -32,6 +33,13 @@ interface NutritionalRow {
     | "extra-large-thick";
 }
 
+interface TextSection {
+  id: string;
+  title: string;
+  content: string;
+  isCustom: boolean;
+}
+
 export function SupplementsTemplate({
   product,
   variant,
@@ -49,6 +57,22 @@ export function SupplementsTemplate({
   // Serving information
   const [servingSize, setServingSize] = useState("1g");
   const [servingsPerBottle, setServingsPerBottle] = useState("200");
+
+  // Text Sections for serving lines (editable)
+  const [textSections, setTextSections] = useState<TextSection[]>([
+    {
+      id: "serving-size-line",
+      title: "SERVING SIZE LINE:",
+      content: "Serving Size: 1g",
+      isCustom: false,
+    },
+    {
+      id: "servings-per-bottle-line",
+      title: "SERVINGS PER BOTTLE LINE:",
+      content: "Servings per Bottle: 200",
+      isCustom: false,
+    },
+  ]);
 
   // Query NIPs for all variants of this product
   const productNips = useQuery(
@@ -124,6 +148,32 @@ export function SupplementsTemplate({
         if (content.servingSize) setServingSize(content.servingSize);
         if (content.servingsPerBottle)
           setServingsPerBottle(content.servingsPerBottle);
+        if (content.textSections) {
+          let merged: TextSection[] = content.textSections as TextSection[];
+          const hasServingSize = merged.some((s) => s.id === "serving-size-line");
+          const hasServingsBottle = merged.some(
+            (s) => s.id === "servings-per-bottle-line",
+          );
+          const toAdd: TextSection[] = [];
+          if (!hasServingSize) {
+            toAdd.push({
+              id: "serving-size-line",
+              title: "SERVING SIZE LINE:",
+              content: `Serving Size: ${content.servingSize || servingSize}`,
+              isCustom: false,
+            });
+          }
+          if (!hasServingsBottle) {
+            toAdd.push({
+              id: "servings-per-bottle-line",
+              title: "SERVINGS PER BOTTLE LINE:",
+              content: `Servings per Bottle: ${content.servingsPerBottle || servingsPerBottle}`,
+              isCustom: false,
+            });
+          }
+          if (toAdd.length > 0) merged = [...toAdd, ...merged];
+          setTextSections(merged);
+        }
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -215,8 +265,8 @@ export function SupplementsTemplate({
               <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px;">
               <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
                 <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
-                  <span style="margin-bottom: 3px;">Serving Size: 30 grams</span>
-                  <span>Servings per Pack: 33</span>
+                  <span style="margin-bottom: 3px;">${convertFormattingForHtml(convertTabsForHtml(servingSizeLine))}</span>
+                  <span>${convertFormattingForHtml(convertTabsForHtml(servingsPerBottleLine))}</span>
                 </div>
               </div>
               </div>
@@ -275,7 +325,7 @@ export function SupplementsTemplate({
     `;
 
     return html;
-  }, [nutritionalRows, servingSize, servingsPerBottle]);
+  }, [nutritionalRows, servingSize, servingsPerBottle, textSections]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
@@ -300,6 +350,7 @@ export function SupplementsTemplate({
           nutritionalRows,
           servingSize,
           servingsPerBottle,
+          textSections,
         },
         htmlContent: generateHtml(),
       };
@@ -496,6 +547,22 @@ export function SupplementsTemplate({
 
         {/* Main Content Area */}
         <div className="flex-1 p-6 bg-white overflow-y-auto">
+          {/* Text Sections editor for serving lines */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Text Sections</h3>
+            <DraggableTextSection
+              sections={textSections}
+              onSectionsReorder={(sections) => setTextSections(sections)}
+              onUpdateSection={(id, field, value) =>
+                setTextSections((prev) =>
+                  prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+                )
+              }
+              onDeleteSection={(id) =>
+                setTextSections((prev) => prev.filter((s) => s.id !== id))
+              }
+            />
+          </div>
           <div className="w-[40%] flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold mb-4">
               Nutritional Information
@@ -528,7 +595,21 @@ export function SupplementsTemplate({
               </div>
             </div> */}
 
-              <div className="p-2">
+            {/* Serving Information (render only inside box) */}
+            <div className="px-3 py-3 bg-white border-b-2 border-black">
+              <div className="flex flex-col text-xs font-bold">
+                <span>
+                  {textSections.find((s) => s.id === "serving-size-line")?.content ||
+                    `Serving Size: ${servingSize}`}
+                </span>
+                <span>
+                  {textSections.find((s) => s.id === "servings-per-bottle-line")?.content ||
+                    `Servings per Bottle: ${servingsPerBottle}`}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-2">
                 <table className="w-full table-fixed border-collapse">
                   <colgroup>
                     <col className="w-1/2" />
