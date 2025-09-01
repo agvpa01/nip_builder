@@ -554,7 +554,7 @@ export function ComplexSupplementsTemplate({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Complex Supplements NIP Builder
+              Pre-workout NIP Builder
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {product?.title} {variant?.title && `- ${variant.title}`}
@@ -751,32 +751,44 @@ export function ComplexSupplementsTemplate({
                       return (
                         <tr
                           key={row.id}
-                          draggable
                           onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
                           onDragOver={nutritionalDragHandlers.onDragOver}
                           onDrop={(e) => nutritionalDragHandlers.onDrop(e, index)}
                           onDragEnd={nutritionalDragHandlers.onDragEnd}
-                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 cursor-move ${
+                          className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 ${
                             draggedNutritionalIndex === index ? "opacity-50" : ""
                           }`}
                           style={draggedNutritionalIndex === index ? getDragHandleStyles() : {}}
                         >
                           {spanAll ? (
-                            <td className="px-0 py-2" colSpan={3}>
+                            <td className="px-0 py-2 relative" colSpan={3}>
                               <div className="flex items-center">
                                 <FormattableTableInput
                                   value={row.nutrient}
                                   onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
-                                  className="w-full text-sm bg-transparent border-none outline-none"
+                                  className="w-full text-sm bg-transparent border-none outline-none pr-12"
                                   disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
                                   rowThickness={row.thickness || "normal"}
                                   onThicknessChange={(t) =>
                                     updateNutritionalRow(row.id, "thickness", t)
                                   }
                                 />
+                                {/* Drag handle button for row reordering */}
+                                <button
+                                  aria-label="Drag to reorder"
+                                  title="Drag to reorder"
+                                  draggable
+                                  onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
+                                  onDragEnd={nutritionalDragHandlers.onDragEnd}
+                                  className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                    <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                  </svg>
+                                </button>
                                 <button
                                   onClick={() => deleteNutritionalRow(row.id)}
-                                  className="ml-2 text-red-500 hover:text-red-700 text-xs"
+                                  className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
                                 >
                                   ×
                                 </button>
@@ -813,13 +825,26 @@ export function ComplexSupplementsTemplate({
                                   <FormattableTableInput
                                     value={row.per100g}
                                     onChange={(value) => updateNutritionalRow(row.id, "per100g", value)}
-                                    className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-6"
+                                    className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-12"
                                     disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
                                     rowThickness={row.thickness || "normal"}
                                     onThicknessChange={(t) =>
                                       updateNutritionalRow(row.id, "thickness", t)
                                     }
                                   />
+                                  {/* Drag handle button for row reordering */}
+                                  <button
+                                    aria-label="Drag to reorder"
+                                    title="Drag to reorder"
+                                    draggable
+                                    onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
+                                    onDragEnd={nutritionalDragHandlers.onDragEnd}
+                                    className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                      <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                    </svg>
+                                  </button>
                                   <button
                                     onClick={() => deleteNutritionalRow(row.id)}
                                     className="absolute right-1 text-red-500 hover:text-red-700 text-xs"

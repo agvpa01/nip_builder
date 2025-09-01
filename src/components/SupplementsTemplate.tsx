@@ -433,7 +433,7 @@ export function SupplementsTemplate({
         )}
 
         {/* Quick Actions */}
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <div className="text-sm font-medium text-gray-700 mb-2">
             Quick Actions:
           </div>
@@ -457,7 +457,7 @@ export function SupplementsTemplate({
               I
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Main Content */}
@@ -540,10 +540,10 @@ export function SupplementsTemplate({
                       <th className="text-left px-2 py-1 text-xs font-medium">
                         Nutrient
                       </th>
-                      <th className="text-right px-2 py-1 text-xs font-medium">
+                      <th className="px-2 py-1 text-xs font-medium">
                         Per Serve
                       </th>
-                      <th className="text-right px-2 py-1 text-xs font-medium">
+                      <th className="px-2 py-1 text-xs font-medium">
                         Per 100g
                       </th>
                     </tr>
@@ -552,7 +552,6 @@ export function SupplementsTemplate({
                     {nutritionalRows.map((row, index) => (
                       <React.Fragment key={row.id}>
                         <tr
-                          draggable
                           onDragStart={(e) =>
                             nutritionalDragHandlers.onDragStart(e, index)
                           }
@@ -561,7 +560,7 @@ export function SupplementsTemplate({
                             nutritionalDragHandlers.onDrop(e, index)
                           }
                           onDragEnd={nutritionalDragHandlers.onDragEnd}
-                          className={`${getBorderClass(row.thickness || "normal")} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black cursor-move ${
+                          className={`${getBorderClass(row.thickness || "normal")} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black ${
                             draggedNutritionalIndex === index
                               ? "opacity-50"
                               : ""
@@ -615,7 +614,7 @@ export function SupplementsTemplate({
                                 onChange={(value) =>
                                   updateNutritionalRow(row.id, "per100g", value)
                                 }
-                                className="w-full text-sm bg-transparent border-none outline-none text-right font-medium pr-6"
+                                className="w-full text-sm bg-transparent border-none outline-none text-right font-medium pr-12"
                                 disabled={
                                   product?.variants &&
                                   product.variants.length > 1 &&
@@ -629,9 +628,29 @@ export function SupplementsTemplate({
                                   )
                                 }
                               />
+                              {/* Drag handle button for row reordering */}
+                              <button
+                                aria-label="Drag to reorder"
+                                title="Drag to reorder"
+                                draggable
+                                onDragStart={(e) =>
+                                  nutritionalDragHandlers.onDragStart(e, index)
+                                }
+                                onDragEnd={nutritionalDragHandlers.onDragEnd}
+                                className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                  className="w-4 h-4"
+                                >
+                                  <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                </svg>
+                              </button>
                               <button
                                 onClick={() => deleteNutritionalRow(row.id)}
-                                className="absolute -right-2 text-red-500 hover:text-red-700 text"
+                                className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
                               >
                                 ×
                               </button>
