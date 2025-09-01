@@ -166,7 +166,33 @@ export function ProteinPowderTemplate({
     if (currentVariantNip && currentVariantNip.content) {
       try {
         const content = currentVariantNip.content;
-        if (content.textSections) setTextSections(content.textSections);
+        if (content.textSections) {
+          let mergedSections: TextSection[] = content.textSections as TextSection[];
+          const hasServingSize = mergedSections.some((s) => s.id === "serving-size-line");
+          const hasServingsPerPack = mergedSections.some((s) => s.id === "servings-per-pack-line");
+
+          const toAdd: TextSection[] = [];
+          if (!hasServingSize) {
+            toAdd.push({
+              id: "serving-size-line",
+              title: "SERVING SIZE LINE:",
+              content: "Serving Size: 30 grams",
+              isCustom: false,
+            });
+          }
+          if (!hasServingsPerPack) {
+            toAdd.push({
+              id: "servings-per-pack-line",
+              title: "SERVINGS PER PACK LINE:",
+              content: "Servings per Pack: 33",
+              isCustom: false,
+            });
+          }
+          if (toAdd.length > 0) {
+            mergedSections = [...toAdd, ...mergedSections];
+          }
+          setTextSections(mergedSections);
+        }
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.aminoAcidRows) setAminoAcidRows(content.aminoAcidRows);
@@ -579,7 +605,7 @@ export function ProteinPowderTemplate({
     `;
 
     return html;
-  }, [textSections, nutritionalRows, aminoAcidRows, servingSize, servingsPerPack]);
+  }, [textSections, nutritionalRows, aminoAcidRows]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
