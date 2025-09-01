@@ -1,10 +1,3 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
 // Convert thickness value to CSS border style
 export function getThicknessBorderStyle(thickness: string): string {
   switch (thickness) {
