@@ -561,7 +561,7 @@ export function ProteinPowderTemplate({
     `;
 
     return html;
-  }, [textSections, nutritionalRows, aminoAcidRows]);
+  }, [textSections, nutritionalRows, aminoAcidRows, servingSize, servingsPerPack]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
