@@ -553,7 +553,7 @@ export function FormattableTableInput({
       {showFormatting && !disabled && (
         <div
           ref={formattingRef}
-          className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1"
+          className="absolute right-1 top-1/2 transform -translate-y-1/2 flex gap-1 z-40"
           onMouseDown={(e) => {
             // Prevent the input from losing focus when clicking formatting buttons
             e.preventDefault();
