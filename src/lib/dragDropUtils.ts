@@ -74,11 +74,3 @@ export function getDragHandleStyles(isDragging: boolean = false) {
   };
 }
 
-// Get drop zone styles
-export function getDropZoneStyles(isDragOver: boolean = false) {
-  return {
-    backgroundColor: isDragOver ? "#f3f4f6" : "transparent",
-    borderColor: isDragOver ? "#3b82f6" : "transparent",
-    transition: "all 0.2s ease",
-  };
-}

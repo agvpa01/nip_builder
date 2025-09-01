@@ -82,17 +82,6 @@ export function redo(state: UndoRedoState): {
   };
 }
 
-// Check if undo is available
-export function canUndo(state: UndoRedoState): boolean {
-  return state.currentIndex > 0;
-}
-
-// Check if redo is available
-export function canRedo(state: UndoRedoState): boolean {
-  return state.currentIndex < state.history.length - 1;
-}
-
-// Handle undo/redo keyboard shortcuts
 export function handleUndoRedoKeyPress(
   event: KeyboardEvent,
   undoCallback: () => void,

@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
-import { convertTabsForHtml } from "../lib/tabUtils";
 import { handleNavigationKeyPress } from "../lib/navigationUtils";
 import {
   createUndoRedoState,
