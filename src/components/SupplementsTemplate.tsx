@@ -254,6 +254,13 @@ export function SupplementsTemplate({
 
   // Generate HTML output
   const generateHtml = useCallback(() => {
+    const servingSizeLine =
+      textSections.find((s) => s.id === "serving-size-line")?.content ||
+      `Serving Size: ${servingSize}`;
+    const servingsPerBottleLine =
+      textSections.find((s) => s.id === "servings-per-bottle-line")?.content ||
+      `Servings per Bottle: ${servingsPerBottle}`;
+
     let html = `
      <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
     <!-- Nutritional Information Table -->
