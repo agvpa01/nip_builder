@@ -426,12 +426,11 @@ export function USSupplementsTemplate({
                 {rows.map((row, index) => (
                   <tr
                     key={row.id}
-                    draggable
                     onDragStart={(e) => rowDragHandlers.onDragStart(e, index)}
                     onDragOver={rowDragHandlers.onDragOver}
                     onDrop={(e) => rowDragHandlers.onDrop(e, index)}
                     onDragEnd={rowDragHandlers.onDragEnd}
-                    className={`${getBorderClass(row.thickness)} cursor-move hover:bg-gray-50 ${
+                    className={`${getBorderClass(row.thickness)} hover:bg-gray-50 ${
                       draggedIndex === index ? "opacity-50" : ""
                     }`}
                     style={draggedIndex === index ? getDragHandleStyles() : {}}
@@ -475,17 +474,12 @@ export function USSupplementsTemplate({
                             updateRow(row.id, "thickness", t)
                           }
                         />
-                        <button
-                          onClick={() => deleteRow(row.id)}
-                          className="ml-1 text-xs text-red-500 hover:text-red-700"
-                          aria-label="Delete row"
-                        >
-                          ×
-                        </button>
+                       
                       </div>
                     </td>
                     <td className="px-1 py-1">
-                      <FormattableTableInput
+                      <div className="flex items-center gap-2 justify-end">
+                        <FormattableTableInput
                         value={row.percentDv}
                         onChange={(v) => updateRow(row.id, "percentDv", v)}
                         className="w-full border-none bg-transparent text-right text-sm outline-none"
@@ -494,6 +488,33 @@ export function USSupplementsTemplate({
                           updateRow(row.id, "thickness", t)
                         }
                       />
+
+                       {/* Drag handle button for row reordering */}
+                        <button
+                          aria-label="Drag to reorder"
+                          title="Drag to reorder"
+                          draggable
+                          onDragStart={(e) => rowDragHandlers.onDragStart(e, index)}
+                          onDragEnd={rowDragHandlers.onDragEnd}
+                          className="inline-flex h-5 w-5 cursor-grab items-center justify-center text-gray-500 hover:text-gray-700 active:cursor-grabbing"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => deleteRow(row.id)}
+                          className="ml-1 text-xs text-red-500 hover:text-red-700"
+                          aria-label="Delete row"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
