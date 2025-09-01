@@ -66,10 +66,6 @@ export function ProteinPowderTemplate({
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Serving information (editable)
-  const [servingSize, setServingSize] = useState<string>("30 grams");
-  const [servingsPerPack, setServingsPerPack] = useState<string>("33");
-
   // Query NIPs for all variants of this product
   const productNips = useQuery(
     api.nips.getNipsByProduct,
@@ -94,6 +90,18 @@ export function ProteinPowderTemplate({
 
   // Initialize default text sections
   const [textSections, setTextSections] = useState<TextSection[]>([
+    {
+      id: "serving-size-line",
+      title: "SERVING SIZE LINE:",
+      content: "Serving Size: 30 grams",
+      isCustom: false,
+    },
+    {
+      id: "servings-per-pack-line",
+      title: "SERVINGS PER PACK LINE:",
+      content: "Servings per Pack: 33",
+      isCustom: false,
+    },
     {
       id: "directions",
       title: "DIRECTIONS:",
@@ -162,8 +170,6 @@ export function ProteinPowderTemplate({
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.aminoAcidRows) setAminoAcidRows(content.aminoAcidRows);
-        if (content.servingSize) setServingSize(content.servingSize);
-        if (content.servingsPerPack) setServingsPerPack(content.servingsPerPack);
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -424,14 +430,26 @@ export function ProteinPowderTemplate({
 
   // Generate HTML output
   const generateHtml = useCallback(() => {
+    const servingSizeLine =
+      textSections.find((s) => s.id === "serving-size-line")?.content ||
+      "Serving Size: 30 grams";
+    const servingsPerPackLine =
+      textSections.find((s) => s.id === "servings-per-pack-line")?.content ||
+      "Servings per Pack: 33";
     let html = `
     <div class="protein-powder-nip" style="display: flex; font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: white;">
       <!-- Left Column: Text Sections -->
       <div class="left-column" style="flex: 1; padding: 20px; padding-right: 10px;">
     `;
 
-    // Add text sections
+    // Add text sections (exclude serving info lines which render in table header)
     textSections.forEach((section) => {
+      if (
+        section.id === "serving-size-line" ||
+        section.id === "servings-per-pack-line"
+      ) {
+        return;
+      }
       html += `
         <div class="text-section" style="margin-bottom: 16px;">
           <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
@@ -454,8 +472,8 @@ export function ProteinPowderTemplate({
           <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black; border-bottom: none;">
           <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
             <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
-              <span style="margin-bottom: 3px;">Serving Size: ${convertFormattingForHtml(convertTabsForHtml(servingSize))}</span>
-              <span>Servings per Pack: ${convertFormattingForHtml(convertTabsForHtml(servingsPerPack))}</span>
+              <span style="margin-bottom: 3px;">${convertFormattingForHtml(convertTabsForHtml(servingSizeLine))}</span>
+              <span>${convertFormattingForHtml(convertTabsForHtml(servingsPerPackLine))}</span>
             </div>
           </div>
           </div>
@@ -586,8 +604,6 @@ export function ProteinPowderTemplate({
           textSections,
           nutritionalRows,
           aminoAcidRows,
-          servingSize,
-          servingsPerPack,
         },
         htmlContent: generateHtml(),
       };
@@ -805,25 +821,22 @@ export function ProteinPowderTemplate({
               <div className="bg-black text-white text-center font-bold text-2xl px-2 pt-2 pb-2 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
-              {/* Serving Information (editable) */}
+              {/* Serving Information (editable via Text Sections) */}
               <div className="px-3 py-3 bg-white">
-                <div className="flex justify-between items-center text-xs font-bold gap-4">
-                  <div className="flex items-center gap-1">
-                    <span>Serving Size:</span>
-                    <input
-                      value={servingSize}
-                      onChange={(e) => setServingSize(e.target.value)}
-                      className="w-28 border border-black px-1 py-0.5 text-xs font-bold"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>Servings per Pack:</span>
-                    <input
-                      value={servingsPerPack}
-                      onChange={(e) => setServingsPerPack(e.target.value)}
-                      className="w-16 border border-black px-1 py-0.5 text-xs font-bold text-right"
-                    />
-                  </div>
+                <div className="flex justify-between text-xs font-bold">
+                  <span>
+                    {
+                      textSections.find((s) => s.id === "serving-size-line")
+                        ?.content || "Serving Size: 30 grams"
+                    }
+                  </span>
+                  <span>
+                    {
+                      textSections.find(
+                        (s) => s.id === "servings-per-pack-line",
+                      )?.content || "Servings per Pack: 33"
+                    }
+                  </span>
                 </div>
               </div>
 
