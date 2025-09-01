@@ -33,6 +33,8 @@ const applicationTables = {
     region: v.optional(v.string()), // "AU" or "US"
     content: v.any(), // Flexible content structure for different templates
     htmlContent: v.string(),
+    // Legacy optional storage file id retained for backward compatibility
+    htmlFileId: v.optional(v.id("_storage")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
