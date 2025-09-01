@@ -66,6 +66,10 @@ export function ProteinPowderTemplate({
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  // Serving information (editable)
+  const [servingSize, setServingSize] = useState<string>("30 grams");
+  const [servingsPerPack, setServingsPerPack] = useState<string>("33");
+
   // Query NIPs for all variants of this product
   const productNips = useQuery(
     api.nips.getNipsByProduct,
@@ -158,6 +162,8 @@ export function ProteinPowderTemplate({
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.aminoAcidRows) setAminoAcidRows(content.aminoAcidRows);
+        if (content.servingSize) setServingSize(content.servingSize);
+        if (content.servingsPerPack) setServingsPerPack(content.servingsPerPack);
       } catch (error) {
         console.error("Error loading NIP content:", error);
       }
@@ -448,8 +454,8 @@ export function ProteinPowderTemplate({
           <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black; border-bottom: none;">
           <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
             <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
-              <span style="margin-bottom: 3px;">Serving Size: 30 grams</span>
-              <span>Servings per Pack: 33</span>
+              <span style="margin-bottom: 3px;">Serving Size: ${convertFormattingForHtml(convertTabsForHtml(servingSize))}</span>
+              <span>Servings per Pack: ${convertFormattingForHtml(convertTabsForHtml(servingsPerPack))}</span>
             </div>
           </div>
           </div>
@@ -580,6 +586,8 @@ export function ProteinPowderTemplate({
           textSections,
           nutritionalRows,
           aminoAcidRows,
+          servingSize,
+          servingsPerPack,
         },
         htmlContent: generateHtml(),
       };
@@ -716,42 +724,6 @@ export function ProteinPowderTemplate({
             </div>
           )}
 
-          {/* AU/US Builder chooser with existence status */}
-          <div className="hidden sm:flex items-center gap-2">
-            <a
-              href={`?builder=au${activeVariantId ? `&variant=${activeVariantId}` : ""}`}
-              className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
-              title="Switch to Australian NIP Builder"
-            >
-              AU Builder
-              <span
-                className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                  auExists
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {auExists ? "Exists" : "None"}
-              </span>
-            </a>
-            <a
-              href={`?builder=us${activeVariantId ? `&variant=${activeVariantId}` : ""}`}
-              className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
-              title="Switch to US Nutrition Facts Builder"
-            >
-              US Builder
-              <span
-                className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                  usExists
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {usExists ? "Exists" : "None"}
-              </span>
-            </a>
-          </div>
-
           {/* Quick Actions */}
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">
@@ -833,11 +805,25 @@ export function ProteinPowderTemplate({
               <div className="bg-black text-white text-center font-bold text-2xl px-2 pt-2 pb-2 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
-              {/* Serving Information */}
-              <div className="px-3 py-3  bg-white">
-                <div className="flex justify-between text-xs font-bold">
-                  <span>Serving Size: 30 grams</span>
-                  <span>Servings per Pack: 33</span>
+              {/* Serving Information (editable) */}
+              <div className="px-3 py-3 bg-white">
+                <div className="flex justify-between items-center text-xs font-bold gap-4">
+                  <div className="flex items-center gap-1">
+                    <span>Serving Size:</span>
+                    <input
+                      value={servingSize}
+                      onChange={(e) => setServingSize(e.target.value)}
+                      className="w-28 border border-black px-1 py-0.5 text-xs font-bold"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>Servings per Pack:</span>
+                    <input
+                      value={servingsPerPack}
+                      onChange={(e) => setServingsPerPack(e.target.value)}
+                      className="w-16 border border-black px-1 py-0.5 text-xs font-bold text-right"
+                    />
+                  </div>
                 </div>
               </div>
 
