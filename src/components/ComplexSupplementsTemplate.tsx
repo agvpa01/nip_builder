@@ -735,7 +735,11 @@ export function ComplexSupplementsTemplate({
           <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
 
           <DraggableTextSection
-            sections={textSections}
+            sections={textSections.filter(
+              (s) =>
+                s.id !== "serving-size-line" &&
+                s.id !== "servings-per-container-line",
+            )}
             onSectionsReorder={handleTextSectionsReorder}
             onUpdateSection={updateTextSection}
             onDeleteSection={deleteTextSection}
@@ -765,15 +769,32 @@ export function ComplexSupplementsTemplate({
                 NUTRITIONAL INFORMATION
               </div>
               <div className="px-3 py-3 text-xs font-bold border-b-2 border-black bg-white">
-                <div className="flex flex-col">
-                  <span>
-                    {textSections.find((s) => s.id === "serving-size-line")?.content ||
-                      "Serving Size: 1-2 capsules"}
-                  </span>
-                  <span>
-                    {textSections.find((s) => s.id === "servings-per-container-line")?.content ||
-                      "Servings per Container: 30-60"}
-                  </span>
+                <div className="flex flex-col gap-1">
+                  <FormattableTableInput
+                    value={
+                      textSections.find((s) => s.id === "serving-size-line")
+                        ?.content || "Serving Size: 1-2 capsules"
+                    }
+                    onChange={(v) =>
+                      updateTextSection("serving-size-line", "content", v)
+                    }
+                    className="w-full bg-transparent border border-black px-1 py-0.5"
+                  />
+                  <FormattableTableInput
+                    value={
+                      textSections.find(
+                        (s) => s.id === "servings-per-container-line",
+                      )?.content || "Servings per Container: 30-60"
+                    }
+                    onChange={(v) =>
+                      updateTextSection(
+                        "servings-per-container-line",
+                        "content",
+                        v,
+                      )
+                    }
+                    className="w-full bg-transparent border border-black px-1 py-0.5"
+                  />
                 </div>
               </div>
 
