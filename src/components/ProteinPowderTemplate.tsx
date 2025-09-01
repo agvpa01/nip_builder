@@ -816,11 +816,7 @@ export function ProteinPowderTemplate({
           <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
 
           <DraggableTextSection
-            sections={textSections.filter(
-              (s) =>
-                s.id !== "serving-size-line" &&
-                s.id !== "servings-per-pack-line",
-            )}
+            sections={textSections}
             onSectionsReorder={handleTextSectionsReorder}
             onUpdateSection={updateTextSection}
             onDeleteSection={deleteTextSection}
@@ -851,38 +847,22 @@ export function ProteinPowderTemplate({
               <div className="bg-black text-white text-center font-bold text-2xl px-2 pt-2 pb-2 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
-              {/* Serving Information (editable only here, hidden from Text Sections list) */}
+              {/* Serving Information (values come from Text Sections) */}
               <div className="px-3 py-3 bg-white">
-                <div className="flex justify-between items-center text-xs font-bold gap-4">
-                  <div className="flex items-center gap-1">
-                    <FormattableTableInput
-                      value={
-                        textSections.find((s) => s.id === "serving-size-line")
-                          ?.content || "Serving Size: 30 grams"
-                      }
-                      onChange={(v) =>
-                        updateTextSection("serving-size-line", "content", v)
-                      }
-                      className="w-40 bg-transparent border border-black px-1 py-0.5"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <FormattableTableInput
-                      value={
-                        textSections.find(
-                          (s) => s.id === "servings-per-pack-line",
-                        )?.content || "Servings per Pack: 33"
-                      }
-                      onChange={(v) =>
-                        updateTextSection(
-                          "servings-per-pack-line",
-                          "content",
-                          v,
-                        )
-                      }
-                      className="w-56 bg-transparent border border-black px-1 py-0.5 text-right"
-                    />
-                  </div>
+                <div className="flex justify-between text-xs font-bold">
+                  <span>
+                    {
+                      textSections.find((s) => s.id === "serving-size-line")
+                        ?.content || "Serving Size: 30 grams"
+                    }
+                  </span>
+                  <span>
+                    {
+                      textSections.find(
+                        (s) => s.id === "servings-per-pack-line",
+                      )?.content || "Servings per Pack: 33"
+                    }
+                  </span>
                 </div>
               </div>
 
