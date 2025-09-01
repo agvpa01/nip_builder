@@ -72,8 +72,20 @@ export function ComplexSupplementsTemplate({
     (nip) => nip.variantId === activeVariantId && nip.templateType === "complex_supplements",
   );
 
-  // Initialize text sections with only Ingredients
+  // Initialize text sections with serving info + Ingredients
   const [textSections, setTextSections] = useState<TextSection[]>([
+    {
+      id: "serving-size-line",
+      title: "SERVING SIZE LINE:",
+      content: "Serving Size: 1-2 capsules",
+      isCustom: false,
+    },
+    {
+      id: "servings-per-container-line",
+      title: "SERVINGS PER CONTAINER LINE:",
+      content: "Servings per Container: 30-60",
+      isCustom: false,
+    },
     {
       id: "ingredients",
       title: "INGREDIENTS:",
@@ -207,7 +219,30 @@ export function ComplexSupplementsTemplate({
     if (currentVariantNip && currentVariantNip.content) {
       try {
         const content = currentVariantNip.content;
-        if (content.textSections) setTextSections(content.textSections);
+        if (content.textSections) {
+          let mergedSections: TextSection[] = content.textSections as TextSection[];
+          const hasServingSize = mergedSections.some((s) => s.id === "serving-size-line");
+          const hasServingsContainer = mergedSections.some((s) => s.id === "servings-per-container-line");
+          const toAdd: TextSection[] = [];
+          if (!hasServingSize) {
+            toAdd.push({
+              id: "serving-size-line",
+              title: "SERVING SIZE LINE:",
+              content: "Serving Size: 1-2 capsules",
+              isCustom: false,
+            });
+          }
+          if (!hasServingsContainer) {
+            toAdd.push({
+              id: "servings-per-container-line",
+              title: "SERVINGS PER CONTAINER LINE:",
+              content: "Servings per Container: 30-60",
+              isCustom: false,
+            });
+          }
+          if (toAdd.length > 0) mergedSections = [...toAdd, ...mergedSections];
+          setTextSections(mergedSections);
+        }
         if (content.nutritionalRows)
           setNutritionalRows(content.nutritionalRows);
         if (content.ingredientRows) setIngredientRows(content.ingredientRows);
@@ -383,11 +418,15 @@ export function ComplexSupplementsTemplate({
     const nutritionalThicknessBorder = getThicknessBorderStyle(
       nutritionalRowThickness
     );
-    
-
-    const servingInfo = nutritionalRows.find((r) => r.id === "serving-info");
-    const servingSizeText = servingInfo?.nutrient || "Serving Size";
-    const servingsPerText = servingInfo?.perServe || "Servings per Container";
+    // Serving info comes from Text Sections (fallback to row data for legacy)
+    const servingSizeText =
+      (textSections.find((s) => s.id === "serving-size-line")?.content as string) ||
+      nutritionalRows.find((r) => r.id === "serving-info")?.nutrient ||
+      "Serving Size";
+    const servingsPerText =
+      (textSections.find((s) => s.id === "servings-per-container-line")?.content as string) ||
+      nutritionalRows.find((r) => r.id === "serving-info")?.perServe ||
+      "Servings per Container";
 
     let html = `
     <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; padding: 20px;">
@@ -725,8 +764,17 @@ export function ComplexSupplementsTemplate({
               <div className="bg-black text-white text-center font-bold  text-2xl py-0 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
-              <div className="text-right px-3 py-3 text-sm border-b-2 border-black">
-                Per Serve / Per 100g
+              <div className="px-3 py-3 text-xs font-bold border-b-2 border-black bg-white">
+                <div className="flex flex-col">
+                  <span>
+                    {textSections.find((s) => s.id === "serving-size-line")?.content ||
+                      "Serving Size: 1-2 capsules"}
+                  </span>
+                  <span>
+                    {textSections.find((s) => s.id === "servings-per-container-line")?.content ||
+                      "Servings per Container: 30-60"}
+                  </span>
+                </div>
               </div>
 
               <div className="p-2">
@@ -745,6 +793,7 @@ export function ComplexSupplementsTemplate({
                   </thead>
                   <tbody>
                     {nutritionalRows.map((row, index) => {
+                      if (row.id === "serving-info") return null; // shown above from Text Sections
                       const perServeEmpty = !row.perServe || row.perServe.trim() === "";
                       const per100gEmpty = !row.per100g || row.per100g.trim() === "";
                       const spanAll = perServeEmpty && per100gEmpty;
