@@ -504,12 +504,17 @@ export function ComplexSupplementsTemplate({
 
     // Add text sections
     textSections.forEach((section) => {
-      html += `
+
+      if(section.id !== "serving-size-line" && section.id !== "servings-per-container-line") {
+       html += `
         <div class="text-section" style="margin-bottom: 15px;">
           <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
           <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
         </div>
       `;
+      }
+
+     
     });
 
     html += `

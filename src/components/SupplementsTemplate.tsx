@@ -553,9 +553,9 @@ export function SupplementsTemplate({
         </div> */}
 
         {/* Main Content Area */}
-        <div className="flex-1 p-6 bg-white overflow-y-auto">
+        <div className="flex flex-1 p-6 bg-white overflow-y-auto gap-20">
           {/* Text Sections editor for serving lines */}
-          <div className="mb-6">
+          <div className="mb-6 w-1/3 ">
             <h3 className="text-lg font-semibold mb-2">Text Sections</h3>
             <DraggableTextSection
               sections={textSections}
@@ -570,7 +570,8 @@ export function SupplementsTemplate({
               }
             />
           </div>
-          <div className="w-[40%] flex items-center justify-between mb-2">
+         <div className="w-3/4">
+           <div className="w-[70%] flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold mb-4">
               Nutritional Information
             </h3>
@@ -583,17 +584,12 @@ export function SupplementsTemplate({
           </div>
 
           <div>
-            <div className="w-[40%] border-2 border-black rounded-lg overflow-hidden">
+            <div className="w-[70%] border-2 border-black rounded-lg overflow-hidden">
               <div className="bg-black text-white text-center font-bold text-2xl py-0 tracking-[0.5em] w-full">
                 NUTRITIONAL INFORMATION
               </div>
               {/* Serving Information */}
-              <div className="px-3 py-3 border-b border-black bg-white">
-                <div className="flex justify-between text-xs font-bold">
-                  <span>Serving Size: {servingSize}</span>
-                  <span>Servings per Bottle: {servingsPerBottle}</span>
-                </div>
-              </div>
+             
               {/* Column Headers */}
               {/* <div className="px-3 py-3 border-b-2 border-black bg-white">
               <div className="flex justify-between text-sm font-bold">
@@ -752,6 +748,7 @@ export function SupplementsTemplate({
               </div>
             </div>
           </div>
+         </div>
         </div>
       </div>
 
