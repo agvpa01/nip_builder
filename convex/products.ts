@@ -65,53 +65,84 @@ export const syncProducts = action({
 
     try {
       // Fetch products from external API
-      const response = await fetch("https://ysoc0k44w0os0gkg8k0s0ck8.coolify.vpa.com.au/api/products/simple");
-      
+      const response = await fetch(
+        "https://ysoc0k44w0os0gkg8k0s0ck8.coolify.vpa.com.au/api/products/simple"
+      );
+
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       if (!data.success || !data.data?.products) {
         throw new Error("Invalid API response format");
       }
 
       const products = data.data.products;
-      let syncedCount = 0;
-      let skippedCount = 0;
+      let syncedCount = 0; // new products added
+      let skippedCount = 0; // products already existed
+      let variantsAdded = 0; // new variants added to existing products
 
       // Process each product
       for (const product of products) {
         // Check if product already exists
-        const existingProduct = await ctx.runQuery(api.products.getProductByUrl, {
-          onlineStoreUrl: product.onlineStoreUrl,
-        });
+        const existingProduct = await ctx.runQuery(
+          api.products.getProductByUrl,
+          {
+            onlineStoreUrl: product.onlineStoreUrl,
+          }
+        );
 
         if (existingProduct) {
+          // Product exists: ensure its variants are up to date (add missing)
           skippedCount++;
-          continue;
-        }
-
-        // Create new product
-        const productId = await ctx.runMutation(api.products.createProduct, {
-          title: product.title,
-          productType: product.productType,
-          onlineStoreUrl: product.onlineStoreUrl,
-        });
-
-        // Create variants for the product
-        if (product.variants && Array.isArray(product.variants)) {
-          for (const variant of product.variants) {
-            await ctx.runMutation(api.products.createProductVariant, {
-              productId,
-              title: variant.title,
-              imageUrl: variant.imageUrl,
-            });
+          if (
+            product.variants &&
+            Array.isArray(product.variants) &&
+            product.variants.length > 0
+          ) {
+            const existingVariants = await ctx.runQuery(
+              api.products.getVariantsByProduct,
+              {
+                productId: existingProduct._id,
+              }
+            );
+            const existingTitles = new Set(
+              (existingVariants || []).map((v: any) => v.title)
+            );
+            for (const variant of product.variants) {
+              if (!existingTitles.has(variant.title)) {
+                await ctx.runMutation(api.products.createProductVariant, {
+                  productId: existingProduct._id,
+                  title: variant.title,
+                  imageUrl: variant.imageUrl,
+                });
+                variantsAdded++;
+              }
+            }
           }
-        }
+        } else {
+          // Create new product
+          const productId = await ctx.runMutation(api.products.createProduct, {
+            title: product.title,
+            productType: product.productType,
+            onlineStoreUrl: product.onlineStoreUrl,
+          });
 
-        syncedCount++;
+          // Create variants for the product
+          if (product.variants && Array.isArray(product.variants)) {
+            for (const variant of product.variants) {
+              await ctx.runMutation(api.products.createProductVariant, {
+                productId,
+                title: variant.title,
+                imageUrl: variant.imageUrl,
+              });
+            }
+          }
+
+          syncedCount++;
+        }
       }
 
       return {
@@ -119,10 +150,13 @@ export const syncProducts = action({
         syncedCount,
         skippedCount,
         totalProcessed: products.length,
+        variantsAdded,
       };
     } catch (error) {
       console.error("Sync error:", error);
-      throw new Error(`Failed to sync products: ${error instanceof Error ? error.message : "Unknown error"}`);
+      throw new Error(
+        `Failed to sync products: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   },
 });
@@ -135,10 +169,27 @@ export const getProductByUrl = query({
 
     const product = await ctx.db
       .query("products")
-      .withIndex("by_online_store_url", (q) => q.eq("onlineStoreUrl", args.onlineStoreUrl))
+      .withIndex("by_online_store_url", (q) =>
+        q.eq("onlineStoreUrl", args.onlineStoreUrl)
+      )
       .first();
 
     return product;
+  },
+});
+
+// Get all variants for a product
+export const getVariantsByProduct = query({
+  args: { productId: v.id("products") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const variants = await ctx.db
+      .query("productVariants")
+      .withIndex("by_product", (q) => q.eq("productId", args.productId))
+      .collect();
+
+    return variants;
   },
 });
 
