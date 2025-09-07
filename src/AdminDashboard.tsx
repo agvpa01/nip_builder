@@ -9,6 +9,7 @@ import { SupplementsTemplate } from "./components/SupplementsTemplate";
 import { ComplexSupplementsTemplate } from "./components/ComplexSupplementsTemplate";
 import { USNutritionFactsTemplate } from "./components/USNutritionFactsTemplate";
 import { USSupplementsTemplate } from "./components/USSupplementsTemplate";
+import { EmbedInstructions } from "./components/EmbedInstructions";
 import { Id } from "../convex/_generated/dataModel";
 
 
@@ -603,12 +604,48 @@ export function AdminDashboard() {
                   </div>
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => setActiveTab("embed")}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === "embed"
+                      ? "bg-blue-100 text-blue-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 17l4-4 4 4m0-8l-4 4-4-4"
+                      />
+                    </svg>
+                    Embed Instructions
+                  </div>
+                </button>
+              </li>
             </ul>
           </div>
         </nav>
 
         {/* Main Content */}
         <main className="flex-1 ml-64 p-8">
+          {activeTab === "embed" && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Embed Instructions</h2>
+                <p className="text-gray-600">Generate copy‑paste snippets to embed NIPs on VPA websites (Shopify/Shogun/any HTML).</p>
+              </div>
+              <EmbedInstructions />
+            </div>
+          )}
           {activeTab === "users" && (
             <div>
               <div className="mb-6">
