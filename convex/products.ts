@@ -178,6 +178,42 @@ export const getProductByUrl = query({
   },
 });
 
+// Public: Get product by online store URL (no admin requirement)
+export const getProductByOnlineStoreUrlPublic = query({
+  args: { onlineStoreUrl: v.string() },
+  handler: async (ctx, { onlineStoreUrl }) => {
+    // Normalize URL for trailing slash differences and canonical form
+    const normalize = (input: string): string => {
+      try {
+        const u = new URL(input);
+        const cleanPath = u.pathname !== "/" && u.pathname.endsWith("/")
+          ? u.pathname.slice(0, -1)
+          : u.pathname;
+        return `${u.protocol}//${u.host}${cleanPath}`;
+      } catch {
+        return input.trim();
+      }
+    };
+
+    const primary = normalize(onlineStoreUrl);
+    let product = await ctx.db
+      .query("products")
+      .withIndex("by_online_store_url", (q) => q.eq("onlineStoreUrl", primary))
+      .first();
+
+    if (!product) {
+      // Try toggling trailing slash
+      const alt = primary.endsWith("/") ? primary.slice(0, -1) : `${primary}/`;
+      product = await ctx.db
+        .query("products")
+        .withIndex("by_online_store_url", (q) => q.eq("onlineStoreUrl", alt))
+        .first();
+    }
+
+    return product || null;
+  },
+});
+
 // Get all variants for a product
 export const getVariantsByProduct = query({
   args: { productId: v.id("products") },
