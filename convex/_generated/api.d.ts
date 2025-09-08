@@ -20,6 +20,7 @@ import type * as http from "../http.js";
 import type * as nips from "../nips.js";
 import type * as products from "../products.js";
 import type * as router from "../router.js";
+import type * as settings from "../settings.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   nips: typeof nips;
   products: typeof products;
   router: typeof router;
+  settings: typeof settings;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
