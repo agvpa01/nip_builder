@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant C as Client (React)
+    participant A as createNipWithTabbedFile<br/>convex/nips.ts
+    participant M as createNip<br/>mutation
+    participant Q as generateTabbedProductHtml<br/>query
+    participant DB as Convex DB (nips table)
+
+    C->>A: useAction(api.nips.createNipWithTabbedFile)
+    A->>M: runMutation(createNip)
+    M->>DB: insert NIP document
+    DB-->>M: nipId
+    M-->>A: nipId
+    A->>Q: runQuery(generateTabbedProductHtml)
+    Q->>DB: query nips by product
+    DB-->>Q: NIP list
+    Q-->>A: tabbed HTML result
+    A-->>C: {nipId, success, message}
