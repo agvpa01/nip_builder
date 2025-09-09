@@ -53,6 +53,13 @@ http.route({
         if(!data||!data.html) return;
         const doc=new DOMParser().parseFromString(data.html,'text/html');
         doc.head.querySelectorAll('style').forEach(st=>document.head.appendChild(st.cloneNode(true)));
+        (function(){
+          if(!document.getElementById('nip-embed-visibility')){
+            var st=document.createElement('style'); st.id='nip-embed-visibility';
+            st.textContent='.tab-container > .tab-content{display:none !important;} .tab-container > .tab-content.active{display:block !important;}';
+            document.head.appendChild(st);
+          }
+        })();
         const contentsEls=[...doc.querySelectorAll('.tab-content')];
         const container=document.createElement('div');
         container.className='tab-container';
@@ -83,7 +90,7 @@ http.route({
             panel.dataset.index = String(i);
             panel.innerHTML = el.innerHTML;
             panel.id = el.id || ('variant-' + i);
-            panel.style.display = (i===0 ? 'block' : 'none');
+            
             container.appendChild(panel);
           });
 
@@ -91,10 +98,10 @@ http.route({
           const applyVisibility = function(panels){
             panels.forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
           };
-          const showPanel = function(panel){ if (!panel) return; panel.style.display = 'block'; panel.classList.add('active'); };
+          const showPanel = function(panel){ if(!panel) return; panel.classList.add('active'); };
           const syncToSelect = ()=>{
             var panels = getPanels();
-            applyVisibility(panels);
+            panels.forEach(function(p){ p.classList.remove('active'); });
             const val = select.value;
             // Prefer matching by id (value is variant id), fallback to index
             var target = val ? container.querySelector('#' + CSS.escape(val)) : null;
