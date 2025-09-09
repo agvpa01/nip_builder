@@ -83,6 +83,7 @@ http.route({
             panel.dataset.index = String(i);
             panel.innerHTML = el.innerHTML;
             panel.id = el.id || ('variant-' + i);
+            panel.style.display = (i===0 ? 'block' : 'none');
             container.appendChild(panel);
           });
 
