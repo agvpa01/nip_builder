@@ -63,95 +63,226 @@ export const syncProducts = action({
       throw new Error("Admin access required");
     }
 
-    try {
-      // Fetch products from external API
-      const response = await fetch(
-        "https://ysoc0k44w0os0gkg8k0s0ck8.coolify.vpa.com.au/api/products/simple"
+    // Read Shopify config from admin settings
+    const shopifyCfg = await ctx.runQuery(api.settings.getSetting as any, {
+      key: "shopify",
+    });
+
+    const shop =
+      shopifyCfg?.shop || shopifyCfg?.domain || process.env.SHOPIFY_SHOP;
+    const accessToken =
+      shopifyCfg?.accessToken || process.env.SHOPIFY_ACCESS_TOKEN;
+    const storefrontToken =
+      shopifyCfg?.storefrontToken || process.env.SHOPIFY_STOREFRONT_TOKEN;
+
+    if (!shop || (!accessToken && !storefrontToken)) {
+      throw new Error(
+        "Missing Shopify credentials. Provide either an Admin API accessToken (read_products) or a Storefront storefrontToken via admin setting 'shopify' or env vars."
       );
+    }
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
+    const normalizedShop = (shop as string).replace(/^https?:\/\//, "");
+    const mode: "admin" | "storefront" = accessToken ? "admin" : "storefront";
+    const endpoint =
+      mode === "admin"
+        ? `https://${normalizedShop}/admin/api/2024-07/graphql.json`
+        : `https://${normalizedShop}/api/2024-07/graphql.json`;
 
-      const data = await response.json();
-
-      if (!data.success || !data.data?.products) {
-        throw new Error("Invalid API response format");
-      }
-
-      const products = data.data.products;
-      let syncedCount = 0; // new products added
-      let skippedCount = 0; // products already existed
-      let variantsAdded = 0; // new variants added to existing products
-
-      // Process each product
-      for (const product of products) {
-        // Check if product already exists
-        const existingProduct = await ctx.runQuery(
-          api.products.getProductByUrl,
-          {
-            onlineStoreUrl: product.onlineStoreUrl,
-          }
-        );
-
-        if (existingProduct) {
-          // Product exists: ensure its variants are up to date (add missing)
-          skippedCount++;
-          if (
-            product.variants &&
-            Array.isArray(product.variants) &&
-            product.variants.length > 0
-          ) {
-            const existingVariants = await ctx.runQuery(
-              api.products.getVariantsByProduct,
-              {
-                productId: existingProduct._id,
-              }
-            );
-            const existingTitles = new Set(
-              (existingVariants || []).map((v: any) => v.title)
-            );
-            for (const variant of product.variants) {
-              if (!existingTitles.has(variant.title)) {
-                await ctx.runMutation(api.products.createProductVariant, {
-                  productId: existingProduct._id,
-                  title: variant.title,
-                  imageUrl: variant.imageUrl,
-                });
-                variantsAdded++;
+    const adminQuery = `#graphql
+      query Products($first: Int!, $after: String) {
+        products(first: $first, after: $after, sortKey: UPDATED_AT) {
+          edges {
+            cursor
+            node {
+              id
+              title
+              productType
+              handle
+              onlineStoreUrl
+              variants(first: 100) {
+                edges {
+                  node {
+                    id
+                    title
+                    image { url }
+                  }
+                }
               }
             }
           }
-        } else {
-          // Create new product
-          const productId = await ctx.runMutation(api.products.createProduct, {
-            title: product.title,
-            productType: product.productType,
-            onlineStoreUrl: product.onlineStoreUrl,
-          });
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    `;
+    const storefrontQuery = `#graphql
+      query Products($first: Int!, $after: String) {
+        products(first: $first, after: $after) {
+          edges {
+            cursor
+            node {
+              id
+              title
+              productType
+              handle
+              onlineStoreUrl
+              variants(first: 100) {
+                edges {
+                  node {
+                    id
+                    title
+                    image { url }
+                  }
+                }
+              }
+            }
+          }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    `;
+    const queryBody = mode === "admin" ? adminQuery : storefrontQuery;
 
-          // Create variants for the product
-          if (product.variants && Array.isArray(product.variants)) {
-            for (const variant of product.variants) {
+    const doGraphQL = async (variables: any) => {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (mode === "admin")
+        headers["X-Shopify-Access-Token"] = accessToken as string;
+      else
+        headers["X-Shopify-Storefront-Access-Token"] =
+          storefrontToken as string;
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query: queryBody, variables }),
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(
+          `Shopify GraphQL error ${res.status}: ${txt || res.statusText}`
+        );
+      }
+      const json = await res.json();
+      if (json.errors) {
+        // Provide a clearer message for common scope/token issues
+        try {
+          const errs = Array.isArray(json.errors) ? json.errors : [json.errors];
+          const denied = errs.find(
+            (e: any) => e?.extensions?.code === "ACCESS_DENIED"
+          );
+          if (denied) {
+            if (mode === "admin") {
+              throw new Error(
+                "Shopify access denied for 'products'. Ensure your Admin API token has scope 'read_products' and that you are using an Admin token (not a Storefront token)."
+              );
+            } else {
+              throw new Error(
+                "Shopify access denied. Ensure your Storefront token is valid and the products are published to the Online Store channel."
+              );
+            }
+          }
+        } catch {}
+        throw new Error(
+          `Shopify GraphQL returned errors: ${JSON.stringify(json.errors)}`
+        );
+      }
+      return json.data;
+    };
+
+    let syncedCount = 0; // new products added
+    let skippedCount = 0; // products already existed
+    let variantsAdded = 0; // new variants added to existing products
+    let totalProcessed = 0;
+
+    let after: string | null = null;
+    const pageSize = 100; // Shopify max for products per page
+
+    try {
+      while (true) {
+        const data = await doGraphQL({ first: pageSize, after });
+        const edges = data?.products?.edges || [];
+
+        for (const edge of edges) {
+          const p = edge.node;
+          const productTitle: string = p.title || "Untitled";
+          const productType: string = p.productType || "";
+          const handle: string = p.handle;
+          const urlFromShopify: string | null = p.onlineStoreUrl || null;
+          const onlineStoreUrl =
+            urlFromShopify ||
+            `https://${shop.replace(/^https?:\/\//, "")}/products/${handle}`;
+
+          // Build variants array in the same shape expected downstream
+          const variants = (p.variants?.edges || []).map((ve: any) => ({
+            title: ve.node?.title || "Default",
+            imageUrl: ve.node?.image?.url || "",
+          }));
+
+          // Check if product already exists by URL
+          const existingProduct = await ctx.runQuery(
+            api.products.getProductByUrl,
+            {
+              onlineStoreUrl,
+            }
+          );
+
+          if (existingProduct) {
+            skippedCount++;
+            if (variants.length > 0) {
+              const existingVariants = await ctx.runQuery(
+                api.products.getVariantsByProduct,
+                { productId: existingProduct._id }
+              );
+              const existingTitles = new Set(
+                (existingVariants || []).map((v: any) => v.title)
+              );
+              for (const variant of variants) {
+                if (!existingTitles.has(variant.title)) {
+                  await ctx.runMutation(api.products.createProductVariant, {
+                    productId: existingProduct._id,
+                    title: variant.title,
+                    imageUrl: variant.imageUrl,
+                  });
+                  variantsAdded++;
+                }
+              }
+            }
+          } else {
+            // Create new product
+            const productId = await ctx.runMutation(
+              api.products.createProduct,
+              {
+                title: productTitle,
+                productType,
+                onlineStoreUrl,
+              }
+            );
+            // Create variants
+            for (const variant of variants) {
               await ctx.runMutation(api.products.createProductVariant, {
                 productId,
                 title: variant.title,
                 imageUrl: variant.imageUrl,
               });
             }
+            syncedCount++;
           }
 
-          syncedCount++;
+          totalProcessed++;
+        }
+
+        const pageInfo = data?.products?.pageInfo;
+        if (pageInfo?.hasNextPage) {
+          after = pageInfo.endCursor;
+          // small backoff to be kind to rate limits
+          await new Promise((r) => setTimeout(r, 150));
+        } else {
+          break;
         }
       }
 
-      return {
-        success: true,
-        syncedCount,
-        skippedCount,
-        totalProcessed: products.length,
-        variantsAdded,
-      };
+      return { success: true, syncedCount, skippedCount, totalProcessed, variantsAdded };
     } catch (error) {
       console.error("Sync error:", error);
       throw new Error(

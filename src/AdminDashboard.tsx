@@ -31,6 +31,26 @@ export function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Products sorting state
+  type ProductSortKey = "title" | "productType" | "variants" | "syncedAt";
+  const [productSort, setProductSort] = useState<{ key: ProductSortKey; dir: "asc" | "desc" }>({ key: "title", dir: "asc" });
+  const toggleProductSort = (key: ProductSortKey) => {
+    setProductSort((prev) =>
+      prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }
+    );
+    setCurrentPage(1);
+  };
+  const sortIcon = (key: ProductSortKey) => {
+    if (productSort.key !== key) return (
+      <span className="ml-1 text-gray-300">↕</span>
+    );
+    return productSort.dir === "asc" ? (
+      <span className="ml-1">↑</span>
+    ) : (
+      <span className="ml-1">↓</span>
+    );
+  };
+
   // NIPs state
   const [nipsSearch, setNipsSearch] = useState("");
   const [nipsTypeFilter, setNipsTypeFilter] = useState("");
@@ -349,6 +369,28 @@ export function AdminDashboard() {
       return matchesSearch && matchesType;
     });
 
+    // Sort products
+    const getVal = (p: any) => {
+      switch (productSort.key) {
+        case "title":
+          return (p.title || "").toLowerCase();
+        case "productType":
+          return (p.productType || "").toLowerCase();
+        case "variants":
+          return Array.isArray(p.variants) ? p.variants.length : 0;
+        case "syncedAt":
+          return p.syncedAt || 0;
+      }
+    };
+    filtered.sort((a: any, b: any) => {
+      const av = getVal(a);
+      const bv = getVal(b);
+      let cmp = 0;
+      if (typeof av === "number" && typeof bv === "number") cmp = av - bv;
+      else cmp = String(av).localeCompare(String(bv));
+      return productSort.dir === "asc" ? cmp : -cmp;
+    });
+
     // Calculate pagination
     const totalItems = filtered.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -362,7 +404,7 @@ export function AdminDashboard() {
       totalItems,
       allFilteredProducts: filtered,
     };
-  }, [products, productSearch, productTypeFilter, currentPage, itemsPerPage]);
+  }, [products, productSearch, productTypeFilter, productSort, currentPage, itemsPerPage]);
 
   // Filter products for NIPs with infinite scroll
   const filteredNipsProducts = useMemo(() => {
@@ -894,16 +936,44 @@ export function AdminDashboard() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Product
+                          <button
+                            type="button"
+                            onClick={() => toggleProductSort("title")}
+                            className="inline-flex items-center hover:text-gray-900"
+                            title="Sort by product name"
+                          >
+                            Product {sortIcon("title")}
+                          </button>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
+                          <button
+                            type="button"
+                            onClick={() => toggleProductSort("productType")}
+                            className="inline-flex items-center hover:text-gray-900"
+                            title="Sort by type"
+                          >
+                            Type {sortIcon("productType")}
+                          </button>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Variants
+                          <button
+                            type="button"
+                            onClick={() => toggleProductSort("variants")}
+                            className="inline-flex items-center hover:text-gray-900"
+                            title="Sort by number of variants"
+                          >
+                            Variants {sortIcon("variants")}
+                          </button>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Synced
+                          <button
+                            type="button"
+                            onClick={() => toggleProductSort("syncedAt")}
+                            className="inline-flex items-center hover:text-gray-900"
+                            title="Sort by last synced"
+                          >
+                            Synced {sortIcon("syncedAt")}
+                          </button>
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
