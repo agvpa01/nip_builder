@@ -124,7 +124,7 @@ http.route({
           });
           container.addEventListener('click', (ev)=>{
             const t = ev.target && ev.target.closest ? ev.target.closest('.tab-button') : null;
-            const btn = t as any;
+            const btn = t;
             if(!btn) return;
             ev.preventDefault();
             const idx = btn.dataset.index;
