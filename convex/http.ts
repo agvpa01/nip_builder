@@ -86,13 +86,24 @@ http.route({
             container.appendChild(panel);
           });
 
+          const getPanels = ()=> Array.from(container.children).filter((el)=> el.classList && el.classList.contains('tab-content'));
           const syncToSelect = ()=>{
-            const idx = select.selectedIndex;
-            const panels = container.querySelectorAll('.tab-content');
-            panels.forEach((p, i)=>{
-              if (i === idx) p.classList.add('active');
-              else p.classList.remove('active');
-            });
+            const val = select.value;
+            // Prefer matching by id (value is variant id), fallback to index
+            var matched = false;
+            if (val) {
+              var target = container.querySelector('#' + CSS.escape(val));
+              if (target) {
+                getPanels().forEach(function(p){ p.classList.remove('active'); });
+                target.classList.add('active');
+                matched = true;
+              }
+            }
+            if (!matched) {
+              var panels = getPanels();
+              var idx = Math.max(0, Math.min(select.selectedIndex, panels.length - 1));
+              panels.forEach(function(p, i){ p.classList.toggle('active', i === idx); });
+            }
           };
           // Initialize and bind
           syncToSelect();
