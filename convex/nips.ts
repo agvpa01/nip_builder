@@ -479,7 +479,7 @@ export const generateTabbedProductHtml = query({
         variantCount: 0,
       }
     }
-    // Check if we have only one variant - if so, generate simple HTML without tabs
+    // Check if we have only one variant - if so, generate simple HTML without selector
     if (variantData.length === 1) {
       const singleVariant = variantData[0]
       const simpleHtml = `
@@ -601,37 +601,9 @@ export const generateTabbedProductHtml = query({
             color: #666;
             margin: 10px 0 0 0;
           }
-          .tab-container {
-            margin-bottom: 30px;
-          }
-          .tab-buttons {
-            display: flex;
-            border-bottom: 2px solid #ddd;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-          }
-          .tab-button {
-            background: #f8f9fa;
-            border: none;
-            padding: 12px 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-            margin-right: 5px;
-            margin-bottom: 5px;
-          }
-          .tab-button:hover {
-            background: #e9ecef;
-            color: #333;
-          }
-          .tab-button.active {
-            background: white;
-            color: #007bff;
-            border-bottom-color: #007bff;
-          }
+          .tab-container { margin-bottom: 30px; }
+          .selector-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+          #variantSelect { padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
           .tab-content {
             display: none;
             padding: 20px;
@@ -684,7 +656,7 @@ export const generateTabbedProductHtml = query({
             background: #218838;
           }
           @media print {
-            .tab-buttons, .print-button { display: none; }
+            #variantSelect, .print-button, .selector-row { display: none; }
             .tab-content { display: block !important; border: none; padding: 0; }
             .tab-content:not(.active) { page-break-before: always; }
           }
@@ -692,13 +664,16 @@ export const generateTabbedProductHtml = query({
       </head>
       <body>
         <div class="tab-container">
-          <div class="tab-buttons">
-            ${variantData
-              .map(
-                (variant, index) =>
-                  `<button class="tab-button ${index === 0 ? 'active' : ''}" onclick="showTab('${variant.id}')">${variant.name}</button>`,
-              )
-              .join('')}
+          <div class="selector-row">
+            <label for="variantSelect">Select Variant:</label>
+            <select id="variantSelect">
+              ${variantData
+                .map(
+                  (variant, index) =>
+                    `<option value="${variant.id}" ${index === 0 ? 'selected' : ''}>${variant.name}</option>`,
+                )
+                .join('')}
+            </select>
           </div>
 
           ${variantData
@@ -720,35 +695,20 @@ export const generateTabbedProductHtml = query({
 
         <script>
           function showTab(tabId) {
-            // Hide all tab contents
             const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-              content.classList.remove('active');
-            });
-
-            // Remove active class from all buttons
-            const tabButtons = document.querySelectorAll('.tab-button');
-            tabButtons.forEach(button => {
-              button.classList.remove('active');
-            });
-
-            // Show selected tab content
+            tabContents.forEach(content => content.classList.remove('active'));
             const selectedTab = document.getElementById(tabId);
-            if (selectedTab) {
-              selectedTab.classList.add('active');
-            }
-
-            // Add active class to clicked button
-            const clickedButton = event.target;
-            clickedButton.classList.add('active');
+            if (selectedTab) selectedTab.classList.add('active');
           }
-
-          // Initialize first tab as active on page load
           document.addEventListener('DOMContentLoaded', function() {
-            const firstTab = document.querySelector('.tab-content');
-            const firstButton = document.querySelector('.tab-button');
-            if (firstTab) firstTab.classList.add('active');
-            if (firstButton) firstButton.classList.add('active');
+            const select = document.getElementById('variantSelect');
+            if (select) {
+              showTab(select.value);
+              select.addEventListener('change', function(e) {
+                const target = e.target as HTMLSelectElement;
+                showTab(target.value);
+              });
+            }
           });
         </script>
       </body>
