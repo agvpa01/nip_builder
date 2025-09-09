@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { DraggableTextSection } from "./DraggableTextSection";
@@ -58,6 +58,15 @@ export function ComplexSupplementsTemplate({
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     variant?._id || null
   );
+  const [variantsList, setVariantsList] = useState<any[]>(product?.variants || []);
+  useEffect(() => {
+    setVariantsList(product?.variants || []);
+  }, [product?._id]);
+  const createProductVariant = useMutation(api.products.createProductVariant);
+  const [addingVariant, setAddingVariant] = useState(false);
+  const [newVarTitle, setNewVarTitle] = useState("");
+  const [newVarImageUrl, setNewVarImageUrl] = useState("");
+  const [savingVar, setSavingVar] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -666,24 +675,93 @@ export function ComplexSupplementsTemplate({
           </div>
         )}
 
-        {/* Variant Selection */}
-        {product?.variants && product.variants.length > 1 && (
+        {/* Variant Selection + Add */}
+        {variantsList && variantsList.length > 0 && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Variant:
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Select Variant:
+              </label>
+              <button
+                type="button"
+                onClick={() => setAddingVariant((v) => !v)}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                {addingVariant ? "Cancel" : "+ Add Variant"}
+              </button>
+            </div>
             <select
               value={activeVariantId || ""}
               onChange={(e) => setActiveVariantId(e.target.value || null)}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a variant...</option>
-              {product.variants.map((v: any) => (
+              {variantsList.map((v: any) => (
                 <option key={v._id} value={v._id}>
                   {v.title}
                 </option>
               ))}
             </select>
+            {addingVariant && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
+                <div className="md:col-span-2">
+                  <input
+                    type="text"
+                    placeholder="Variant title"
+                    value={newVarTitle}
+                    onChange={(e) => setNewVarTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <input
+                    type="url"
+                    placeholder="Image URL (optional)"
+                    value={newVarImageUrl}
+                    onChange={(e) => setNewVarImageUrl(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="md:col-span-1 flex items-center">
+                  <button
+                    type="button"
+                    disabled={savingVar}
+                    onClick={async () => {
+                      const title = newVarTitle.trim();
+                      if (!title) {
+                        toast.error("Please enter a variant title");
+                        return;
+                      }
+                      try {
+                        setSavingVar(true);
+                        const variantId = await createProductVariant({
+                          productId: product._id,
+                          title,
+                          imageUrl: newVarImageUrl.trim(),
+                        } as any);
+                        setVariantsList((list) => [
+                          ...list,
+                          { _id: variantId, title, imageUrl: newVarImageUrl.trim() },
+                        ]);
+                        setActiveVariantId(String(variantId));
+                        setNewVarTitle("");
+                        setNewVarImageUrl("");
+                        setAddingVariant(false);
+                        toast.success("Variant added");
+                      } catch (e) {
+                        console.error(e);
+                        toast.error("Failed to add variant");
+                      } finally {
+                        setSavingVar(false);
+                      }
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {savingVar ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
