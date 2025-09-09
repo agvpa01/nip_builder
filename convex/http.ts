@@ -53,43 +53,92 @@ http.route({
         if(!data||!data.html) return;
         const doc=new DOMParser().parseFromString(data.html,'text/html');
         doc.head.querySelectorAll('style').forEach(st=>document.head.appendChild(st.cloneNode(true)));
-        const labels=[...doc.querySelectorAll('.tab-buttons .tab-button')].map(b=> (b.textContent||'').trim());
-        const contents=[...doc.querySelectorAll('.tab-content')].map(p=> p.innerHTML);
+        const contentsEls=[...doc.querySelectorAll('.tab-content')];
         const container=document.createElement('div');
         container.className='tab-container';
-        const bar=document.createElement('div');
-        bar.className='tab-buttons';
-        labels.forEach((label,i)=>{
-          const btn=document.createElement('button');
-          btn.className='tab-button' + (i===0?' active':'');
-          btn.textContent= label || ('Variant ' + (i+1));
-          btn.dataset.index= String(i);
-          bar.appendChild(btn);
-        });
-        container.appendChild(bar);
-        contents.forEach((html,i)=>{
-          const panel=document.createElement('div');
-          panel.id='variant-' + i;
-          panel.className='tab-content' + (i===0?' active':'');
-          panel.dataset.index= String(i);
-          panel.innerHTML= html;
-          container.appendChild(panel);
-        });
+        const selectFromDoc = doc.getElementById('variantSelect') as HTMLSelectElement | null;
+
+        if (selectFromDoc) {
+          // Clone dropdown UI and wire events
+          const row=document.createElement('div');
+          row.className='selector-row';
+          const label=document.createElement('label');
+          label.htmlFor='variantSelect';
+          label.textContent='Select Variant:';
+          const select=document.createElement('select');
+          select.id='variantSelect';
+          [...selectFromDoc.options].forEach((opt,i)=>{
+            const o=document.createElement('option');
+            o.value= opt.value; o.textContent= opt.textContent || ('Variant ' + (i+1));
+            if (opt.selected) o.selected = true;
+            select.appendChild(o);
+          });
+          row.appendChild(label); row.appendChild(select);
+          container.appendChild(row);
+
+          // Panels
+          contentsEls.forEach((el,i)=>{
+            const panel=document.createElement('div');
+            panel.className = 'tab-content' + (i===0?' active':'');
+            panel.dataset.index = String(i);
+            panel.innerHTML = el.innerHTML;
+            panel.id = el.id || ('variant-' + i);
+            container.appendChild(panel);
+          });
+
+          const syncToSelect = ()=>{
+            const val = select.value;
+            // Hide all
+            container.querySelectorAll('.tab-content.active').forEach(el=>el.classList.remove('active'));
+            const show = container.querySelector('#' + CSS.escape(val));
+            if (show) show.classList.add('active');
+            else {
+              // Fallback to first
+              const first = container.querySelector('.tab-content') as HTMLElement | null;
+              if (first) first.classList.add('active');
+            }
+          };
+          // Initialize and bind
+          syncToSelect();
+          select.addEventListener('change', syncToSelect);
+        } else {
+          // Fallback to legacy tab buttons if dropdown not present
+          const labels=[...doc.querySelectorAll('.tab-buttons .tab-button')].map(b=> (b.textContent||'').trim());
+          const bar=document.createElement('div');
+          bar.className='tab-buttons';
+          labels.forEach((label,i)=>{
+            const btn=document.createElement('button');
+            btn.className='tab-button' + (i===0?' active':'');
+            btn.textContent= label || ('Variant ' + (i+1));
+            btn.dataset.index= String(i);
+            bar.appendChild(btn);
+          });
+          container.appendChild(bar);
+          contentsEls.forEach((el,i)=>{
+            const panel=document.createElement('div');
+            panel.id='variant-' + i;
+            panel.className='tab-content' + (i===0?' active':'');
+            panel.dataset.index= String(i);
+            panel.innerHTML= el.innerHTML;
+            container.appendChild(panel);
+          });
+          container.addEventListener('click', (ev)=>{
+            const btn = ev.target && (ev.target as HTMLElement).closest ? (ev.target as HTMLElement).closest('.tab-button') : null as any;
+            if(!btn) return;
+            ev.preventDefault();
+            const idx = btn.dataset.index;
+            container.querySelectorAll('.tab-button.active').forEach(el=>el.classList.remove('active'));
+            container.querySelectorAll('.tab-content.active').forEach(el=>el.classList.remove('active'));
+            btn.classList.add('active');
+            const panel = container.querySelector('.tab-content[data-index="' + idx + '"]');
+            if(panel) panel.classList.add('active');
+          });
+        }
+
         const footer=doc.querySelector('.footer');
         if (footer) container.appendChild(footer.cloneNode(true));
         mount.innerHTML='';
         mount.appendChild(container);
-        container.addEventListener('click', (ev)=>{
-          const btn = ev.target && ev.target.closest ? ev.target.closest('.tab-button') : null;
-          if(!btn) return;
-          ev.preventDefault();
-          const idx = btn.dataset.index;
-          container.querySelectorAll('.tab-button.active').forEach(el=>el.classList.remove('active'));
-          container.querySelectorAll('.tab-content.active').forEach(el=>el.classList.remove('active'));
-          btn.classList.add('active');
-          const panel = container.querySelector('.tab-content[data-index="' + idx + '"]');
-          if(panel) panel.classList.add('active');
-        });
       })
       .catch(err=>{ console.error('[NIP embed]', err); mount.textContent='Nutritional panel unavailable.'; });
   }
