@@ -384,7 +384,7 @@ export const backfillNipRegions = mutation({
 // Generate tabbed HTML with JavaScript for variant switching
 export const generateTabbedProductHtml = query({
   args: {
-    productId: v.id('products'),
+    productId: v.id("products"),
     templateType: v.optional(v.string()),
     region: v.optional(v.string()),
   },
@@ -397,91 +397,99 @@ export const generateTabbedProductHtml = query({
   handler: async (ctx, { productId, templateType, region }) => {
     // Get all NIPs for this product
     const nips = await ctx.db
-      .query('nips')
-      .withIndex('by_product', (q) => q.eq('productId', productId))
-      .collect()
+      .query("nips")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .collect();
 
     // Optionally filter by templateType first; otherwise by region; else use all
-    let filtered = nips
+    let filtered = nips;
     if (templateType) {
-      filtered = nips.filter((n) => n.templateType === templateType)
+      filtered = nips.filter((n) => n.templateType === templateType);
     } else if (region) {
-      filtered = nips.filter((n) => (n as any).region === region)
+      filtered = nips.filter((n) => (n as any).region === region);
     }
 
     if (filtered.length === 0) {
       return {
         success: false,
-        message: 'No NIPs found for this product',
-        html: '',
+        message: "No NIPs found for this product",
+        html: "",
         variantCount: 0,
-      }
+      };
     }
 
     // Get product information
-    const product = await ctx.db.get(productId)
+    const product = await ctx.db.get(productId);
     if (!product) {
       return {
         success: false,
-        message: 'Product not found',
-        html: '',
+        message: "Product not found",
+        html: "",
         variantCount: 0,
-      }
+      };
     }
 
     // Build variant data for tabs
     // Group NIPs by variant and pick the latest non-empty HTML per variant
-    type VariantTab = { id: string; name: string; templateType: string; htmlContent: string }
-    const byVariant = new Map<string, any[]>()
+    type VariantTab = {
+      id: string;
+      name: string;
+      templateType: string;
+      htmlContent: string;
+    };
+    const byVariant = new Map<string, any[]>();
     for (const nip of filtered) {
-      const key = nip.variantId ? nip.variantId.toString() : 'no-variant'
-      const arr = byVariant.get(key) || []
-      arr.push(nip)
-      byVariant.set(key, arr)
+      const key = nip.variantId ? nip.variantId.toString() : "no-variant";
+      const arr = byVariant.get(key) || [];
+      arr.push(nip);
+      byVariant.set(key, arr);
     }
 
-    const variantData: VariantTab[] = []
-    let tabIndex = 0
+    const variantData: VariantTab[] = [];
+    let tabIndex = 0;
     for (const [key, arr] of byVariant.entries()) {
       // Choose the most recently updated/created NIP that has non-empty html
       const latestWithHtml = arr
         .filter(
           (n) =>
-            !!n.htmlContent && (typeof n.htmlContent !== 'string' || n.htmlContent.trim() !== ''),
+            !!n.htmlContent &&
+            (typeof n.htmlContent !== "string" || n.htmlContent.trim() !== "")
         )
-        .sort((a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt))[0]
+        .sort(
+          (a, b) => (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt)
+        )[0];
 
-      if (!latestWithHtml) continue
+      if (!latestWithHtml) continue;
 
       const fetchedVariant = latestWithHtml.variantId
-        ? await ctx.db.get(latestWithHtml.variantId as Id<'productVariants'>)
-        : null
-      const variantIndex = variantData.length + 1
+        ? await ctx.db.get(latestWithHtml.variantId as Id<"productVariants">)
+        : null;
+      const variantIndex = variantData.length + 1;
       const variantName =
-        fetchedVariant?.title && fetchedVariant.title.trim() !== ''
+        fetchedVariant?.title && fetchedVariant.title.trim() !== ""
           ? fetchedVariant.title
-          : `Variant ${variantIndex}`
+          : `Variant ${variantIndex}`;
 
       variantData.push({
         id: `variant-${tabIndex++}`,
         name: variantName,
         templateType: latestWithHtml.templateType,
         htmlContent: latestWithHtml.htmlContent,
-      })
+      });
     }
 
     // If no variants with HTML, abort
     if (variantData.length === 0) {
       return {
         success: false,
-        message: 'No NIPs with HTML content found for this product',
-        html: '',
+        message: "No NIPs with HTML content found for this product",
+        html: "",
         variantCount: 0,
-      }
+      };
     }
-    // Check if we have only one variant - if so, generate simple HTML without selector
+    // Check if we have only one variant - if so, generate simple HTML without tabs
     if (variantData.length === 1) {
-      const singleVariant = variantData[0]
+      const singleVariant = variantData[0];
       const simpleHtml = `
         <!DOCTYPE html>
         <html lang="en">
@@ -553,19 +561,17 @@ export const generateTabbedProductHtml = query({
             ${singleVariant.htmlContent}
           </div>
 
-          <div class="footer">
-            <p>Generated on ${new Date().toLocaleDateString()} - NIP for ${product.title}</p>
-          </div>
+         
         </body>
         </html>
-      `
+      `;
 
       return {
         success: true,
         message: `Simple HTML generated for single variant`,
         html: simpleHtml,
         variantCount: variantData.length,
-      }
+      };
     }
 
     // Generate tabbed HTML with embedded JavaScript for multiple variants
@@ -601,9 +607,62 @@ export const generateTabbedProductHtml = query({
             color: #666;
             margin: 10px 0 0 0;
           }
-          .tab-container { margin-bottom: 30px; }
-          .selector-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-          #variantSelect { padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+          .tab-container {
+            margin-bottom: 30px;
+          }
+          /* Dropdown-styled tab selector */
+          .tab-buttons {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+          }
+          .dropdown-toggle {
+            background: #3b82f6; /* blue */
+            color: #ffffff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 10px rgba(59,130,246,0.25);
+            transition: background 0.2s ease;
+          }
+          .dropdown-toggle:hover { background: #2563eb; }
+          .caret { font-size: 12px; opacity: 0.95; transition: transform 0.2s ease; }
+          .tab-buttons.open .caret { transform: rotate(180deg); }
+          .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: #ffffff;
+            border-radius: 10px;
+            min-width: 220px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+            padding: 6px 0;
+            z-index: 1000;
+            display: none;
+          }
+          .tab-buttons.open .dropdown-menu { display: block; }
+          /* Individual tab buttons inside dropdown */
+          .dropdown-menu .tab-button {
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            border: none;
+            padding: 10px 14px;
+            margin: 0;
+            font-size: 14px;
+            color: #374151; /* gray-700 */
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+          }
+          .dropdown-menu .tab-button:hover { background: #f3f4f6; color: #111827; }
+          .dropdown-menu .tab-button.active { background: #eff6ff; color: #2563eb; }
           .tab-content {
             display: none;
             padding: 20px;
@@ -656,77 +715,164 @@ export const generateTabbedProductHtml = query({
             background: #218838;
           }
           @media print {
-            #variantSelect, .print-button, .selector-row { display: none; }
+            .tab-buttons, .print-button { display: none; }
             .tab-content { display: block !important; border: none; padding: 0; }
             .tab-content:not(.active) { page-break-before: always; }
           }
         </style>
       </head>
       <body>
+        <!-- Inline styles duplicated here so content works when only <body> is injected without <head> -->
+        <style>
+          .tab-container { margin-bottom: 30px; }
+          .tab-buttons { position: relative; display: inline-block; margin-bottom: 20px; }
+          .dropdown-toggle { background:#3b82f6;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,0.05),0 4px 10px rgba(59,130,246,0.25); }
+          .dropdown-toggle:hover { background:#2563eb; }
+          .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
+          .tab-buttons.open .caret { transform: rotate(180deg); }
+          .dropdown-menu { position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:10px;min-width:220px;box-shadow:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);padding:6px 0;z-index:1000;display:none; }
+          .tab-buttons.open .dropdown-menu { display:block; }
+          .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
+          .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
+          .dropdown-menu .tab-button.active { background:#eff6ff;color:#2563eb; }
+          .tab-content { display:none;padding:20px;border:1px solid #ddd;border-radius:5px;background:#fff; }
+          .tab-content.active { display:block; }
+        </style>
         <div class="tab-container">
-          <div class="selector-row">
-            <label for="variantSelect">Select Variant:</label>
-            <select id="variantSelect">
+          <div class="tab-buttons">
+            <button class="dropdown-toggle" onclick="toggleDropdown()">
+              <span class="dropdown-label">${(variantData[0] && variantData[0].name) || "Select Variant"}</span>
+              <span class="caret">▾</span>
+            </button>
+            <div class="dropdown-menu">
               ${variantData
                 .map(
                   (variant, index) =>
-                    `<option value="${variant.id}" ${index === 0 ? 'selected' : ''}>${variant.name}</option>`,
+                    `<button class=\"tab-button ${index === 0 ? "active" : ""}\" onclick=\"showTab('${variant.id}', this)\">${variant.name}</button>`
                 )
-                .join('')}
-            </select>
+                .join("")}
+            </div>
           </div>
 
           ${variantData
             .map(
               (variant, index) => `
-            <div id="${variant.id}" class="tab-content ${index === 0 ? 'active' : ''}">
+            <div id="${variant.id}" class="tab-content ${index === 0 ? "active" : ""}">
               
               ${variant.htmlContent}
             </div>
-          `,
+          `
             )
-            .join('')}
+            .join("")}
         </div>
 
-        <div class="footer">
-          <p>Generated on ${new Date().toLocaleDateString()} - Interactive NIP for ${product.title}</p>
-          <p>Total Variants: ${variantData.length}</p>
-        </div>
 
         <script>
-          function showTab(tabId) {
+          function showTab(tabId, btn) {
+            // Hide all tab contents
             const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => content.classList.remove('active'));
+            tabContents.forEach(content => {
+              content.classList.remove('active');
+            });
+
+            // Remove active class from all dropdown buttons
+            const tabButtons = document.querySelectorAll('.dropdown-menu .tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab content
             const selectedTab = document.getElementById(tabId);
-            if (selectedTab) selectedTab.classList.add('active');
-          }
-          document.addEventListener('DOMContentLoaded', function() {
-            const select = document.getElementById('variantSelect');
-            if (select) {
-              showTab(select.value);
-              select.addEventListener('change', function(e) {
-                var t = e && e.target ? e.target : select;
-                showTab(t.value);
-              });
+            if (selectedTab) {
+              selectedTab.classList.add('active');
             }
+
+            // Add active class to clicked button
+            const clickedButton = btn || (typeof event !== 'undefined' ? event.target : null);
+            if (clickedButton) clickedButton.classList.add('active');
+
+            // Update dropdown label and close menu
+            const labelEl = document.querySelector('.dropdown-label');
+            if (labelEl && clickedButton) labelEl.textContent = (clickedButton.textContent || '').trim();
+            const dropdown = document.querySelector('.tab-buttons');
+            if (dropdown) dropdown.classList.remove('open');
+          }
+
+          function toggleDropdown() {
+            const dropdown = document.querySelector('.tab-buttons');
+            if (dropdown) dropdown.classList.toggle('open');
+          }
+
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.tab-buttons');
+            if (!dropdown) return;
+            if (!dropdown.contains(e.target)) {
+              dropdown.classList.remove('open');
+            }
+          });
+
+          // Initialize first tab as active on page load
+          document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.tab-buttons');
+            if (container && !container.querySelector('.dropdown-toggle')) {
+              // Progressive enhancement: convert flat buttons into dropdown structure
+              const existingButtons = Array.from(container.querySelectorAll('.tab-button'));
+              const toggle = document.createElement('button');
+              toggle.className = 'dropdown-toggle';
+              const labelSpan = document.createElement('span');
+              labelSpan.className = 'dropdown-label';
+              labelSpan.textContent = (existingButtons[0]?.textContent || 'Select Variant').trim();
+              const caretSpan = document.createElement('span');
+              caretSpan.className = 'caret';
+              caretSpan.textContent = '▾';
+              toggle.appendChild(labelSpan);
+              toggle.appendChild(caretSpan);
+              toggle.addEventListener('click', toggleDropdown);
+
+              const menu = document.createElement('div');
+              menu.className = 'dropdown-menu';
+              existingButtons.forEach((b, i) => {
+                b.classList.remove('active');
+                // Ensure inline handler passes the button as second arg when clicked
+                // If not present, add a listener that calls showTab using its text/onclick
+                const onclickAttr = b.getAttribute('onclick');
+                if (!onclickAttr || !onclickAttr.includes('this')) {
+                  const match = onclickAttr && onclickAttr.match(/showTab\('([^']+)'\)/);
+                  const id = match ? match[1] : null;
+                  if (id) {
+                    b.onclick = function() { showTab(id, b); };
+                  }
+                }
+                menu.appendChild(b);
+              });
+
+              // Clear and rebuild
+              container.innerHTML = '';
+              container.appendChild(toggle);
+              container.appendChild(menu);
+            }
+
+            const firstTab = document.querySelector('.tab-content');
+            const firstButton = document.querySelector('.dropdown-menu .tab-button');
+            if (firstTab) firstTab.classList.add('active');
+            if (firstButton) firstButton.classList.add('active');
           });
         </script>
       </body>
       </html>
-    `
+    `;
 
     return {
       success: true,
       message: `Tabbed HTML generated for ${variantData.length} variant(s)`,
       html: tabbedHtml,
       variantCount: variantData.length,
-    }
+    };
   },
-})
+});
 
 export const generateCombinedProductHtml = query({
   args: {
-    productId: v.id('products'),
+    productId: v.id("products"),
   },
   returns: v.object({
     success: v.boolean(),
@@ -736,37 +882,37 @@ export const generateCombinedProductHtml = query({
   }),
   handler: async (
     ctx,
-    { productId },
+    { productId }
   ): Promise<{
-    success: boolean
-    message: string
-    html: string
-    variantCount: number
+    success: boolean;
+    message: string;
+    html: string;
+    variantCount: number;
   }> => {
     // Get all NIPs for this product
     const nips = await ctx.db
-      .query('nips')
-      .withIndex('by_product', (q) => q.eq('productId', productId))
-      .collect()
+      .query("nips")
+      .withIndex("by_product", (q) => q.eq("productId", productId))
+      .collect();
 
     if (nips.length === 0) {
       return {
         success: false,
-        message: 'No NIPs found for this product',
-        html: '',
+        message: "No NIPs found for this product",
+        html: "",
         variantCount: 0,
-      }
+      };
     }
 
     // Get product information
-    const product = await ctx.db.get(productId)
+    const product = await ctx.db.get(productId);
     if (!product) {
       return {
         success: false,
-        message: 'Product not found',
-        html: '',
+        message: "Product not found",
+        html: "",
         variantCount: 0,
-      }
+      };
     }
 
     // Start building combined HTML
@@ -776,49 +922,49 @@ export const generateCombinedProductHtml = query({
           <h1 style="font-size: 28px; font-weight: bold; margin: 0; color: #333;">${product.title}</h1>
           <p style="font-size: 16px; color: #666; margin: 10px 0 0 0;">Complete Nutritional Information Panel - All Variants</p>
         </div>
-    `
+    `;
 
     // Group NIPs by variant and add each variant's content
     for (let i = 0; i < nips.length; i++) {
-      const nip = nips[i]
+      const nip = nips[i];
 
       // Get variant information if available
-      let variantName = 'Default Variant'
+      let variantName = "Default Variant";
       if (nip.variantId) {
-        const variant = await ctx.db.get(nip.variantId)
+        const variant = await ctx.db.get(nip.variantId);
         if (variant) {
-          variantName = variant.title || `Variant ${i + 1}`
+          variantName = variant.title || `Variant ${i + 1}`;
         }
       }
 
       // Add variant section
       combinedHtml += `
-        <div class="variant-section" style="margin-bottom: 50px; ${i < nips.length - 1 ? 'border-bottom: 2px solid #eee; padding-bottom: 40px;' : ''}">
+        <div class="variant-section" style="margin-bottom: 50px; ${i < nips.length - 1 ? "border-bottom: 2px solid #eee; padding-bottom: 40px;" : ""}">
           <div class="variant-header" style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-left: 5px solid #007bff;">
             <h2 style="font-size: 20px; font-weight: bold; margin: 0; color: #007bff;">${variantName}</h2>
-            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">Template: ${nip.templateType.replace('_', ' ')}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">Template: ${nip.templateType.replace("_", " ")}</p>
           </div>
           <div class="variant-content" style="padding: 0 10px;">
             ${nip.htmlContent}
           </div>
         </div>
-      `
+      `;
     }
 
     // Close the combined HTML
-    combinedHtml += `
-        <div class="footer" style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee; color: #666; font-size: 12px;">
-          <p>Generated on ${new Date().toLocaleDateString()} - Combined NIP for ${product.title}</p>
-          <p>Total Variants: ${nips.length}</p>
-        </div>
-      </div>
-    `
+    // combinedHtml += `
+    //     <div class="footer" style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee; color: #666; font-size: 12px;">
+    //       <p>Generated on ${new Date().toLocaleDateString()} - Combined NIP for ${product.title}</p>
+    //       <p>Total Variants: ${nips.length}</p>
+    //     </div>
+    //   </div>
+    // `
 
     return {
       success: true,
       message: `Combined HTML generated for ${nips.length} variant(s)`,
       html: combinedHtml,
       variantCount: nips.length,
-    }
+    };
   },
-})
+});
