@@ -87,16 +87,12 @@ http.route({
           });
 
           const syncToSelect = ()=>{
-            const val = select.value;
-            // Hide all
-            container.querySelectorAll('.tab-content.active').forEach(el=>el.classList.remove('active'));
-            const show = container.querySelector('#' + CSS.escape(val));
-            if (show) show.classList.add('active');
-            else {
-              // Fallback to first
-              const first = container.querySelector('.tab-content');
-              if (first) first.classList.add('active');
-            }
+            const idx = select.selectedIndex;
+            const panels = container.querySelectorAll('.tab-content');
+            panels.forEach((p, i)=>{
+              if (i === idx) p.classList.add('active');
+              else p.classList.remove('active');
+            });
           };
           // Initialize and bind
           syncToSelect();
