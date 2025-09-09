@@ -86,24 +86,23 @@ http.route({
             container.appendChild(panel);
           });
 
-          const getPanels = ()=> Array.from(container.children).filter((el)=> el.classList && el.classList.contains('tab-content'));
+          const getPanels = ()=> Array.from(container.children).filter(function(el){ return el.classList && el.classList.contains('tab-content'); });
+          const applyVisibility = function(panels){
+            panels.forEach(function(p){ p.style.display = 'none'; p.classList.remove('active'); });
+          };
+          const showPanel = function(panel){ if (!panel) return; panel.style.display = 'block'; panel.classList.add('active'); };
           const syncToSelect = ()=>{
+            var panels = getPanels();
+            applyVisibility(panels);
             const val = select.value;
             // Prefer matching by id (value is variant id), fallback to index
-            var matched = false;
-            if (val) {
-              var target = container.querySelector('#' + CSS.escape(val));
-              if (target) {
-                getPanels().forEach(function(p){ p.classList.remove('active'); });
-                target.classList.add('active');
-                matched = true;
-              }
+            var target = val ? container.querySelector('#' + CSS.escape(val)) : null;
+            if (target) {
+              showPanel(target);
+              return;
             }
-            if (!matched) {
-              var panels = getPanels();
-              var idx = Math.max(0, Math.min(select.selectedIndex, panels.length - 1));
-              panels.forEach(function(p, i){ p.classList.toggle('active', i === idx); });
-            }
+            var idx = Math.max(0, Math.min(select.selectedIndex, panels.length - 1));
+            showPanel(panels[idx]);
           };
           // Initialize and bind
           syncToSelect();
