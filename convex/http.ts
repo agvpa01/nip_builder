@@ -125,8 +125,7 @@ http.route({
             panel.id='variant-' + i;
             panel.className='tab-content' + (i===0?' active':'');
             panel.dataset.index= String(i);
-            panel.innerHTML= el.innerHTML;
-            container.appendChild(panel);
+            panel.innerHTML= el.innerHTML; panel.style.display = (i===0?'block':'none');\n            container.appendChild(panel);
           });
           container.addEventListener('click', (ev)=>{
             const t = ev.target && ev.target.closest ? ev.target.closest('.tab-button') : null;
