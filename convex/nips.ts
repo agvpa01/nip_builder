@@ -439,7 +439,11 @@ export const generateTabbedProductHtml = query({
     };
     const byVariant = new Map<string, any[]>();
     for (const nip of filtered) {
-      const key = nip.variantId ? nip.variantId.toString() : "no-variant";
+      // Treat NIPs without a linked product variant as distinct entries
+      // so multiple custom variants don't collapse into one tab.
+      const key = nip.variantId
+        ? nip.variantId.toString()
+        : (nip._id ? nip._id.toString() : Math.random().toString(36).slice(2));
       const arr = byVariant.get(key) || [];
       arr.push(nip);
       byVariant.set(key, arr);
@@ -465,10 +469,18 @@ export const generateTabbedProductHtml = query({
         ? await ctx.db.get(latestWithHtml.variantId as Id<"productVariants">)
         : null;
       const variantIndex = variantData.length + 1;
+      // Try to infer a friendly name for custom variants from content
+      let inferredName: string | undefined = undefined;
+      const c = latestWithHtml.content as any;
+      if (c && typeof c === 'object') {
+        inferredName = c.variantName || c.name || c.title;
+      }
       const variantName =
         fetchedVariant?.title && fetchedVariant.title.trim() !== ""
           ? fetchedVariant.title
-          : `Variant ${variantIndex}`;
+          : (typeof inferredName === 'string' && inferredName.trim() !== ''
+              ? inferredName
+              : `Variant ${variantIndex}`);
 
       variantData.push({
         id: `variant-${tabIndex++}`,
