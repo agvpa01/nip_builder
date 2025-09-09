@@ -423,3 +423,25 @@ export const deleteProduct = mutation({
     return { success: true };
   },
 });
+
+// Delete a single product variant (and cascade delete related NIPs)
+export const deleteProductVariant = mutation({
+  args: { variantId: v.id("productVariants") },
+  handler: async (ctx, { variantId }) => {
+    await requireAdmin(ctx);
+
+    // Remove any NIPs that reference this variant to avoid orphans
+    const nipsForVariant = await ctx.db
+      .query("nips")
+      .withIndex("by_variant", (q) => q.eq("variantId", variantId))
+      .collect();
+    for (const nip of nipsForVariant) {
+      await ctx.db.delete(nip._id);
+    }
+
+    // Delete the variant
+    await ctx.db.delete(variantId);
+
+    return { success: true, deletedNips: nipsForVariant.length };
+  },
+});

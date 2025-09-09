@@ -63,6 +63,7 @@ export function ComplexSupplementsTemplate({
     setVariantsList(product?.variants || []);
   }, [product?._id]);
   const createProductVariant = useMutation(api.products.createProductVariant);
+  const deleteProductVariant = useMutation(api.products.deleteProductVariant);
   const [addingVariant, setAddingVariant] = useState(false);
   const [newVarTitle, setNewVarTitle] = useState("");
   const [newVarImageUrl, setNewVarImageUrl] = useState("");
@@ -690,6 +691,22 @@ export function ComplexSupplementsTemplate({
                 {addingVariant ? "Cancel" : "+ Add Variant"}
               </button>
             </div>
+            {activeVariantId && (
+              <div className="mb-2 flex justify-end">
+                <button
+                  type="button"
+                  className="text-xs text-red-600 hover:text-red-800"
+                  onClick={async ()=>{
+                    const v = variantsList.find(v=>String(v._id)===String(activeVariantId));
+                    const ok = confirm(`Delete variant "${v?.title || 'Selected'}"? This will also remove its NIPs.`);
+                    if(!ok) return;
+                    try { await deleteProductVariant({ variantId: activeVariantId as any }); setVariantsList(l=>l.filter(x=>String(x._id)!==String(activeVariantId))); setActiveVariantId(null); toast.success('Variant deleted'); } catch(e){ console.error(e); toast.error('Failed to delete variant'); }
+                  }}
+                >
+                  Delete Selected Variant
+                </button>
+              </div>
+            )}
             <select
               value={activeVariantId || ""}
               onChange={(e) => setActiveVariantId(e.target.value || null)}

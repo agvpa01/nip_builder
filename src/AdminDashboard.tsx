@@ -22,6 +22,7 @@ export function AdminDashboard() {
   const deleteUser = useMutation(api.admin.deleteUser);
   const syncProducts = useAction(api.products.syncProducts);
   const deleteProduct = useMutation(api.products.deleteProduct);
+  const deleteProductVariant = useMutation(api.products.deleteProductVariant);
   const deleteAllNipsForProduct = useMutation(api.nips.deleteAllNipsForProduct);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -1015,9 +1016,27 @@ export function AdminDashboard() {
                                   .map((variant: any, index: number) => (
                                     <span
                                       key={index}
-                                      className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800"
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800"
                                     >
                                       {variant.title}
+                                      <button
+                                        title="Remove variant"
+                                        className="ml-1 text-blue-700 hover:text-red-700"
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          const ok = confirm(`Delete variant "${variant.title}"? This will also remove any NIPs linked to it.`);
+                                          if (!ok) return;
+                                          try {
+                                            await deleteProductVariant({ variantId: variant._id as any });
+                                            toast.success('Variant deleted');
+                                          } catch (err) {
+                                            console.error(err);
+                                            toast.error('Failed to delete variant');
+                                          }
+                                        }}
+                                      >
+                                        ×
+                                      </button>
                                     </span>
                                   ))}
                                 {product.variants.length > 3 && (
