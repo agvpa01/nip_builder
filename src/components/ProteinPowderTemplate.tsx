@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { DraggableTextSection } from "./DraggableTextSection";
@@ -63,6 +63,13 @@ export function ProteinPowderTemplate({
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     variant?._id || null
   );
+  const [variantsList, setVariantsList] = useState<any[]>(product?.variants || []);
+  useEffect(() => { setVariantsList(product?.variants || []); }, [product?._id]);
+  const createProductVariant = useMutation(api.products.createProductVariant);
+  const [addingVariant, setAddingVariant] = useState(false);
+  const [newVarTitle, setNewVarTitle] = useState("");
+  const [newVarImageUrl, setNewVarImageUrl] = useState("");
+  const [savingVar, setSavingVar] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -745,17 +752,24 @@ export function ProteinPowderTemplate({
 
         <div className="flex items-center justify-between">
           {/* Variant Selection */}
-          {product?.variants && product.variants.length > 1 && (
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">
-                Select Variant:
-              </label>
+          {variantsList && variantsList.length > 0 && (
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-gray-700">Select Variant:</label>
+                <button
+                  type="button"
+                  onClick={() => setAddingVariant(v=>!v)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  {addingVariant ? 'Cancel' : '+ Add Variant'}
+                </button>
+              </div>
               <select
                 value={activeVariantId || ""}
                 onChange={(e) => setActiveVariantId(e.target.value)}
-                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-64"
               >
-                {product.variants.map(
+                {variantsList.map(
                   (v: { _id: string; title?: string; sku?: string }) => (
                     <option key={v._id} value={v._id}>
                       {v.title || "Unnamed Variant"} {v.sku ? `- ${v.sku}` : ""}
@@ -763,6 +777,35 @@ export function ProteinPowderTemplate({
                   )
                 )}
               </select>
+              {addingVariant && (
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2 w-full md:w-auto">
+                  <input
+                    className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    placeholder="Variant title"
+                    value={newVarTitle}
+                    onChange={e=>setNewVarTitle(e.target.value)}
+                  />
+                  <input
+                    className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    placeholder="Image URL (optional)"
+                    value={newVarImageUrl}
+                    onChange={e=>setNewVarImageUrl(e.target.value)}
+                  />
+                  <div className="md:col-span-1 flex items-center">
+                    <button
+                      type="button"
+                      disabled={savingVar}
+                      onClick={async ()=>{
+                        const title = newVarTitle.trim(); if(!title){ toast.error('Please enter a variant title'); return; }
+                        try { setSavingVar(true); const id = await createProductVariant({productId: product._id, title, imageUrl: newVarImageUrl.trim()} as any); setVariantsList(l=>[...l,{_id:id,title,imageUrl:newVarImageUrl.trim()}]); setActiveVariantId(String(id)); setNewVarTitle(''); setNewVarImageUrl(''); setAddingVariant(false); toast.success('Variant added'); } catch(e) { console.error(e); toast.error('Failed to add variant'); } finally { setSavingVar(false);} }
+                      }
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {savingVar ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
