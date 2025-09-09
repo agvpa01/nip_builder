@@ -52,7 +52,8 @@ http.route({
       .then(data=>{
         if(!data||!data.html) return;
         const doc=new DOMParser().parseFromString(data.html,'text/html');
-        doc.head.querySelectorAll('style').forEach(st=>document.head.appendChild(st.cloneNode(true)));
+        // Copy all styles (head and body) so custom dropdown styling is available
+        doc.querySelectorAll('style').forEach(st=>document.head.appendChild(st.cloneNode(true)));
         (function(){
           if(!document.getElementById('nip-embed-visibility')){
             var st=document.createElement('style'); st.id='nip-embed-visibility';
@@ -64,8 +65,66 @@ http.route({
         const container=document.createElement('div');
         container.className='tab-container';
         const selectFromDoc = doc.getElementById('variantSelect');
+        const dropdownBtnsFromDoc = [...doc.querySelectorAll('.dropdown-menu .tab-button')];
 
-        if (selectFromDoc) {
+        if (dropdownBtnsFromDoc.length) {
+          // Build dropdown menu UI using labels from the generated HTML
+          const bar=document.createElement('div');
+          bar.className='tab-buttons';
+          const toggle=document.createElement('button');
+          toggle.className='dropdown-toggle';
+          const labelSpan=document.createElement('span');
+          labelSpan.className='dropdown-label';
+          labelSpan.textContent=(dropdownBtnsFromDoc[0].textContent||'Select Variant').trim();
+          const caretSpan=document.createElement('span');
+          caretSpan.className='caret';
+          caretSpan.textContent='▾';
+          toggle.appendChild(labelSpan); toggle.appendChild(caretSpan);
+          toggle.addEventListener('click', function(){ bar.classList.toggle('open'); });
+
+          const menu=document.createElement('div');
+          menu.className='dropdown-menu';
+          bar.appendChild(toggle);
+          bar.appendChild(menu);
+          container.appendChild(bar);
+
+          // Panels
+          contentsEls.forEach(function(el,i){
+            const panel=document.createElement('div');
+            panel.className = 'tab-content' + (i===0?' active':'');
+            panel.dataset.index = String(i);
+            panel.innerHTML = el.innerHTML;
+            panel.id = el.id || ('variant-' + i);
+            container.appendChild(panel);
+          });
+
+          const getPanels=function(){ return Array.from(container.children).filter(function(el){ return el.classList && el.classList.contains('tab-content'); }); };
+          const showPanel=function(panel){ if(!panel) return; panel.classList.add('active'); panel.style.display='block'; };
+          const hidePanels=function(panels){ panels.forEach(function(p){ p.classList.remove('active'); p.style.display='none'; }); };
+
+          dropdownBtnsFromDoc.forEach(function(srcBtn, i){
+            const b=document.createElement('button');
+            b.className='tab-button' + (i===0?' active':'');
+            b.textContent=(srcBtn.textContent||('Variant ' + (i+1)));
+            b.dataset.index=String(i);
+            b.addEventListener('click', function(){
+              // activate
+              menu.querySelectorAll('.tab-button.active').forEach(function(el){ el.classList.remove('active'); });
+              b.classList.add('active');
+              var panels=getPanels(); hidePanels(panels);
+              var panel=panels[i]; if(panel) showPanel(panel);
+              labelSpan.textContent=(b.textContent||'').trim();
+              bar.classList.remove('open');
+            });
+            menu.appendChild(b);
+          });
+
+          // Initialize visibility
+          (function(){ var panels=getPanels(); hidePanels(panels); if(panels[0]) showPanel(panels[0]); })();
+
+          // Close when clicking outside
+          document.addEventListener('click', function(e){ if(!bar.contains(e.target)){ bar.classList.remove('open'); }});
+        } else if (selectFromDoc) {
           // Clone dropdown UI and wire events
           const row=document.createElement('div');
           row.className='selector-row';
@@ -339,3 +398,6 @@ http.route({
 });
 
 export default http;
+
+
+
