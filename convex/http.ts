@@ -56,7 +56,7 @@ http.route({
         const contentsEls=[...doc.querySelectorAll('.tab-content')];
         const container=document.createElement('div');
         container.className='tab-container';
-        const selectFromDoc = doc.getElementById('variantSelect') as HTMLSelectElement | null;
+        const selectFromDoc = doc.getElementById('variantSelect');
 
         if (selectFromDoc) {
           // Clone dropdown UI and wire events
@@ -94,7 +94,7 @@ http.route({
             if (show) show.classList.add('active');
             else {
               // Fallback to first
-              const first = container.querySelector('.tab-content') as HTMLElement | null;
+              const first = container.querySelector('.tab-content');
               if (first) first.classList.add('active');
             }
           };
@@ -123,7 +123,8 @@ http.route({
             container.appendChild(panel);
           });
           container.addEventListener('click', (ev)=>{
-            const btn = ev.target && (ev.target as HTMLElement).closest ? (ev.target as HTMLElement).closest('.tab-button') : null as any;
+            const t = ev.target && ev.target.closest ? ev.target.closest('.tab-button') : null;
+            const btn = t as any;
             if(!btn) return;
             ev.preventDefault();
             const idx = btn.dataset.index;

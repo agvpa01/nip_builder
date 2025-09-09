@@ -705,8 +705,8 @@ export const generateTabbedProductHtml = query({
             if (select) {
               showTab(select.value);
               select.addEventListener('change', function(e) {
-                const target = e.target as HTMLSelectElement;
-                showTab(target.value);
+                var t = e && e.target ? e.target : select;
+                showTab(t.value);
               });
             }
           });
