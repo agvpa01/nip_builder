@@ -73,6 +73,7 @@ export function ProteinPowderTemplate({
   const [savingVar, setSavingVar] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showTextSections, setShowTextSections] = useState(true);
 
   // Query NIPs for all variants of this product
   const productNips = useQuery(
@@ -174,6 +175,11 @@ export function ProteinPowderTemplate({
     if (currentVariantNip && currentVariantNip.content) {
       try {
         const content = currentVariantNip.content;
+        if (typeof content.showTextSections === 'boolean') {
+          setShowTextSections(content.showTextSections);
+        } else {
+          setShowTextSections(true);
+        }
         if (content.textSections) {
           let mergedSections: TextSection[] = content.textSections as TextSection[];
           const hasServingSize = mergedSections.some((s) => s.id === "serving-size-line");
@@ -472,29 +478,33 @@ export function ProteinPowderTemplate({
       "Servings per Pack: 33";
     let html = `
     <div class="protein-powder-nip" style="display: flex; font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background: white;">
-      <!-- Left Column: Text Sections -->
-      <div class="left-column" style="flex: 1; padding: 20px; padding-right: 10px;">
     `;
 
-    // Add text sections (exclude serving info lines which render in table header)
-    textSections.forEach((section) => {
-      if (
-        section.id === "serving-size-line" ||
-        section.id === "servings-per-pack-line"
-      ) {
-        return;
-      }
+    if (showTextSections) {
       html += `
-        <div class="text-section" style="margin-bottom: 16px;">
-          <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
+        <!-- Left Column: Text Sections -->
+        <div class="left-column" style="flex: 1; padding: 20px; padding-right: 10px;">
+      `;
+      textSections.forEach((section) => {
+        if (
+          section.id === "serving-size-line" ||
+          section.id === "servings-per-pack-line"
+        ) {
+          return;
+        }
+        html += `
+          <div class="text-section" style="margin-bottom: 16px;">
+            <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+            <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
+          </div>
+        `;
+      });
+      html += `
         </div>
       `;
-    });
+    }
 
     html += `
-      </div>
-      
       <!-- Right Column: Tables -->
       <div class="right-column" style="flex: 1; padding: 20px; padding-left: 10px;">
         <!-- Nutritional Information Table -->
@@ -608,12 +618,26 @@ export function ProteinPowderTemplate({
     html += `
           </table>
           </div>
+      `;
+
+    const ing = textSections.find((s) => s.id === 'ingredients');
+    const ingredientsBlock = !showTextSections && ing
+      ? `
+        <div class="ingredients" style="margin-top: 16px;">
+          <h4 style="font-weight: bold; margin: 0 0 6px 0; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(ing.title || 'INGREDIENTS:'))}</h4>
+          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(ing.content || ''))}</p>
+        </div>
+      `
+      : '';
+
+    html += `
+        ${ingredientsBlock}
       </div>
     </div>
     `;
 
     return html;
-  }, [textSections, nutritionalRows, aminoAcidRows]);
+  }, [textSections, nutritionalRows, aminoAcidRows, showTextSections]);
 
   // Save NIP
   const handleSave = useCallback(async () => {
@@ -638,6 +662,7 @@ export function ProteinPowderTemplate({
           textSections,
           nutritionalRows,
           aminoAcidRows,
+          showTextSections,
         },
         htmlContent: generateHtml(),
       };
@@ -940,7 +965,17 @@ export function ProteinPowderTemplate({
 
         {/* Right Column: Tables */}
         <div className="flex-1 p-6 bg-white overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Tables</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Tables</h3>
+            <label className="text-xs text-gray-700 inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showTextSections}
+                onChange={(e) => setShowTextSections(e.target.checked)}
+              />
+              Show Text Sections
+            </label>
+          </div>
 
           {/* Nutritional Information Table */}
           <div className="mb-8">
