@@ -479,34 +479,57 @@ export function SupplementsTemplate({
         {/* Variant Selection + Add */}
         {variantsList && variantsList.length > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
                 Select Variant:
               </label>
-              <button
-                type="button"
-                onClick={() => setAddingVariant(v=>!v)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                {addingVariant ? 'Cancel' : '+ Add Variant'}
-              </button>
-            </div>
-            {activeVariantId && (
-              <div className="mb-2 flex justify-end">
+              <div className="flex items-center ml-4">
                 <button
                   type="button"
-                  className="text-xs text-red-600 hover:text-red-800"
-                  onClick={async ()=>{
-                    const v = variantsList.find((vv:any)=>String(vv._id)===String(activeVariantId));
-                    const ok = confirm(`Delete variant "${v?.title || 'Selected'}"? This will also remove its NIPs.`);
-                    if(!ok) return;
-                    try { await deleteProductVariant({ variantId: activeVariantId as any }); setVariantsList((l:any[])=>l.filter(x=>String(x._id)!==String(activeVariantId))); setActiveVariantId(null); toast.success('Variant deleted'); } catch(e){ console.error(e); toast.error('Failed to delete variant'); }
-                  }}
+                  onClick={() => setAddingVariant((v) => !v)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Delete Selected Variant
+                  {addingVariant ? "Cancel" : "+ Add Variant"}
                 </button>
+                &nbsp;|&nbsp;
+                {activeVariantId && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:text-red-800"
+                      onClick={async () => {
+                        const v = variantsList.find(
+                          (vv: any) =>
+                            String(vv._id) === String(activeVariantId)
+                        );
+                        const ok = confirm(
+                          `Delete variant "${v?.title || "Selected"}"? This will also remove its NIPs.`
+                        );
+                        if (!ok) return;
+                        try {
+                          await deleteProductVariant({
+                            variantId: activeVariantId as any,
+                          });
+                          setVariantsList((l: any[]) =>
+                            l.filter(
+                              (x) => String(x._id) !== String(activeVariantId)
+                            )
+                          );
+                          setActiveVariantId(null);
+                          toast.success("Variant deleted");
+                        } catch (e) {
+                          console.error(e);
+                          toast.error("Failed to delete variant");
+                        }
+                      }}
+                    >
+                      Delete Selected Variant
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
             <select
               value={activeVariantId || ""}
               onChange={(e) => setActiveVariantId(e.target.value)}
@@ -523,28 +546,53 @@ export function SupplementsTemplate({
             {addingVariant && (
               <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
                 <input
-                  className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  className="md:col-span-2 w-full px-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
                   placeholder="Variant title"
                   value={newVarTitle}
-                  onChange={e=>setNewVarTitle(e.target.value)}
+                  onChange={(e) => setNewVarTitle(e.target.value)}
                 />
                 <input
-                  className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  className="md:col-span-2 w-full px-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500"
                   placeholder="Image URL (optional)"
                   value={newVarImageUrl}
-                  onChange={e=>setNewVarImageUrl(e.target.value)}
+                  onChange={(e) => setNewVarImageUrl(e.target.value)}
                 />
                 <div className="md:col-span-1 flex items-center">
                   <button
                     type="button"
                     disabled={savingVar}
-                    onClick={async ()=>{
-                      const title = newVarTitle.trim(); if(!title){ toast.error('Please enter a variant title'); return; }
-                      try { setSavingVar(true); const id = await createProductVariant({productId: product._id, title, imageUrl: newVarImageUrl.trim()} as any); setVariantsList(l=>[...l,{_id:id,title,imageUrl:newVarImageUrl.trim()}]); setActiveVariantId(String(id)); setNewVarTitle(''); setNewVarImageUrl(''); setAddingVariant(false); toast.success('Variant added'); } catch(e) { console.error(e); toast.error('Failed to add variant'); } finally { setSavingVar(false);} }
-                    }
+                    onClick={async () => {
+                      const title = newVarTitle.trim();
+                      if (!title) {
+                        toast.error("Please enter a variant title");
+                        return;
+                      }
+                      try {
+                        setSavingVar(true);
+                        const id = await createProductVariant({
+                          productId: product._id,
+                          title,
+                          imageUrl: newVarImageUrl.trim(),
+                        } as any);
+                        setVariantsList((l) => [
+                          ...l,
+                          { _id: id, title, imageUrl: newVarImageUrl.trim() },
+                        ]);
+                        setActiveVariantId(String(id));
+                        setNewVarTitle("");
+                        setNewVarImageUrl("");
+                        setAddingVariant(false);
+                        toast.success("Variant added");
+                      } catch (e) {
+                        console.error(e);
+                        toast.error("Failed to add variant");
+                      } finally {
+                        setSavingVar(false);
+                      }
+                    }}
                     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {savingVar ? 'Saving...' : 'Save'}
+                    {savingVar ? "Saving..." : "Save"}
                   </button>
                 </div>
               </div>
@@ -624,7 +672,7 @@ export function SupplementsTemplate({
               onSectionsReorder={(sections) => setTextSections(sections)}
               onUpdateSection={(id, field, value) =>
                 setTextSections((prev) =>
-                  prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+                  prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
                 )
               }
               onDeleteSection={(id) =>
@@ -632,135 +680,103 @@ export function SupplementsTemplate({
               }
             />
           </div>
-         <div className="w-3/4">
-           <div className="w-[70%] flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold mb-4">
-              Nutritional Information
-            </h3>
-            <button
-              onClick={addNutritionalRow}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              + Add Row
-            </button>
-          </div>
+          <div className="w-3/4">
+            <div className="w-[70%] flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold mb-4">
+                Nutritional Information
+              </h3>
+              <button
+                onClick={addNutritionalRow}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                + Add Row
+              </button>
+            </div>
 
-          <div>
-            <div className="w-[70%] border-2 border-black rounded-lg overflow-hidden">
-              <div className="bg-black text-white text-center font-bold text-2xl py-0 tracking-[0.5em] w-full">
-                NUTRITIONAL INFORMATION
-              </div>
-              {/* Serving Information */}
-             
-              {/* Column Headers */}
-              {/* <div className="px-3 py-3 border-b-2 border-black bg-white">
+            <div>
+              <div className="w-[70%] border-2 border-black rounded-lg overflow-hidden">
+                <div className="bg-black text-white text-center font-bold text-2xl py-0 tracking-[0.5em] w-full">
+                  NUTRITIONAL INFORMATION
+                </div>
+                {/* Serving Information */}
+
+                {/* Column Headers */}
+                {/* <div className="px-3 py-3 border-b-2 border-black bg-white">
               <div className="flex justify-between text-sm font-bold">
                 <span className="flex-1 text-right">Per Serve</span>
                 <span className="flex-1 text-right">Per 100g</span>
               </div>
             </div> */}
 
-            {/* Serving Information (render only inside box) */}
-            <div className="px-3 py-3 bg-white border-b-2 border-black">
-              <div className="flex flex-col text-xs font-bold">
-                <span>
-                  {textSections.find((s) => s.id === "serving-size-line")?.content ||
-                    `Serving Size: ${servingSize}`}
-                </span>
-                <span>
-                  {textSections.find((s) => s.id === "servings-per-bottle-line")?.content ||
-                    `Servings per Bottle: ${servingsPerBottle}`}
-                </span>
-              </div>
-            </div>
+                {/* Serving Information (render only inside box) */}
+                <div className="px-3 py-3 bg-white border-b-2 border-black">
+                  <div className="flex flex-col text-xs font-bold">
+                    <span>
+                      {textSections.find((s) => s.id === "serving-size-line")
+                        ?.content || `Serving Size: ${servingSize}`}
+                    </span>
+                    <span>
+                      {textSections.find(
+                        (s) => s.id === "servings-per-bottle-line"
+                      )?.content || `Servings per Bottle: ${servingsPerBottle}`}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="p-2">
-                <table className="w-full table-fixed border-collapse">
-                  <colgroup>
-                    <col className="w-1/2" />
-                    <col className="w-1/4" />
-                    <col className="w-1/4" />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="text-left px-2 py-1 text-xs font-medium">
-                        Nutrient
-                      </th>
-                      <th className="px-2 py-1 text-xs font-medium">
-                        Per Serve
-                      </th>
-                      <th className="px-2 py-1 text-xs font-medium">
-                        Per 100g
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nutritionalRows.map((row, index) => (
-                      <React.Fragment key={row.id}>
-                        <tr
-                          onDragStart={(e) =>
-                            nutritionalDragHandlers.onDragStart(e, index)
-                          }
-                          onDragOver={nutritionalDragHandlers.onDragOver}
-                          onDrop={(e) =>
-                            nutritionalDragHandlers.onDrop(e, index)
-                          }
-                          onDragEnd={nutritionalDragHandlers.onDragEnd}
-                          className={`${getBorderClass(row.thickness || "normal")} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black ${
-                            draggedNutritionalIndex === index
-                              ? "opacity-50"
-                              : ""
-                          }`}
-                          style={
-                            draggedNutritionalIndex === index
-                              ? getDragHandleStyles()
-                              : {}
-                          }
-                        >
-                          <td className="px-0 py-2">
-                            <FormattableTableInput
-                              value={row.nutrient}
-                              onChange={(value) =>
-                                updateNutritionalRow(row.id, "nutrient", value)
-                              }
-                              className="w-full text-sm bg-transparent border-none outline-none font-medium"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(thickness) =>
-                                updateNutritionalRowThickness(row.id, thickness)
-                              }
-                            />
-                          </td>
-                          <td className="px-0 py-2">
-                            <FormattableTableInput
-                              value={row.perServe}
-                              onChange={(value) =>
-                                updateNutritionalRow(row.id, "perServe", value)
-                              }
-                              className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
-                              disabled={
-                                product?.variants &&
-                                product.variants.length > 1 &&
-                                !activeVariantId
-                              }
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(thickness) =>
-                                updateNutritionalRowThickness(row.id, thickness)
-                              }
-                            />
-                          </td>
-                          <td className="px-0 py-2 relative w-full">
-                            <div className="w-full flex items-center">
+                <div className="p-2">
+                  <table className="w-full table-fixed border-collapse">
+                    <colgroup>
+                      <col className="w-1/2" />
+                      <col className="w-1/4" />
+                      <col className="w-1/4" />
+                    </colgroup>
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="text-left px-2 py-1 text-xs font-medium">
+                          Nutrient
+                        </th>
+                        <th className="px-2 py-1 text-xs font-medium">
+                          Per Serve
+                        </th>
+                        <th className="px-2 py-1 text-xs font-medium">
+                          Per 100g
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {nutritionalRows.map((row, index) => (
+                        <React.Fragment key={row.id}>
+                          <tr
+                            onDragStart={(e) =>
+                              nutritionalDragHandlers.onDragStart(e, index)
+                            }
+                            onDragOver={nutritionalDragHandlers.onDragOver}
+                            onDrop={(e) =>
+                              nutritionalDragHandlers.onDrop(e, index)
+                            }
+                            onDragEnd={nutritionalDragHandlers.onDragEnd}
+                            className={`${getBorderClass(row.thickness || "normal")} ${index % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 border-b border-black ${
+                              draggedNutritionalIndex === index
+                                ? "opacity-50"
+                                : ""
+                            }`}
+                            style={
+                              draggedNutritionalIndex === index
+                                ? getDragHandleStyles()
+                                : {}
+                            }
+                          >
+                            <td className="px-0 py-2">
                               <FormattableTableInput
-                                value={row.per100g}
+                                value={row.nutrient}
                                 onChange={(value) =>
-                                  updateNutritionalRow(row.id, "per100g", value)
+                                  updateNutritionalRow(
+                                    row.id,
+                                    "nutrient",
+                                    value
+                                  )
                                 }
-                                className="w-full text-sm bg-transparent border-none outline-none text-right font-medium pr-12"
+                                className="w-full text-sm bg-transparent border-none outline-none font-medium"
                                 disabled={
                                   product?.variants &&
                                   product.variants.length > 1 &&
@@ -774,43 +790,97 @@ export function SupplementsTemplate({
                                   )
                                 }
                               />
-                              {/* Drag handle button for row reordering */}
-                              <button
-                                aria-label="Drag to reorder"
-                                title="Drag to reorder"
-                                draggable
-                                onDragStart={(e) =>
-                                  nutritionalDragHandlers.onDragStart(e, index)
+                            </td>
+                            <td className="px-0 py-2">
+                              <FormattableTableInput
+                                value={row.perServe}
+                                onChange={(value) =>
+                                  updateNutritionalRow(
+                                    row.id,
+                                    "perServe",
+                                    value
+                                  )
                                 }
-                                onDragEnd={nutritionalDragHandlers.onDragEnd}
-                                className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                  className="w-4 h-4"
+                                className="w-full text-sm bg-transparent border-none outline-none text-right font-medium"
+                                disabled={
+                                  product?.variants &&
+                                  product.variants.length > 1 &&
+                                  !activeVariantId
+                                }
+                                rowThickness={row.thickness || "normal"}
+                                onThicknessChange={(thickness) =>
+                                  updateNutritionalRowThickness(
+                                    row.id,
+                                    thickness
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-0 py-2 relative w-full">
+                              <div className="w-full flex items-center">
+                                <FormattableTableInput
+                                  value={row.per100g}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "per100g",
+                                      value
+                                    )
+                                  }
+                                  className="w-full text-sm bg-transparent border-none outline-none text-right font-medium pr-12"
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(thickness) =>
+                                    updateNutritionalRowThickness(
+                                      row.id,
+                                      thickness
+                                    )
+                                  }
+                                />
+                                {/* Drag handle button for row reordering */}
+                                <button
+                                  aria-label="Drag to reorder"
+                                  title="Drag to reorder"
+                                  draggable
+                                  onDragStart={(e) =>
+                                    nutritionalDragHandlers.onDragStart(
+                                      e,
+                                      index
+                                    )
+                                  }
+                                  onDragEnd={nutritionalDragHandlers.onDragEnd}
+                                  className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
                                 >
-                                  <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => deleteNutritionalRow(row.id)}
-                                className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className="w-4 h-4"
+                                  >
+                                    <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => deleteNutritionalRow(row.id)}
+                                  className="absolute right-1 text-red-500 hover:text-red-700 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
-         </div>
         </div>
       </div>
 

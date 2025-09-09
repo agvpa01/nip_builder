@@ -308,7 +308,7 @@ export function USSupplementsTemplate({
     <div className="flex h-full flex-col bg-gray-50">
       <div className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="w-1/2">
             <h2 className="text-xl font-semibold text-gray-900">
               US Supplements NIP Builder
             </h2>
@@ -316,21 +316,59 @@ export function USSupplementsTemplate({
               {product?.title} {variant?.title && `- ${variant.title}`}
             </p>
             {variantsList && variantsList.length > 0 && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-700">Select Variant:</label>
-                  <button type="button" onClick={()=>setAddingVariant(v=>!v)} className="text-xs text-blue-600 hover:text-blue-800">{addingVariant? 'Cancel' : '+ Add Variant'}</button>
-                </div>
-                {activeVariantId && (
-                  <div className="mb-2 flex justify-end">
-                    <button type="button" className="text-[11px] text-red-600 hover:text-red-800" onClick={async ()=>{
-                      const v = variantsList.find((vv:any)=>String(vv._id)===String(activeVariantId));
-                      const ok = confirm(`Delete variant "${v?.title || 'Selected'}"? This will also remove its NIPs.`);
-                      if(!ok) return;
-                      try { await deleteProductVariant({ variantId: activeVariantId as any }); setVariantsList((l:any[])=>l.filter(x=>String(x._id)!==String(activeVariantId))); setActiveVariantId(null); toast.success('Variant deleted'); } catch(e){ console.error(e); toast.error('Failed to delete variant'); }
-                    }}>Delete Selected Variant</button>
+              <div className="mt-2 ">
+                <div className="flex items-center mb-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-700">
+                    Select Variant:
+                  </label>
+                  <div className="flex items-center ml-4">
+                    <button
+                      type="button"
+                      onClick={() => setAddingVariant((v) => !v)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      {addingVariant ? "Cancel" : "+ Add Variant"}
+                    </button>
+                    {activeVariantId && (
+                      <div className="flex">
+                        &nbsp;|&nbsp;
+                        <button
+                          type="button"
+                          className="text-xs text-red-600 hover:text-red-800"
+                          onClick={async () => {
+                            const v = variantsList.find(
+                              (vv: any) =>
+                                String(vv._id) === String(activeVariantId)
+                            );
+                            const ok = confirm(
+                              `Delete variant "${v?.title || "Selected"}"? This will also remove its NIPs.`
+                            );
+                            if (!ok) return;
+                            try {
+                              await deleteProductVariant({
+                                variantId: activeVariantId as any,
+                              });
+                              setVariantsList((l: any[]) =>
+                                l.filter(
+                                  (x) =>
+                                    String(x._id) !== String(activeVariantId)
+                                )
+                              );
+                              setActiveVariantId(null);
+                              toast.success("Variant deleted");
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Failed to delete variant");
+                            }
+                          }}
+                        >
+                          Delete Selected Variant
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
                 <select
                   value={activeVariantId || ""}
                   onChange={(e) => setActiveVariantId(e.target.value || null)}
@@ -345,12 +383,59 @@ export function USSupplementsTemplate({
                 </select>
                 {addingVariant && (
                   <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-2">
-                    <input className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Variant title" value={newVarTitle} onChange={e=>setNewVarTitle(e.target.value)} />
-                    <input className="md:col-span-2 w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Image URL (optional)" value={newVarImageUrl} onChange={e=>setNewVarImageUrl(e.target.value)} />
+                    <input
+                      className="md:col-span-2 w-full rounded-md px-3 border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Variant title"
+                      value={newVarTitle}
+                      onChange={(e) => setNewVarTitle(e.target.value)}
+                    />
+                    <input
+                      className="md:col-span-2 w-full rounded-md px-3 border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      placeholder="Image URL (optional)"
+                      value={newVarImageUrl}
+                      onChange={(e) => setNewVarImageUrl(e.target.value)}
+                    />
                     <div className="md:col-span-1 flex items-center">
-                      <button type="button" disabled={savingVar} onClick={async ()=>{
-                        const title = newVarTitle.trim(); if(!title){ toast.error('Please enter a variant title'); return; }
-                        try{ setSavingVar(true); const id = await createProductVariant({productId: product._id, title, imageUrl: newVarImageUrl.trim()} as any); setVariantsList(l=>[...l,{_id:id,title,imageUrl:newVarImageUrl.trim()}]); setActiveVariantId(String(id)); setNewVarTitle(''); setNewVarImageUrl(''); setAddingVariant(false); toast.success('Variant added'); } catch(e){ console.error(e); toast.error('Failed to add variant'); } finally{ setSavingVar(false);} }} className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">{savingVar?'Saving...':'Save'}</button>
+                      <button
+                        type="button"
+                        disabled={savingVar}
+                        onClick={async () => {
+                          const title = newVarTitle.trim();
+                          if (!title) {
+                            toast.error("Please enter a variant title");
+                            return;
+                          }
+                          try {
+                            setSavingVar(true);
+                            const id = await createProductVariant({
+                              productId: product._id,
+                              title,
+                              imageUrl: newVarImageUrl.trim(),
+                            } as any);
+                            setVariantsList((l) => [
+                              ...l,
+                              {
+                                _id: id,
+                                title,
+                                imageUrl: newVarImageUrl.trim(),
+                              },
+                            ]);
+                            setActiveVariantId(String(id));
+                            setNewVarTitle("");
+                            setNewVarImageUrl("");
+                            setAddingVariant(false);
+                            toast.success("Variant added");
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Failed to add variant");
+                          } finally {
+                            setSavingVar(false);
+                          }
+                        }}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {savingVar ? "Saving..." : "Save"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -504,27 +589,28 @@ export function USSupplementsTemplate({
                             updateRow(row.id, "thickness", t)
                           }
                         />
-                       
                       </div>
                     </td>
                     <td className="px-1 py-1">
                       <div className="flex items-center gap-2 justify-end">
                         <FormattableTableInput
-                        value={row.percentDv}
-                        onChange={(v) => updateRow(row.id, "percentDv", v)}
-                        className="w-full border-none bg-transparent text-right text-sm outline-none"
-                        rowThickness={row.thickness || "normal"}
-                        onThicknessChange={(t) =>
-                          updateRow(row.id, "thickness", t)
-                        }
-                      />
+                          value={row.percentDv}
+                          onChange={(v) => updateRow(row.id, "percentDv", v)}
+                          className="w-full border-none bg-transparent text-right text-sm outline-none"
+                          rowThickness={row.thickness || "normal"}
+                          onThicknessChange={(t) =>
+                            updateRow(row.id, "thickness", t)
+                          }
+                        />
 
-                       {/* Drag handle button for row reordering */}
+                        {/* Drag handle button for row reordering */}
                         <button
                           aria-label="Drag to reorder"
                           title="Drag to reorder"
                           draggable
-                          onDragStart={(e) => rowDragHandlers.onDragStart(e, index)}
+                          onDragStart={(e) =>
+                            rowDragHandlers.onDragStart(e, index)
+                          }
                           onDragEnd={rowDragHandlers.onDragEnd}
                           className="inline-flex h-5 w-5 cursor-grab items-center justify-center text-gray-500 hover:text-gray-700 active:cursor-grabbing"
                         >

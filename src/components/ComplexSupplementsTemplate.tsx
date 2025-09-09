@@ -675,7 +675,10 @@ export function ComplexSupplementsTemplate({
             </div>
           </div>
         )}
+      </div>
 
+      {/* Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         {/* Variant Selection + Add */}
         {variantsList && variantsList.length > 0 && (
           <div className="mb-4">
@@ -683,30 +686,52 @@ export function ComplexSupplementsTemplate({
               <label className="block text-sm font-medium text-gray-700">
                 Select Variant:
               </label>
-              <button
-                type="button"
-                onClick={() => setAddingVariant((v) => !v)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                {addingVariant ? "Cancel" : "+ Add Variant"}
-              </button>
-            </div>
-            {activeVariantId && (
-              <div className="mb-2 flex justify-end">
+              <div className="flex items-center">
                 <button
                   type="button"
-                  className="text-xs text-red-600 hover:text-red-800"
-                  onClick={async ()=>{
-                    const v = variantsList.find(v=>String(v._id)===String(activeVariantId));
-                    const ok = confirm(`Delete variant "${v?.title || 'Selected'}"? This will also remove its NIPs.`);
-                    if(!ok) return;
-                    try { await deleteProductVariant({ variantId: activeVariantId as any }); setVariantsList(l=>l.filter(x=>String(x._id)!==String(activeVariantId))); setActiveVariantId(null); toast.success('Variant deleted'); } catch(e){ console.error(e); toast.error('Failed to delete variant'); }
-                  }}
+                  onClick={() => setAddingVariant((v) => !v)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Delete Selected Variant
+                  {addingVariant ? "Cancel" : "+ Add Variant"}
                 </button>
+                {activeVariantId && (
+                  <div className="flex justify-end">
+                    &nbsp;|&nbsp;
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:text-red-800"
+                      onClick={async () => {
+                        const v = variantsList.find(
+                          (v) => String(v._id) === String(activeVariantId)
+                        );
+                        const ok = confirm(
+                          `Delete variant "${v?.title || "Selected"}"? This will also remove its NIPs.`
+                        );
+                        if (!ok) return;
+                        try {
+                          await deleteProductVariant({
+                            variantId: activeVariantId as any,
+                          });
+                          setVariantsList((l) =>
+                            l.filter(
+                              (x) => String(x._id) !== String(activeVariantId)
+                            )
+                          );
+                          setActiveVariantId(null);
+                          toast.success("Variant deleted");
+                        } catch (e) {
+                          console.error(e);
+                          toast.error("Failed to delete variant");
+                        }
+                      }}
+                    >
+                      Delete Selected Variant
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
             <select
               value={activeVariantId || ""}
               onChange={(e) => setActiveVariantId(e.target.value || null)}
@@ -758,7 +783,11 @@ export function ComplexSupplementsTemplate({
                         } as any);
                         setVariantsList((list) => [
                           ...list,
-                          { _id: variantId, title, imageUrl: newVarImageUrl.trim() },
+                          {
+                            _id: variantId,
+                            title,
+                            imageUrl: newVarImageUrl.trim(),
+                          },
                         ]);
                         setActiveVariantId(String(variantId));
                         setNewVarTitle("");
@@ -781,10 +810,6 @@ export function ComplexSupplementsTemplate({
             )}
           </div>
         )}
-      </div>
-
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-700">
             Quick Actions:
@@ -801,7 +826,7 @@ export function ComplexSupplementsTemplate({
           >
             + Add Nutritional Row
           </button>
-          
+
           {selectedText && (
             <div className="flex items-center space-x-1 ml-4 pl-4 border-l border-gray-300">
               <span className="text-xs text-gray-600">Format:</span>
@@ -867,12 +892,13 @@ export function ComplexSupplementsTemplate({
               <div className="px-3 py-3 text-xs font-bold border-b-2 border-black bg-white">
                 <div className="flex flex-col">
                   <span>
-                    {textSections.find((s) => s.id === "serving-size-line")?.content ||
-                      "Serving Size: 1-2 capsules"}
+                    {textSections.find((s) => s.id === "serving-size-line")
+                      ?.content || "Serving Size: 1-2 capsules"}
                   </span>
                   <span>
-                    {textSections.find((s) => s.id === "servings-per-container-line")?.content ||
-                      "Servings per Container: 30-60"}
+                    {textSections.find(
+                      (s) => s.id === "servings-per-container-line"
+                    )?.content || "Servings per Container: 30-60"}
                   </span>
                 </div>
               </div>
@@ -886,37 +912,65 @@ export function ComplexSupplementsTemplate({
                   </colgroup>
                   <thead>
                     <tr className="bg-gray-50 border-b">
-                      <th className="text-left px-2 py-1 text-xs font-medium">Nutrient</th>
-                      <th className="text-right px-2 py-1 text-xs font-medium">Per Serve</th>
-                      <th className="text-right px-2 py-1 text-xs font-medium">Per 100g</th>
+                      <th className="text-left px-2 py-1 text-xs font-medium">
+                        Nutrient
+                      </th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Per Serve
+                      </th>
+                      <th className="text-right px-2 py-1 text-xs font-medium">
+                        Per 100g
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {nutritionalRows.map((row, index) => {
                       if (row.id === "serving-info") return null; // shown above from Text Sections
-                      const perServeEmpty = !row.perServe || row.perServe.trim() === "";
-                      const per100gEmpty = !row.per100g || row.per100g.trim() === "";
+                      const perServeEmpty =
+                        !row.perServe || row.perServe.trim() === "";
+                      const per100gEmpty =
+                        !row.per100g || row.per100g.trim() === "";
                       const spanAll = perServeEmpty && per100gEmpty;
                       return (
                         <tr
                           key={row.id}
-                          onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
+                          onDragStart={(e) =>
+                            nutritionalDragHandlers.onDragStart(e, index)
+                          }
                           onDragOver={nutritionalDragHandlers.onDragOver}
-                          onDrop={(e) => nutritionalDragHandlers.onDrop(e, index)}
+                          onDrop={(e) =>
+                            nutritionalDragHandlers.onDrop(e, index)
+                          }
                           onDragEnd={nutritionalDragHandlers.onDragEnd}
                           className={`${getBorderClass(row.thickness || "normal")} hover:bg-gray-50 ${
-                            draggedNutritionalIndex === index ? "opacity-50" : ""
+                            draggedNutritionalIndex === index
+                              ? "opacity-50"
+                              : ""
                           }`}
-                          style={draggedNutritionalIndex === index ? getDragHandleStyles() : {}}
+                          style={
+                            draggedNutritionalIndex === index
+                              ? getDragHandleStyles()
+                              : {}
+                          }
                         >
                           {spanAll ? (
                             <td className="px-0 py-2 relative" colSpan={3}>
                               <div className="flex items-center">
                                 <FormattableTableInput
                                   value={row.nutrient}
-                                  onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "nutrient",
+                                      value
+                                    )
+                                  }
                                   className="w-full text-sm bg-transparent border-none outline-none pr-12"
-                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
                                   rowThickness={row.thickness || "normal"}
                                   onThicknessChange={(t) =>
                                     updateNutritionalRow(row.id, "thickness", t)
@@ -927,11 +981,21 @@ export function ComplexSupplementsTemplate({
                                   aria-label="Drag to reorder"
                                   title="Drag to reorder"
                                   draggable
-                                  onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
+                                  onDragStart={(e) =>
+                                    nutritionalDragHandlers.onDragStart(
+                                      e,
+                                      index
+                                    )
+                                  }
                                   onDragEnd={nutritionalDragHandlers.onDragEnd}
                                   className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className="w-4 h-4"
+                                  >
                                     <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
                                   </svg>
                                 </button>
@@ -948,9 +1012,19 @@ export function ComplexSupplementsTemplate({
                               <td className="px-0 py-2">
                                 <FormattableTableInput
                                   value={row.nutrient}
-                                  onChange={(value) => updateNutritionalRow(row.id, "nutrient", value)}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "nutrient",
+                                      value
+                                    )
+                                  }
                                   className="w-full text-sm bg-transparent border-none outline-none"
-                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
                                   rowThickness={row.thickness || "normal"}
                                   onThicknessChange={(t) =>
                                     updateNutritionalRow(row.id, "thickness", t)
@@ -960,25 +1034,49 @@ export function ComplexSupplementsTemplate({
                               <td className="px-0 py-2">
                                 <FormattableTableInput
                                   value={row.perServe}
-                                  onChange={(value) => updateNutritionalRow(row.id, "perServe", value)}
+                                  onChange={(value) =>
+                                    updateNutritionalRow(
+                                      row.id,
+                                      "perServe",
+                                      value
+                                    )
+                                  }
                                   className="w-full text-sm bg-transparent border-none outline-none text-right"
-                                  disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
-                              rowThickness={row.thickness || "normal"}
-                              onThicknessChange={(t) =>
-                                updateNutritionalRow(row.id, "thickness", t)
-                              }
+                                  disabled={
+                                    product?.variants &&
+                                    product.variants.length > 1 &&
+                                    !activeVariantId
+                                  }
+                                  rowThickness={row.thickness || "normal"}
+                                  onThicknessChange={(t) =>
+                                    updateNutritionalRow(row.id, "thickness", t)
+                                  }
                                 />
                               </td>
                               <td className="px-0 py-2 relative">
                                 <div className="flex items-center">
                                   <FormattableTableInput
                                     value={row.per100g}
-                                    onChange={(value) => updateNutritionalRow(row.id, "per100g", value)}
+                                    onChange={(value) =>
+                                      updateNutritionalRow(
+                                        row.id,
+                                        "per100g",
+                                        value
+                                      )
+                                    }
                                     className="flex-1 text-sm bg-transparent border-none outline-none text-right pr-12"
-                                    disabled={product?.variants && product.variants.length > 1 && !activeVariantId}
+                                    disabled={
+                                      product?.variants &&
+                                      product.variants.length > 1 &&
+                                      !activeVariantId
+                                    }
                                     rowThickness={row.thickness || "normal"}
                                     onThicknessChange={(t) =>
-                                      updateNutritionalRow(row.id, "thickness", t)
+                                      updateNutritionalRow(
+                                        row.id,
+                                        "thickness",
+                                        t
+                                      )
                                     }
                                   />
                                   {/* Drag handle button for row reordering */}
@@ -986,11 +1084,23 @@ export function ComplexSupplementsTemplate({
                                     aria-label="Drag to reorder"
                                     title="Drag to reorder"
                                     draggable
-                                    onDragStart={(e) => nutritionalDragHandlers.onDragStart(e, index)}
-                                    onDragEnd={nutritionalDragHandlers.onDragEnd}
+                                    onDragStart={(e) =>
+                                      nutritionalDragHandlers.onDragStart(
+                                        e,
+                                        index
+                                      )
+                                    }
+                                    onDragEnd={
+                                      nutritionalDragHandlers.onDragEnd
+                                    }
                                     className="absolute right-6 inline-flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing"
                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                      className="w-4 h-4"
+                                    >
                                       <path d="M7 5a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 10a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0zm8 0a1 1 0 11-2 0 1 1 0 012 0z" />
                                     </svg>
                                   </button>
@@ -1012,8 +1122,6 @@ export function ComplexSupplementsTemplate({
               </div>
             </div>
           </div>
-
-          
         </div>
       </div>
 
