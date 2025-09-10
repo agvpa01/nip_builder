@@ -209,9 +209,21 @@ export const syncProducts = action({
           const productType: string = p.productType || "";
           const handle: string = p.handle;
           const urlFromShopify: string | null = p.onlineStoreUrl || null;
-          const onlineStoreUrl =
+          const fullUrl =
             urlFromShopify ||
             `https://${shop.replace(/^https?:\/\//, "")}/products/${handle}`;
+          // Persist canonical slug (last path segment) instead of full URL
+          const toSlug = (input: string): string => {
+            try {
+              const u = new URL(input);
+              const parts = u.pathname.split('/').filter(Boolean);
+              return decodeURIComponent(parts[parts.length - 1] || input).trim();
+            } catch {
+              const parts = input.split('/').filter(Boolean);
+              return decodeURIComponent(parts[parts.length - 1] || input).trim();
+            }
+          };
+          const onlineStoreUrl = toSlug(fullUrl);
 
           // Build variants array in the same shape expected downstream
           const variants = (p.variants?.edges || []).map((ve: any) => ({
@@ -219,20 +231,25 @@ export const syncProducts = action({
             imageUrl: ve.node?.image?.url || "",
           }));
 
-          // Check if product already exists by URL
+          // Check if product already exists by slug (and fallback to full URL for legacy rows)
           const existingProduct = await ctx.runQuery(
             api.products.getProductByUrl,
             {
               onlineStoreUrl,
             }
           );
+          let found = existingProduct;
+          if (!found && fullUrl !== onlineStoreUrl) {
+            // Try legacy full URL value
+            found = await ctx.runQuery(api.products.getProductByUrl, { onlineStoreUrl: fullUrl });
+          }
 
-          if (existingProduct) {
+          if (found) {
             skippedCount++;
             if (variants.length > 0) {
               const existingVariants = await ctx.runQuery(
                 api.products.getVariantsByProduct,
-                { productId: existingProduct._id }
+                { productId: found._id }
               );
               const existingTitles = new Set(
                 (existingVariants || []).map((v: any) => v.title)
@@ -240,7 +257,7 @@ export const syncProducts = action({
               for (const variant of variants) {
                 if (!existingTitles.has(variant.title)) {
                   await ctx.runMutation(api.products.createProductVariant, {
-                    productId: existingProduct._id,
+                    productId: found._id,
                     title: variant.title,
                     imageUrl: variant.imageUrl,
                   });
