@@ -483,3 +483,68 @@ export const deleteProductVariant = mutation({
     return { success: true, deletedNips: nipsForVariant.length };
   },
 });
+
+// Maintenance: Strip fixed VPA prefix from `onlineStoreUrl` and store only the slug
+export const stripVpaPrefixFromOnlineStoreUrl = mutation({
+  args: { dryRun: v.optional(v.boolean()) },
+  returns: v.object({
+    total: v.number(),
+    updated: v.number(),
+    skipped: v.number(),
+    dryRun: v.boolean(),
+    examples: v.array(v.string()),
+  }),
+  handler: async (ctx, { dryRun }): Promise<{
+    total: number
+    updated: number
+    skipped: number
+    dryRun: boolean
+    examples: string[]
+  }> => {
+    await requireAdmin(ctx);
+
+    const products = await ctx.db.query("products").collect();
+    const prefixes = [
+      "https://www.vpa.com.au/products/",
+      "http://www.vpa.com.au/products/",
+      "https://vpa.com.au/products/",
+      "http://vpa.com.au/products/",
+    ];
+
+    let updated = 0;
+    let skipped = 0;
+    const examples: string[] = [];
+
+    for (const p of products) {
+      const current = (p as any).onlineStoreUrl || "";
+      let next = current;
+      const lower = current.toLowerCase();
+      for (const pre of prefixes) {
+        if (lower.startsWith(pre)) {
+          next = decodeURIComponent(current.slice(pre.length));
+          break;
+        }
+      }
+      // If it still looks like a full URL but contains '/products/', derive last path segment
+      if (next === current && /https?:\/\//i.test(current) && /\/products\//i.test(current)) {
+        try {
+          const u = new URL(current);
+          const parts = u.pathname.split("/").filter(Boolean);
+          next = decodeURIComponent(parts[parts.length - 1] || current);
+        } catch {}
+      }
+
+      if (next !== current) {
+        if (!dryRun) {
+          await ctx.db.patch(p._id, { onlineStoreUrl: next.trim() });
+        }
+        if (examples.length < 10) examples.push(`${current} -> ${next.trim()}`);
+        updated++;
+      } else {
+        skipped++;
+      }
+    }
+
+    return { total: products.length, updated, skipped, dryRun: !!dryRun, examples };
+  },
+});
