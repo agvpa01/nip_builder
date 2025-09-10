@@ -733,6 +733,12 @@ export const generateTabbedProductHtml = query({
           .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width: 100%; height: auto; }
           .tab-content table { width: 100%; border-collapse: collapse; }
           .tab-content th, .tab-content td { word-break: break-word; }
+          /* Protein Powder template: stack columns on small screens */
+          @media (max-width: 640px) {
+            .protein-powder-nip { flex-direction: column !important; max-width: 100% !important; }
+            .protein-powder-nip .left-column, .protein-powder-nip .right-column { padding: 12px !important; }
+            .protein-powder-nip .right-column { padding-top: 0 !important; }
+          }
           @media (max-width: 640px) {
             .product-header { margin-bottom: 20px; padding-bottom: 12px; }
             .product-header h1 { font-size: 20px; }
@@ -766,7 +772,13 @@ export const generateTabbedProductHtml = query({
           .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width:100%; height:auto; }
           .tab-content table { width:100%; border-collapse:collapse; }
           .tab-content th, .tab-content td { word-break: break-word; }
-          @media (max-width:640px){ .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
+          /* Protein Powder template: stack columns on small screens */
+          @media (max-width: 640px) {
+            .protein-powder-nip { flex-direction: column !important; max-width: 100% !important; }
+            .protein-powder-nip .left-column, .protein-powder-nip .right-column { padding: 12px !important; }
+            .protein-powder-nip .right-column { padding-top: 0 !important; }
+          }
+          @media (max-width:640px){ .protein-powder-nip{flex-direction:column !important; max-width:100% !important;} .protein-powder-nip .left-column,.protein-powder-nip .right-column{padding:12px !important;} .protein-powder-nip .right-column{padding-top:0 !important;} .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
         </style>
         <div class="tab-container">
           <div class="tab-buttons">
@@ -998,3 +1010,4 @@ export const generateCombinedProductHtml = query({
     };
   },
 });
+
