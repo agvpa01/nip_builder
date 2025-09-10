@@ -245,6 +245,14 @@ export const syncProducts = action({
           }
 
           if (found) {
+            // If the stored value still contains the full URL prefix, normalize it to the slug
+            const needsNormalize = /https?:\/\//i.test((found as any).onlineStoreUrl || '')
+              || ((found as any).onlineStoreUrl || '').startsWith('www.');
+            if (needsNormalize && (found as any).onlineStoreUrl !== onlineStoreUrl) {
+              try {
+                await ctx.db.patch(found._id, { onlineStoreUrl });
+              } catch {}
+            }
             skippedCount++;
             if (variants.length > 0) {
               const existingVariants = await ctx.runQuery(
