@@ -949,8 +949,17 @@ export function ProteinPowderTemplate({
       <div className="flex-1 flex overflow-hidden">
         {/* Left Column: Text Sections */}
         <div className="flex-1 p-6 bg-white border-r border-gray-200 overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
-
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
+            <label className="text-xs text-gray-700 inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showTextSections}
+                onChange={(e) => setShowTextSections(e.target.checked)}
+              />
+              Show Text Sections
+            </label>
+          </div>
           <DraggableTextSection
             sections={textSections}
             onSectionsReorder={handleTextSectionsReorder}
@@ -967,14 +976,6 @@ export function ProteinPowderTemplate({
         <div className="flex-1 p-6 bg-white overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Tables</h3>
-            <label className="text-xs text-gray-700 inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={showTextSections}
-                onChange={(e) => setShowTextSections(e.target.checked)}
-              />
-              Show Text Sections
-            </label>
           </div>
 
           {/* Nutritional Information Table */}
