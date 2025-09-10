@@ -515,7 +515,7 @@ export const generateTabbedProductHtml = query({
               max-width: 1200px;
               margin: 0 auto;
               background: white;
-              padding: 20px;
+              padding: 0;
             }
             .product-header {
               text-align: center;
@@ -534,13 +534,7 @@ export const generateTabbedProductHtml = query({
               color: #666;
               margin: 10px 0 0 0;
             }
-            .content {
-              padding: 20px;
-              border: 1px solid #ddd;
-              border-radius: 5px;
-              background: white;
-              margin-bottom: 30px;
-            }
+            .content { padding: 0; border: none; border-radius: 0; background: white; margin: 0; }
             .footer {
               text-align: center;
               margin-top: 40px;
@@ -600,7 +594,7 @@ export const generateTabbedProductHtml = query({
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            padding: 20px;
+            padding: 0; /* Remove outer body padding */
           }
           .product-header {
             text-align: center;
@@ -619,14 +613,12 @@ export const generateTabbedProductHtml = query({
             color: #666;
             margin: 10px 0 0 0;
           }
-          .tab-container {
-            margin-bottom: 30px;
-          }
+          .tab-container { margin: 0; }
           /* Dropdown-styled tab selector */
           .tab-buttons {
             position: relative;
             display: inline-block;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* tighter spacing above content */
           }
           .dropdown-toggle {
             background: #3b82f6; /* blue */
@@ -677,9 +669,9 @@ export const generateTabbedProductHtml = query({
           .dropdown-menu .tab-button.active { background: #eff6ff; color: #2563eb; }
           .tab-content {
             display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 0; /* remove inner padding */
+            border: none; /* remove border */
+            border-radius: 0;
             background: white;
           }
           .tab-content.active {
@@ -736,8 +728,8 @@ export const generateTabbedProductHtml = query({
       <body>
         <!-- Inline styles duplicated here so content works when only <body> is injected without <head> -->
         <style>
-          .tab-container { margin-bottom: 30px; }
-          .tab-buttons { position: relative; display: inline-block; margin-bottom: 20px; }
+          .tab-container { margin: 0; }
+          .tab-buttons { position: relative; display: inline-block; margin-bottom: 10px; }
           .dropdown-toggle { background:#3b82f6;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,0.05),0 4px 10px rgba(59,130,246,0.25); }
           .dropdown-toggle:hover { background:#2563eb; }
           .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
@@ -747,7 +739,7 @@ export const generateTabbedProductHtml = query({
           .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
           .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
           .dropdown-menu .tab-button.active { background:#eff6ff;color:#2563eb; }
-          .tab-content { display:none;padding:20px;border:1px solid #ddd;border-radius:5px;background:#fff; }
+          .tab-content { display:none;padding:0;border:none;border-radius:0;background:#fff; }
           .tab-content.active { display:block; }
         </style>
         <div class="tab-container">
