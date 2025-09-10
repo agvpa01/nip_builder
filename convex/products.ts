@@ -231,18 +231,10 @@ export const syncProducts = action({
             imageUrl: ve.node?.image?.url || "",
           }));
 
-          // Check if product already exists by slug (and fallback to full URL for legacy rows)
-          const existingProduct = await ctx.runQuery(
-            api.products.getProductByUrl,
-            {
-              onlineStoreUrl,
-            }
-          );
-          let found = existingProduct;
-          if (!found && fullUrl !== onlineStoreUrl) {
-            // Try legacy full URL value
-            found = await ctx.runQuery(api.products.getProductByUrl, { onlineStoreUrl: fullUrl });
-          }
+          // Check if product already exists using flexible slug/URL matching
+          const found = await ctx.runQuery(api.products.findProductBySlugFlexible, {
+            slugOrUrl: onlineStoreUrl,
+          });
 
           if (found) {
             // If the stored value still contains the full URL prefix, normalize it to the slug
@@ -388,6 +380,64 @@ export const getProductByOnlineStoreUrlPublic = query({
     }
 
     return product || null;
+  },
+});
+
+// Flexible: find a product by slug or last path segment of a URL
+export const findProductBySlugFlexible = query({
+  args: { slugOrUrl: v.string() },
+  handler: async (ctx, { slugOrUrl }) => {
+    await requireAdmin(ctx);
+
+    const inferSlug = (input: string): string => {
+      try {
+        const u = new URL(input);
+        const parts = u.pathname.split('/').filter(Boolean);
+        return decodeURIComponent(parts[parts.length - 1] || input).toLowerCase();
+      } catch {
+        const parts = input.split('/').filter(Boolean);
+        return decodeURIComponent(parts[parts.length - 1] || input).toLowerCase();
+      }
+    };
+
+    const slug = inferSlug(slugOrUrl);
+
+    // First, try direct equality (slug stored) via index
+    let product = await ctx.db
+      .query('products')
+      .withIndex('by_online_store_url', (q) => q.eq('onlineStoreUrl', slug))
+      .first();
+    if (product) return product;
+
+    // Try common full URL variants
+    const bases = [
+      'https://www.vpa.com.au/products/',
+      'https://vpa.com.au/products/',
+      'http://www.vpa.com.au/products/',
+      'http://vpa.com.au/products/',
+    ];
+    for (const base of bases) {
+      const candidate = base + slug;
+      const p = await ctx.db
+        .query('products')
+        .withIndex('by_online_store_url', (q) => q.eq('onlineStoreUrl', candidate))
+        .first();
+      if (p) return p;
+      const pSlash = await ctx.db
+        .query('products')
+        .withIndex('by_online_store_url', (q) => q.eq('onlineStoreUrl', candidate + '/'))
+        .first();
+      if (pSlash) return pSlash;
+    }
+
+    // Fallback: scan and match by last path segment (covers any other base)
+    const all = await ctx.db.query('products').collect();
+    product = all.find((pr: any) => {
+      const s = inferSlug(pr.onlineStoreUrl || '').toLowerCase();
+      return s === slug;
+    }) || null;
+
+    return product;
   },
 });
 
