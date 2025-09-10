@@ -341,6 +341,27 @@ export const getProductByOnlineStoreUrlPublic = query({
         .first();
     }
 
+    // If not found and input looks like a slug (no scheme/host), try matching by last path segment
+    if (!product) {
+      const looksLikeSlug = !/^https?:\/\//i.test(primary) && !primary.includes("/");
+      if (looksLikeSlug) {
+        const slug = primary.toLowerCase();
+        const all = await ctx.db.query("products").collect();
+        product =
+          all.find((p) => {
+            try {
+              const u = new URL(p.onlineStoreUrl);
+              const parts = u.pathname.split("/").filter(Boolean);
+              const last = (parts[parts.length - 1] || "").toLowerCase();
+              return last === slug;
+            } catch {
+              const s = p.onlineStoreUrl.toLowerCase();
+              return s.endsWith("/" + slug) || s === slug;
+            }
+          }) || null;
+      }
+    }
+
     return product || null;
   },
 });
