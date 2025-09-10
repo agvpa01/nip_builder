@@ -250,7 +250,7 @@ export const syncProducts = action({
               || ((found as any).onlineStoreUrl || '').startsWith('www.');
             if (needsNormalize && (found as any).onlineStoreUrl !== onlineStoreUrl) {
               try {
-                await ctx.db.patch(found._id, { onlineStoreUrl });
+                await ctx.runMutation(api.products.updateProductOnlineStoreUrl, { productId: found._id, onlineStoreUrl });
               } catch {}
             }
             skippedCount++;
@@ -466,6 +466,16 @@ export const deleteProduct = mutation({
     // Delete the product
     await ctx.db.delete(args.productId);
 
+    return { success: true };
+  },
+});
+
+// Update product onlineStoreUrl (admin only)
+export const updateProductOnlineStoreUrl = mutation({
+  args: { productId: v.id("products"), onlineStoreUrl: v.string() },
+  handler: async (ctx, { productId, onlineStoreUrl }) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(productId, { onlineStoreUrl });
     return { success: true };
   },
 });
