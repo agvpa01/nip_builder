@@ -557,6 +557,16 @@ export const generateTabbedProductHtml = query({
             .print-button:hover {
               background: #218838;
             }
+            /* Responsive helpers */
+            .content { overflow-x: auto; }
+            .content img, .content svg, .content canvas, .content video { max-width: 100%; height: auto; }
+            .content table { width: 100%; border-collapse: collapse; }
+            .content th, .content td { word-break: break-word; }
+            @media (max-width: 640px) {
+              .product-header { margin-bottom: 20px; padding-bottom: 12px; }
+              .product-header h1 { font-size: 20px; }
+              .product-header p { font-size: 13px; }
+            }
             @media print {
               .print-button { display: none; }
             }
@@ -673,6 +683,7 @@ export const generateTabbedProductHtml = query({
             border: none; /* remove border */
             border-radius: 0;
             background: white;
+            overflow-x: auto; /* enable horizontal scroll for wide tables */
           }
           .tab-content.active {
             display: block;
@@ -718,6 +729,17 @@ export const generateTabbedProductHtml = query({
           .print-button:hover {
             background: #218838;
           }
+          /* Make inner HTML responsive */
+          .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width: 100%; height: auto; }
+          .tab-content table { width: 100%; border-collapse: collapse; }
+          .tab-content th, .tab-content td { word-break: break-word; }
+          @media (max-width: 640px) {
+            .product-header { margin-bottom: 20px; padding-bottom: 12px; }
+            .product-header h1 { font-size: 20px; }
+            .product-header p { font-size: 13px; }
+            .dropdown-toggle { width: 100%; justify-content: space-between; }
+            .dropdown-menu { min-width: 100%; }
+          }
           @media print {
             .tab-buttons, .print-button { display: none; }
             .tab-content { display: block !important; border: none; padding: 0; }
@@ -739,8 +761,12 @@ export const generateTabbedProductHtml = query({
           .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
           .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
           .dropdown-menu .tab-button.active { background:#eff6ff;color:#2563eb; }
-          .tab-content { display:none;padding:0;border:none;border-radius:0;background:#fff; }
+          .tab-content { display:none;padding:0;border:none;border-radius:0;background:#fff; overflow-x:auto; }
           .tab-content.active { display:block; }
+          .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width:100%; height:auto; }
+          .tab-content table { width:100%; border-collapse:collapse; }
+          .tab-content th, .tab-content td { word-break: break-word; }
+          @media (max-width:640px){ .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
         </style>
         <div class="tab-container">
           <div class="tab-buttons">
