@@ -660,7 +660,6 @@ export const generateTabbedProductHtml = query({
             z-index: 1000;
             display: none;
           }
-          .tab-buttons.open .dropdown-menu { display: block; }
           /* Individual tab buttons inside dropdown */
           .dropdown-menu .tab-button {
             background: transparent;
