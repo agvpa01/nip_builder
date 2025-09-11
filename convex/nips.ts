@@ -631,7 +631,7 @@ export const generateTabbedProductHtml = query({
             margin-bottom: 10px; /* tighter spacing above content */
           }
           .dropdown-toggle {
-            width: 90%;
+            width: 94%;
             background: white;
             color: #000000;
             border: none;
@@ -757,7 +757,7 @@ export const generateTabbedProductHtml = query({
         <style>
           .tab-container { margin: 0; }
           .tab-buttons { width:100%; display: flex; justify-content: center; position: relative; margin-bottom: 10px; }
-          .dropdown-toggle { border: lightgray 1px solid; width:87%; background:#fff;color:#000;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px; }
+          .dropdown-toggle { border: lightgray 1px solid; width:94%; background:#fff;color:#000;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px; }
           .dropdown-toggle:hover { background:#f9fafb ; }
           .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
           .tab-buttons.open .caret { transform: rotate(180deg); }
