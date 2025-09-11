@@ -458,7 +458,7 @@ export function ComplexSupplementsTemplate({
                 <!-- Serving Information -->
                 <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black !important; border-bottom: none !important;">
                 <div style="padding: 8px 0px;  border-bottom: 5px solid black !important;">
-                  <div style="display: flex; flex-direction: column; font-size: 14px; font-weight: bold;">
+                  <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
                     <span style="margin-bottom: 3px;">${convertFormattingForHtml(convertTabsForHtml(servingSizeText))}</span>
                     <span>${convertFormattingForHtml(convertTabsForHtml(servingsPerText))}</span>
                   </div>
@@ -533,7 +533,7 @@ export function ComplexSupplementsTemplate({
         ) {
           html += `
             <div class="text-section" style="margin-bottom: 15px;">
-              <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+              <p style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</p>
               <p style="margin: 0; font-size: 14px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
             </div>
           `;

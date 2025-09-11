@@ -494,7 +494,7 @@ export function ProteinPowderTemplate({
         }
         html += `
           <div class="text-section" style="margin-bottom: 16px;">
-            <h4 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+            <p style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</p>
             <p style="margin: 0; font-size: 14px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
           </div>
         `;
