@@ -166,28 +166,28 @@ export function USSupplementsTemplate({
 
   const generateHtml = useCallback(() => {
     let html = `
-    <div class="us-supplements" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black;">
+    <div class="us-supplements" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black !important;">
       <div style="font-weight: 800; font-size: 24px; text-align: left; padding: 8px 10px;">SUPPLEMENT FACTS</div>
       <div style="padding: 0 10px 0px 10px; display: flex; justify-content: flex-start; font-size: 12px; ">
         <div><strong>Serving Size: </strong></div>
         <div><strong>${convertFormattingForHtml(convertTabsForHtml(servingSize))}</strong></div>
       </div>
       <div style="padding: 0px 10px;">
-        <div style="padding: 5px 0px; font-size: 12px; border-bottom: 8px solid black;"><strong>${convertFormattingForHtml(convertTabsForHtml(servingsPerContainer))}</strong></div>
+        <div style="padding: 5px 0px; font-size: 12px; border-bottom: 8px solid black !important;"><strong>${convertFormattingForHtml(convertTabsForHtml(servingsPerContainer))}</strong></div>
       </div>
 
       <div style="padding: 5px 10px;">
-      <table style="width: 100%; border-collapse: collapse;">
+      <table style="width: 100%; border-collapse: collapse; border: none !important;">
         <colgroup>
           <col style="width: 40%;" />
           <col style="width: 35%;" />
           <col style="width: 25%;" />
         </colgroup>
         <thead>
-          <tr style="border-bottom: 3px solid black;">
-            <th style="padding: 6px 10px; font-size: 12px; text-align: left;"></th>
-            <th style="padding: 6px 10px; font-size: 11px; text-align: right;">Amount per serving</th>
-            <th style="width: 35%; padding: 6px 10px; font-size: 12px; text-align: right;">%DV</th>
+          <tr style="border-bottom: 3px solid black !important;">
+            <th style="padding: 6px 10px; font-size: 12px; text-align: left; border: none !important;"></th>
+            <th style="padding: 6px 10px; font-size: 11px; text-align: right; border: none !important;">Amount per serving</th>
+            <th style="width: 35%; padding: 6px 10px; font-size: 12px; text-align: right; border: none !important;">%DV</th>
           </tr>
         </thead>
         <tbody>
@@ -205,10 +205,10 @@ export function USSupplementsTemplate({
         indentPx ? `padding-left:${indentPx}px;` : "",
       ].join("");
       html += `
-          <tr style="border-bottom: ${border};">
-            <td style="padding: 6px 10px; font-size: 12px; ${nameStyle}">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-            <td style="padding: 6px 10px; font-size: 12px; text-align: right;">${row.amount ? convertFormattingForHtml(convertTabsForHtml(row.amount)) : ""}</td>
-            <td style="padding: 6px 10px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.percentDv || ""))}</td>
+          <tr style="border-bottom: ${border} !important;">
+            <td style="padding: 6px 10px; font-size: 12px; ${nameStyle} border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+            <td style="padding: 6px 10px; font-size: 12px; text-align: right; border: none !important;">${row.amount ? convertFormattingForHtml(convertTabsForHtml(row.amount)) : ""}</td>
+            <td style="padding: 6px 10px; font-size: 12px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.percentDv || ""))}</td>
           </tr>
       `;
     });
@@ -221,15 +221,15 @@ export function USSupplementsTemplate({
        ${
          showDvFootnote && dvFootnoteText && dvFootnoteText.trim()
            ? `
-      <div style="padding: 8px 10px 0px 10px; font-size: 11px; border-top: 5px solid black;">${convertFormattingForHtml(convertTabsForHtml(dvFootnoteText)).replace(/\n/g, "<br/>")}</div>
+      <div style="padding: 8px 10px 0px 10px; font-size: 11px; border-top: 5px solid black !important;">${convertFormattingForHtml(convertTabsForHtml(dvFootnoteText)).replace(/\n/g, "<br/>")}</div>
       `
            : ""
        }
-      <div style="font-size: 12px; ${showDvFootnote && dvFootnoteText && dvFootnoteText.trim() ? "padding: 5px 10px 8px 10px; " : "padding: 8px 10px; border-top: 5px solid black;"}">
+      <div style="font-size: 12px; ${showDvFootnote && dvFootnoteText && dvFootnoteText.trim() ? "padding: 5px 10px 8px 10px; " : "padding: 8px 10px; border-top: 5px solid black !important;"}">
       ${showDvFootnote && dvFootnoteText && dvFootnoteText.trim() ? "*" : ""}*Daily Value (DV) not established.
       </div>
      
-      <div style="background-color:black; color:white; padding: 8px 10px; font-size: 12px; border-top: 1px solid black;">
+      <div style="background-color:black; color:white; padding: 8px 10px; font-size: 12px; border-top: 1px solid black !important;">
         Other Ingredients: ${
           otherIngredients && otherIngredients.trim()
             ? `

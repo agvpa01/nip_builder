@@ -270,16 +270,16 @@ export function SupplementsTemplate({
       `Servings per Bottle: ${servingsPerBottle}`;
 
     let html = `
-     <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black; border-radius: 8px; overflow: hidden;">
+     <div class="supplements-nip" style="font-family: Arial, sans-serif; max-width: 93%; margin: 0 auto; border: 2px solid black !important; border-radius: 8px; overflow: hidden;">
     <!-- Nutritional Information Table -->
             <div class="nutritional-info">
-              <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px; padding: 8px; padding-bottom: 6px;">
+              <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 23px !important; letter-spacing: 0.8px !important; padding: 8px; padding-bottom: 6px;">
                 NUTRITIONAL INFORMATION
               </div>
               <!-- Serving Information -->
               <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px;">
-              <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
-                <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
+              <div style="padding: 8px 0px;  border-bottom: 5px solid black !important;">
+                <div style="display: flex; flex-direction: column; font-size: 14px; font-weight: bold;">
                   <span style="margin-bottom: 3px;">${convertFormattingForHtml(convertTabsForHtml(servingSizeLine))}</span>
                   <span>${convertFormattingForHtml(convertTabsForHtml(servingsPerBottleLine))}</span>
                 </div>
@@ -287,50 +287,48 @@ export function SupplementsTemplate({
               </div>
     
               <div style="padding: 10px; padding-top:0px;">
-              <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+              <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: none !important;">
                 <colgroup>
                   <col style="width: 40%;" />
                   <col style="width: 30%;" />
                   <col style="width: 30%;" />
                 </colgroup>
                 <thead>
-                  <tr style="background: #f9fafb; border-bottom: 5px solid black;">
-                    <th style="text-align: left; padding: 4px 0px; font-size: 12px; font-weight: 500;"></th>
-                    <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per Serve</th>
-                    <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per 100g</th>
+                  <tr style="border-bottom: 5px solid black !important;">
+                    <th style="text-align: left; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;"></th>
+                    <th style="text-align: right; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;">Per Serve</th>
+                    <th style="text-align: right; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;">Per 100g</th>
                   </tr>
                 </thead>
                 <tbody>
         `;
-    
-        // Add nutritional rows (skip serving-info row as it's now displayed separately)
-        nutritionalRows.forEach((row, index) => {
-          if (row.id === "serving-info") return; // Skip serving info row
-    
-          const rowThicknessBorder = getThicknessBorderStyle(
-            row.thickness || "normal"
-          );
-    
-          if ((index+1) === nutritionalRows.length) {
-            html += `
-                <tr style="border-bottom: none;">
-                  <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+
+    // Add nutritional rows (skip serving-info row as it's now displayed separately)
+    nutritionalRows.forEach((row, index) => {
+      if (row.id === "serving-info") return; // Skip serving info row
+
+      const rowThicknessBorder = getThicknessBorderStyle(
+        row.thickness || "normal"
+      );
+
+      if (index + 1 === nutritionalRows.length) {
+        html += `
+                <tr style="border-bottom: none !important;">
+                  <td style="padding: 3px 0px; font-size: 14px; font-weight: 500; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                  <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+                  <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
                 </tr>
           `;
-          }
-          else {
-    html += `
-                <tr style="border-bottom: ${rowThicknessBorder};">
-                  <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-                  <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+      } else {
+        html += `
+                <tr style="border-bottom: ${rowThicknessBorder} !important;">
+                  <td style="padding: 3px 0px; font-size: 14px; font-weight: 500; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                  <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+                  <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
                 </tr>
           `;
-          }
-          
-        });
+      }
+    });
     
         html += `
                 </tbody>

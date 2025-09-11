@@ -209,19 +209,19 @@ export function USNutritionFactsTemplate({
 
   const generateHtml = useCallback(() => {
     let html = `
-    <div class="us-nutrition-facts" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black;">
+    <div class="us-nutrition-facts" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; border: 2px solid black !important;">
       <div style="background: black; color: white; font-weight: 800; font-size: 20px; letter-spacing: 1px; text-align: left; padding: 8px 10px;">NUTRITION FACTS</div>
       <div style="padding: 8px 10px; font-size: 12px;">${convertFormattingForHtml(convertTabsForHtml(servingsPerContainer))}</div>
-      <div style="padding: 0 10px 8px 10px; display: flex; justify-content: space-between; font-size: 12px; border-bottom: 8px solid black;">
+      <div style="padding: 0 10px 8px 10px; display: flex; justify-content: space-between; font-size: 12px; border-bottom: 8px solid black !important;">
         <div><strong>Serving Size</strong></div>
         <div><strong>${convertFormattingForHtml(convertTabsForHtml(servingSize))}</strong></div>
       </div>
-      <div style="padding: 8px 10px; display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid black;">
+      <div style="padding: 8px 10px; display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid black !important;">
         <div style="font-size: 18px; font-weight: 800;">Amount per serving<br/><span style="font-size: 22px;">Calories</span></div>
         <div style="font-size: 42px; font-weight: 800; line-height: 1;">${convertFormattingForHtml(convertTabsForHtml(calories))}</div>
       </div>
-      <div style="padding: 6px 10px; font-size: 11px; text-align: right; border-bottom: 1px solid black; font-weight: 700;">% Daily Value *</div>
-      <table style="width: 100%; border-collapse: collapse;">
+      <div style="padding: 6px 10px; font-size: 11px; text-align: right; border-bottom: 1px solid black !important; font-weight: 700;">% Daily Value *</div>
+      <table style="width: 100%; border-collapse: collapse; border: none !important;">
         <colgroup>
           <col style="width: 70%;" />
           <col style="width: 30%;" />
@@ -239,9 +239,9 @@ export function USNutritionFactsTemplate({
         indentPx ? `padding-left:${indentPx}px;` : '',
       ].join('')
       html += `
-          <tr style="border-bottom: ${border};">
-            <td style="padding: 6px 10px; font-size: 12px; ${nameStyle}">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))} ${row.amount ? convertFormattingForHtml(convertTabsForHtml(row.amount)) : ''}</td>
-            <td style="padding: 6px 10px; font-size: 12px; text-align: right; font-weight: 700;">${convertFormattingForHtml(convertTabsForHtml(row.percentDv || ''))}</td>
+          <tr style="border-bottom: ${border} !important;">
+            <td style="padding: 6px 10px; font-size: 12px; ${nameStyle} border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))} ${row.amount ? convertFormattingForHtml(convertTabsForHtml(row.amount)) : ''}</td>
+            <td style="padding: 6px 10px; font-size: 12px; text-align: right; font-weight: 700; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.percentDv || ''))}</td>
           </tr>
       `
     })
@@ -249,7 +249,7 @@ export function USNutritionFactsTemplate({
     html += `
         </tbody>
       </table>
-      <div style="padding: 8px 10px; font-size: 10px; border-top: 1px solid black;">
+      <div style="padding: 8px 10px; font-size: 10px; border-top: 1px solid black !important;">
         *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
       </div>
     </div>`
