@@ -762,7 +762,6 @@ export const generateTabbedProductHtml = query({
           .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
           .tab-buttons.open .caret { transform: rotate(180deg); }
           .dropdown-menu { position:absolute;top:calc(100% + 6px);left:5%;background:#fff;border-radius:10px;min-width:90%;box-shadow:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);padding:6px 0;z-index:1000;display:none; }
-          .tab-buttons.open .dropdown-menu { display:block; }
           .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
           .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
           .dropdown-menu .tab-button.active { background:#f9fafb;color:#000; }
