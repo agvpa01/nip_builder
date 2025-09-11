@@ -58,7 +58,9 @@ export function ComplexSupplementsTemplate({
   const [activeVariantId, setActiveVariantId] = useState<string | null>(
     variant?._id || null
   );
-  const [variantsList, setVariantsList] = useState<any[]>(product?.variants || []);
+  const [variantsList, setVariantsList] = useState<any[]>(
+    product?.variants || []
+  );
   useEffect(() => {
     setVariantsList(product?.variants || []);
   }, [product?._id]);
@@ -79,7 +81,9 @@ export function ComplexSupplementsTemplate({
 
   // Get current variant NIP
   const currentVariantNip = productNips?.find(
-    (nip) => nip.variantId === activeVariantId && nip.templateType === "complex_supplements",
+    (nip) =>
+      nip.variantId === activeVariantId &&
+      nip.templateType === "complex_supplements"
   );
 
   // Initialize text sections with serving info + Ingredients
@@ -193,11 +197,13 @@ export function ComplexSupplementsTemplate({
     "normal" | "thick" | "medium-thick" | "large-thick" | "extra-large-thick"
   >("normal");
 
+  // Toggle for including full text sections in generated HTML
+  const [showTextSections, setShowTextSections] = useState(true);
+
   // Drag and drop state
   const [draggedNutritionalIndex, setDraggedNutritionalIndex] = useState<
     number | null
   >(null);
-  
 
   // Utility function to get border class based on thickness
   const getBorderClass = (
@@ -229,10 +235,18 @@ export function ComplexSupplementsTemplate({
     if (currentVariantNip && currentVariantNip.content) {
       try {
         const content = currentVariantNip.content;
+        if (typeof content.showTextSections === "boolean") {
+          setShowTextSections(content.showTextSections);
+        }
         if (content.textSections) {
-          let mergedSections: TextSection[] = content.textSections as TextSection[];
-          const hasServingSize = mergedSections.some((s) => s.id === "serving-size-line");
-          const hasServingsContainer = mergedSections.some((s) => s.id === "servings-per-container-line");
+          let mergedSections: TextSection[] =
+            content.textSections as TextSection[];
+          const hasServingSize = mergedSections.some(
+            (s) => s.id === "serving-size-line"
+          );
+          const hasServingsContainer = mergedSections.some(
+            (s) => s.id === "servings-per-container-line"
+          );
           const toAdd: TextSection[] = [];
           if (!hasServingSize) {
             toAdd.push({
@@ -341,8 +355,6 @@ export function ComplexSupplementsTemplate({
     setNutritionalRows((prev) => prev.filter((row) => row.id !== id));
   }, []);
 
-  
-
   // Handle nutritional rows reorder
   const handleNutritionalRowsReorder = useCallback(
     (reorderedRows: NutritionalRow[]) => {
@@ -351,8 +363,6 @@ export function ComplexSupplementsTemplate({
     []
   );
 
-  
-
   // Create drag handlers for nutritional rows
   const nutritionalDragHandlers = createDragDropHandlers(
     nutritionalRows,
@@ -360,8 +370,6 @@ export function ComplexSupplementsTemplate({
     draggedNutritionalIndex,
     setDraggedNutritionalIndex
   );
-
-  
 
   // Handle text selection for rich text editing
   const handleTextSelect = useCallback(
@@ -430,105 +438,123 @@ export function ComplexSupplementsTemplate({
     );
     // Serving info comes from Text Sections (fallback to row data for legacy)
     const servingSizeText =
-      (textSections.find((s) => s.id === "serving-size-line")?.content as string) ||
+      (textSections.find((s) => s.id === "serving-size-line")
+        ?.content as string) ||
       nutritionalRows.find((r) => r.id === "serving-info")?.nutrient ||
       "Serving Size";
     const servingsPerText =
-      (textSections.find((s) => s.id === "servings-per-container-line")?.content as string) ||
+      (textSections.find((s) => s.id === "servings-per-container-line")
+        ?.content as string) ||
       nutritionalRows.find((r) => r.id === "serving-info")?.perServe ||
       "Servings per Container";
 
     let html = `
-    <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 300px; margin: 0 auto; background: white; padding: 20px;">
+    <div class="complex-supplements-nip" style="font-family: Arial, sans-serif; max-width: 94%; margin: 0 auto;">
       <!-- Nutritional Information Table -->
               <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-                <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px; padding: 8px; padding-bottom: 6px;">
+                <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 23px !important; letter-spacing: 0.8px !important; padding: 8px; padding-bottom: 6px;">
                   NUTRITIONAL INFORMATION
                 </div>
                 <!-- Serving Information -->
-                <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black; border-bottom: none;">
-                <div style="padding: 8px 0px;  border-bottom: 5px solid black; background: white;">
-                  <div style="display: flex; flex-direction: column; font-size: 12px; font-weight: bold;">
+                <div style="padding: 10px; padding-top: 0px; padding-bottom: 0px; border: 2px solid black !important; border-bottom: none !important;">
+                <div style="padding: 8px 0px;  border-bottom: 5px solid black !important;">
+                  <div style="display: flex; flex-direction: column; font-size: 14px; font-weight: bold;">
                     <span style="margin-bottom: 3px;">${convertFormattingForHtml(convertTabsForHtml(servingSizeText))}</span>
                     <span>${convertFormattingForHtml(convertTabsForHtml(servingsPerText))}</span>
                   </div>
                 </div>
                 </div>
       
-                <div style="padding: 10px; padding-top:0px; border: 2px solid black; border-top: none; margin-bottom:10px; border-radius: 0 0 8px 8px; overflow: hidden;">
-                <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                <div style="padding: 10px; padding-top:0px; border: 2px solid black !important; border-top: none !important; margin-bottom:10px; border-radius: 0 0 8px 8px; overflow: hidden;">
+                <table style="width: 100%; table-layout: fixed; border-collapse: collapse; border: none !important;">
                   <colgroup>
                     <col style="width: 45%;" />
                     <col style="width: 25%;" />
                     <col style="width: 30%;" />
                   </colgroup>
                   <thead>
-                    <tr style="background: #f9fafb; border-bottom: 5px solid black;">
-                      <th style="text-align: left; padding: 4px 0px; font-size: 12px; font-weight: 500;"></th>
-                      <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per Serve</th>
-                      <th style="text-align: right; padding: 4px 0px; font-size: 12px; font-weight: 500;">Per 100g</th>
+                    <tr style="border-bottom: 5px solid black !important;">
+                      <th style="text-align: left; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;"></th>
+                      <th style="text-align: right; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;">Per Serve</th>
+                      <th style="text-align: right; padding: 4px 0px; font-size: 14px; font-weight: 500; border: none !important;">Per 100g</th>
                     </tr>
                   </thead>
                   <tbody>
           `;
-      
-          // Add nutritional rows (skip serving-info row as it's now displayed separately)
-          nutritionalRows.forEach((row, index) => {
-            if (row.id === "serving-info") return; // Skip serving info row
-      
-          const rowThicknessBorder = getThicknessBorderStyle(
-            row.thickness || "normal"
-          );
-      
-            const perServeEmpty = !row.perServe || row.perServe.trim() === "";
-            const per100gEmpty = !row.per100g || row.per100g.trim() === "";
-            const isLast = index + 1 === nutritionalRows.length;
-            const borderStyle = isLast ? "none" : rowThicknessBorder;
 
-            if (perServeEmpty && per100gEmpty) {
-              html += `
-                  <tr style="border-bottom: ${borderStyle};">
-                    <td colspan="3" style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+    // Add nutritional rows (skip serving-info row as it's now displayed separately)
+    nutritionalRows.forEach((row, index) => {
+      if (row.id === "serving-info") return; // Skip serving info row
+
+      const rowThicknessBorder = getThicknessBorderStyle(
+        row.thickness || "normal"
+      );
+
+      const perServeEmpty = !row.perServe || row.perServe.trim() === "";
+      const per100gEmpty = !row.per100g || row.per100g.trim() === "";
+      const isLast = index + 1 === nutritionalRows.length;
+      const borderStyle = isLast ? "none" : rowThicknessBorder;
+
+      if (perServeEmpty && per100gEmpty) {
+        html += `
+                  <tr style="border-bottom: ${borderStyle} !important;">
+                    <td colspan="3" style="padding: 3px 0px; font-size: 14px; font-weight: 500; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
                   </tr>
               `;
-            } else {
-              html += `
-                  <tr style="border-bottom: ${borderStyle};">
-                    <td style="padding: 3px 0px; font-size: 12px; font-weight: 500;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
-                    <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
-                    <td style="padding: 3px 0px; font-size: 12px; text-align: right;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
+      } else {
+        html += `
+                  <tr style="border-bottom: ${borderStyle} !important;">
+                    <td style="padding: 3px 0px; font-size: 14px; font-weight: 500; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.nutrient))}</td>
+                    <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.perServe))}</td>
+                    <td style="padding: 3px 0px; font-size: 14px; text-align: right; border: none !important;">${convertFormattingForHtml(convertTabsForHtml(row.per100g))}</td>
                   </tr>
               `;
-            }
-            
-          });
-      
-          html += `
+      }
+    });
+
+    html += `
                   </tbody>
                 </table>
               </div>
 
-      <!-- Text Sections -->
-      <div class="text-sections">
-    `;
+      `;
 
-    // Add text sections
-    textSections.forEach((section) => {
-
-      if(section.id !== "serving-size-line" && section.id !== "servings-per-container-line") {
-       html += `
-        <div class="text-section" style="margin-bottom: 15px;">
-          <h4 style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
-          <p style="margin: 0; font-size: 11px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
+    // Text sections block
+    const ing = textSections.find((s) => s.id === "ingredients");
+    if (showTextSections) {
+      html += `
+        <!-- Text Sections -->
+        <div class="text-sections">
+      `;
+      textSections.forEach((section) => {
+        if (
+          section.id !== "serving-size-line" &&
+          section.id !== "servings-per-container-line"
+        ) {
+          html += `
+            <div class="text-section" style="margin-bottom: 15px;">
+              <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(section.title))}</h4>
+              <p style="margin: 0; font-size: 14px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(section.content))}</p>
+            </div>
+          `;
+        }
+      });
+      html += `
         </div>
       `;
-      }
-
-     
-    });
+    } else if (ing) {
+      html += `
+        <!-- Ingredients Only -->
+        <div class="text-sections">
+          <div class="text-section" style="margin-bottom: 15px;">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold; color: black;">${convertFormattingForHtml(convertTabsForHtml(ing.title))}</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.4;">${convertFormattingForHtml(convertTabsForHtml(ing.content))}</p>
+          </div>
+        </div>
+      `;
+    }
 
     html += `
-      </div>
     </div>
     `;
 
@@ -537,6 +563,7 @@ export function ComplexSupplementsTemplate({
     textSections,
     nutritionalRows,
     nutritionalRowThickness,
+    showTextSections,
   ]);
 
   // Save NIP
@@ -564,6 +591,7 @@ export function ComplexSupplementsTemplate({
           ingredientRows,
           nutritionalRowThickness,
           ingredientRowThickness,
+          showTextSections,
         },
         htmlContent: generateHtml(),
       };
@@ -857,7 +885,17 @@ export function ComplexSupplementsTemplate({
       <div className="flex-1 flex">
         {/* Left Column: Text Sections */}
         <div className="flex-1 p-6 bg-white border-r border-gray-200 overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Text Sections</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Text Sections</h3>
+            <label className="text-xs text-gray-700 inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={showTextSections}
+                onChange={(e) => setShowTextSections(e.target.checked)}
+              />
+              Show Text Sections
+            </label>
+          </div>
 
           <DraggableTextSection
             sections={textSections}
