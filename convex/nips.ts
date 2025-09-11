@@ -443,7 +443,9 @@ export const generateTabbedProductHtml = query({
       // so multiple custom variants don't collapse into one tab.
       const key = nip.variantId
         ? nip.variantId.toString()
-        : (nip._id ? nip._id.toString() : Math.random().toString(36).slice(2));
+        : nip._id
+          ? nip._id.toString()
+          : Math.random().toString(36).slice(2);
       const arr = byVariant.get(key) || [];
       arr.push(nip);
       byVariant.set(key, arr);
@@ -472,15 +474,15 @@ export const generateTabbedProductHtml = query({
       // Try to infer a friendly name for custom variants from content
       let inferredName: string | undefined = undefined;
       const c = latestWithHtml.content as any;
-      if (c && typeof c === 'object') {
+      if (c && typeof c === "object") {
         inferredName = c.variantName || c.name || c.title;
       }
       const variantName =
         fetchedVariant?.title && fetchedVariant.title.trim() !== ""
           ? fetchedVariant.title
-          : (typeof inferredName === 'string' && inferredName.trim() !== ''
-              ? inferredName
-              : `Variant ${variantIndex}`);
+          : typeof inferredName === "string" && inferredName.trim() !== ""
+            ? inferredName
+            : `Variant ${variantIndex}`;
 
       variantData.push({
         id: `variant-${tabIndex++}`,
@@ -514,7 +516,6 @@ export const generateTabbedProductHtml = query({
               font-family: Arial, sans-serif;
               max-width: 1200px;
               margin: 0 auto;
-              background: white;
               padding: 0;
             }
             .product-header {
@@ -534,7 +535,7 @@ export const generateTabbedProductHtml = query({
               color: #666;
               margin: 10px 0 0 0;
             }
-            .content { padding: 0; border: none; border-radius: 0; background: white; margin: 0; }
+            .content { padding: 0; border: none; border-radius: 0; margin: 0; }
             .footer {
               text-align: center;
               margin-top: 40px;
@@ -603,7 +604,6 @@ export const generateTabbedProductHtml = query({
             font-family: Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
             padding: 0; /* Remove outer body padding */
           }
           .product-header {
@@ -631,8 +631,9 @@ export const generateTabbedProductHtml = query({
             margin-bottom: 10px; /* tighter spacing above content */
           }
           .dropdown-toggle {
-            background: #3b82f6; /* blue */
-            color: #ffffff;
+            width: 90%;
+            background: white;
+            color: #000000;
             border: none;
             padding: 10px 14px;
             border-radius: 8px;
@@ -642,7 +643,6 @@ export const generateTabbedProductHtml = query({
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 10px rgba(59,130,246,0.25);
             transition: background 0.2s ease;
           }
           .dropdown-toggle:hover { background: #2563eb; }
@@ -682,7 +682,6 @@ export const generateTabbedProductHtml = query({
             padding: 0; /* remove inner padding */
             border: none; /* remove border */
             border-radius: 0;
-            background: white;
             overflow-x: auto; /* enable horizontal scroll for wide tables */
           }
           .tab-content.active {
@@ -757,17 +756,17 @@ export const generateTabbedProductHtml = query({
         <!-- Inline styles duplicated here so content works when only <body> is injected without <head> -->
         <style>
           .tab-container { margin: 0; }
-          .tab-buttons { position: relative; display: inline-block; margin-bottom: 10px; }
-          .dropdown-toggle { background:#3b82f6;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(0,0,0,0.05),0 4px 10px rgba(59,130,246,0.25); }
-          .dropdown-toggle:hover { background:#2563eb; }
+          .tab-buttons { width:100%; display: flex; justify-content: center; position: relative; margin-bottom: 10px; }
+          .dropdown-toggle { border: lightgray 1px solid; width:87%; background:#fff;color:#000;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px; }
+          .dropdown-toggle:hover { background:#f9fafb ; }
           .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
           .tab-buttons.open .caret { transform: rotate(180deg); }
-          .dropdown-menu { position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:10px;min-width:220px;box-shadow:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);padding:6px 0;z-index:1000;display:none; }
+          .dropdown-menu { position:absolute;top:calc(100% + 6px);left:5%;background:#fff;border-radius:10px;min-width:90%;box-shadow:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);padding:6px 0;z-index:1000;display:none; }
           .tab-buttons.open .dropdown-menu { display:block; }
           .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
           .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
-          .dropdown-menu .tab-button.active { background:#eff6ff;color:#2563eb; }
-          .tab-content { display:none;padding:0;border:none;border-radius:0;background:#fff; overflow-x:auto; }
+          .dropdown-menu .tab-button.active { background:#f9fafb;color:#000; }
+          .tab-content { display:none;padding:0;border:none;border-radius:0; overflow-x:auto; }
           .tab-content.active { display:block; }
           .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width:100%; height:auto; }
           .tab-content table { width:100%; border-collapse:collapse; }
@@ -778,7 +777,7 @@ export const generateTabbedProductHtml = query({
             .protein-powder-nip .left-column, .protein-powder-nip .right-column { padding: 12px !important; }
             .protein-powder-nip .right-column { padding-top: 0 !important; }
           }
-          @media (max-width:640px){ .protein-powder-nip{flex-direction:column !important; max-width:100% !important;} .protein-powder-nip .left-column,.protein-powder-nip .right-column{padding:12px !important;} .protein-powder-nip .right-column{padding-top:0 !important;} .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
+          @media (max-width:640px){ .tab-container{ display: flex; flex-direction: column; align-items: center;} .tab-buttons{ width: 94%; display: flex; justify-content: center; position: relative; } .dropdown-menu{ left:0%; } .protein-powder-nip{flex-direction:column !important; max-width:100% !important;} .protein-powder-nip .left-column,.protein-powder-nip .right-column{padding:12px !important;} .protein-powder-nip .right-column{padding-top:0 !important;} .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
         </style>
         <div class="tab-container">
           <div class="tab-buttons">
@@ -959,7 +958,7 @@ export const generateCombinedProductHtml = query({
 
     // Start building combined HTML
     let combinedHtml = `
-      <div class="combined-product-nip" style="font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; background: white; padding: 20px;">
+      <div class="combined-product-nip" style="font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
         <div class="product-header" style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #333; padding-bottom: 20px;">
           <h1 style="font-size: 28px; font-weight: bold; margin: 0; color: #333;">${product.title}</h1>
           <p style="font-size: 16px; color: #666; margin: 10px 0 0 0;">Complete Nutritional Information Panel - All Variants</p>
