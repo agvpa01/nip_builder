@@ -514,7 +514,6 @@ export const generateTabbedProductHtml = query({
           <style>
             body {
               font-family: Arial, sans-serif;
-              max-width: 1200px;
               margin: 0 auto;
               padding: 0;
             }
@@ -602,7 +601,6 @@ export const generateTabbedProductHtml = query({
         <style>
           body {
             font-family: Arial, sans-serif;
-            max-width: 1200px;
             margin: 0 auto;
             padding: 0; /* Remove outer body padding */
           }
