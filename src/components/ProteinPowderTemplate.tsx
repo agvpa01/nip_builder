@@ -477,7 +477,7 @@ export function ProteinPowderTemplate({
       textSections.find((s) => s.id === "servings-per-pack-line")?.content ||
       "Servings per Pack: 33";
     let html = `
-    <div class="protein-powder-nip" style="font-family: Arial, sans-serif !important; max-width: 90%; margin: 0 auto; display: flex;">
+    <div class="protein-powder-nip" style="font-family: Arial, sans-serif !important; max-width: 90%; margin: 0 auto;">
     `;
 
     if (showTextSections) {
