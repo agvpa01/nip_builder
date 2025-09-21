@@ -397,7 +397,82 @@ http.route({
   }),
 });
 
+// Public API route to expose NIP content for a product
+http.route({
+  path: "/api/nips",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const productUrlParam =
+      url.searchParams.get("productUrl") || url.searchParams.get("url");
+    const onlineStoreUrlParam = url.searchParams.get("onlineStoreUrl");
+    const { slug: derivedSlug } = deriveFromProductUrl(productUrlParam);
+    const onlineStoreUrl = onlineStoreUrlParam || derivedSlug;
+
+    if (!onlineStoreUrl) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing onlineStoreUrl",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
+      );
+    }
+
+    const product = await ctx.runQuery(
+      api.products.getProductByOnlineStoreUrlPublic,
+      {
+        onlineStoreUrl,
+      }
+    );
+
+    if (!product) {
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    const nips = await ctx.runQuery(api.nips.getNipsByProduct, {
+      productId: product._id,
+    });
+
+    const responseBody = {
+      product: {
+        _id: product._id,
+        title: product.title,
+        onlineStoreUrl: product.onlineStoreUrl,
+      },
+      nips: nips.map((nip) => ({
+        _id: nip._id,
+        templateType: nip.templateType,
+        region: nip.region ?? null,
+        variantId: nip.variantId ?? null,
+        variantName: nip.variantName ?? null,
+        content: nip.content,
+        htmlContent: nip.htmlContent,
+        createdAt: nip.createdAt,
+        updatedAt: nip.updatedAt,
+      })),
+    };
+
+    return new Response(JSON.stringify(responseBody), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=120",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }),
+});
+
+
 export default http;
-
-
-

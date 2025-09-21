@@ -55,7 +55,18 @@ export const getNipsByProduct = query({
       .withIndex('by_product', (q) => q.eq('productId', productId))
       .collect()
 
-    return nips
+    const enriched = await Promise.all(
+      nips.map(async (nip) => {
+        let variantName: string | null = null
+        if (nip.variantId) {
+          const variant = await ctx.db.get(nip.variantId)
+          variantName = variant?.title ?? null
+        }
+        return { ...nip, variantName }
+      }),
+    )
+
+    return enriched
   },
 })
 
