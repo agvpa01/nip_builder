@@ -546,14 +546,6 @@ export const generateTabbedProductHtml = query({
               margin: 10px 0 0 0;
             }
             .content { padding: 0; border: none; border-radius: 0; margin: 0; }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 2px solid #eee;
-              color: #666;
-              font-size: 12px;
-            }
             .print-button {
               background: #28a745;
               color: white;
@@ -714,14 +706,6 @@ export const generateTabbedProductHtml = query({
             color: #666;
             text-transform: uppercase;
             letter-spacing: 1px;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #eee;
-            color: #666;
-            font-size: 12px;
           }
           .print-button {
             background: #28a745;
