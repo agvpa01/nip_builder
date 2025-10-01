@@ -573,7 +573,25 @@ export const generateTabbedProductHtml = query({
             @media print {
               .print-button { display: none; }
             }
-          </style>
+            @media (max-width: 640px) {
+            .nip-selector select {
+              font-size: 16px;
+              min-height: 44px;
+              padding: 10px 44px 10px 12px;
+            }
+            .nip-selector::after {
+              right: 12px;
+            }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .nip-selector select {
+              transition: none;
+            }
+          }
+          .nip-selector option {
+            white-space: normal;
+          }
+        </style>
         </head>
         <body>
           <div class="content">
@@ -593,303 +611,143 @@ export const generateTabbedProductHtml = query({
       };
     }
 
-    // Generate tabbed HTML with embedded JavaScript for multiple variants
-    const tabbedHtml = `
+    // Generate dropdown-controlled HTML for all variants
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const selectOptions = variantData
+      .map((variant, index) => {
+        const label = escapeHtml(variant.name ?? `Variant ${index + 1}`);
+        return `          <option value="variant-${index}">${label}</option>`;
+      })
+      .join("");
+
+    const panelsMarkup = variantData
+      .map(
+        (
+          variant,
+          index
+        ) => `        <section class="nip-variant" data-variant="variant-${index}" style="${index === 0 ? "" : "display:none;"}">
+          ${variant.htmlContent}
+        </section>`
+      )
+      .join("");
+
+    const plainHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${product.title} - Nutritional Information Panel</title>
+        <title>${product.title} - Nutritional Information</title>
         <style>
           body {
             font-family: Arial, sans-serif;
-            margin: 0 auto;
-            padding: 0; /* Remove outer body padding */
-          }
-          .product-header {
-            text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 3px solid #333;
-            padding-bottom: 20px;
-          }
-          .product-header h1 {
-            font-size: 28px;
-            font-weight: bold;
             margin: 0;
-            color: #333;
-          }
-          .product-header p {
-            font-size: 16px;
-            color: #666;
-            margin: 10px 0 0 0;
-          }
-          .tab-container { margin: 0; }
-          /* Dropdown-styled tab selector */
-          .tab-buttons {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 10px; /* tighter spacing above content */
-          }
-          .dropdown-toggle {
-            width: 94%;
-            background: white;
-            color: #000000;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s ease;
-          }
-          .dropdown-toggle:hover { background: #2563eb; }
-          .caret { font-size: 12px; opacity: 0.95; transition: transform 0.2s ease; }
-          .tab-buttons.open .caret { transform: rotate(180deg); }
-          .dropdown-menu {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0;
+            padding: clamp(12px, 5vw, 24px);
             background: #ffffff;
-            border-radius: 10px;
-            min-width: 220px;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
-            padding: 6px 0;
-            z-index: 1000;
-            display: none;
+            color: #111827;
+            overflow-x: hidden;
           }
-          .tab-buttons.open .dropdown-menu { display: block; }
-          /* Individual tab buttons inside dropdown */
-          .dropdown-menu .tab-button {
-            background: transparent;
+          .nip-wrapper {
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .nip-selector {
+            margin-bottom: 16px;
+            position: relative;
+            max-width: 100%;
+            width: 94%;
+          }
+          .nip-selector select {
             width: 100%;
-            text-align: left;
-            border: none;
-            padding: 10px 14px;
-            margin: 0;
-            font-size: 14px;
-            color: #374151; /* gray-700 */
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease;
-          }
-          .dropdown-menu .tab-button:hover { background: #f3f4f6; color: #111827; }
-          .dropdown-menu .tab-button.active { background: #eff6ff; color: #2563eb; }
-          .tab-content {
-            display: none;
-            padding: 0; /* remove inner padding */
-            border: none; /* remove border */
-            border-radius: 0;
-            overflow-x: auto; /* enable horizontal scroll for wide tables */
-          }
-          .tab-content.active {
+            max-width: 100%;
             display: block;
-          }
-          .variant-info {
-            background: #f8f9fa;
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            border-left: 4px solid #007bff;
-            border-radius: 3px;
-          }
-          .variant-info h3 {
-            margin: 0 0 5px 0;
-            color: #007bff;
-            font-size: 16px;
-          }
-          .variant-info p {
-            margin: 0;
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          .print-button {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
+            padding: 10px 44px 10px 14px;
             font-size: 14px;
-            margin: 10px 5px;
-            transition: background 0.3s ease;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #111827;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
           }
-          .print-button:hover {
-            background: #218838;
+          .nip-selector select::-ms-expand {
+            display: none;
           }
-          /* Make inner HTML responsive */
-          .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width: 100%; height: auto; }
-          .tab-content table { width: 100%; border-collapse: collapse; }
-          .tab-content th, .tab-content td { word-break: break-word; }
-          /* Protein Powder template: stack columns on small screens */
+          .nip-selector::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            margin-top: -3px;
+            border-width: 6px 5px 0 5px;
+            border-style: solid;
+            border-color: #6b7280 transparent transparent transparent;
+            pointer-events: none;
+          }
+          .nip-selector select:hover {
+            border-color: #3b82f6;
+          }
+          .nip-selector select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+          }
+          .nip-variant {
+            margin-bottom: 32px;
+          }
+          .nip-variant:last-of-type {
+            margin-bottom: 0;
+          }
           @media (max-width: 640px) {
-            .protein-powder-nip { flex-direction: column !important; max-width: 100% !important; }
-            .protein-powder-nip .left-column, .protein-powder-nip .right-column { padding: 12px !important; }
-            .protein-powder-nip .right-column { padding-top: 0 !important; }
-          }
-          @media (max-width: 640px) {
-            .product-header { margin-bottom: 20px; padding-bottom: 12px; }
-            .product-header h1 { font-size: 20px; }
-            .product-header p { font-size: 13px; }
-            .dropdown-toggle { width: 100%; justify-content: space-between; }
-            .dropdown-menu { min-width: 100%; }
-          }
-          @media print {
-            .tab-buttons, .print-button { display: none; }
-            .tab-content { display: block !important; border: none; padding: 0; }
-            .tab-content:not(.active) { page-break-before: always; }
+            .nip-selector select {
+              font-size: 13px;
+              padding: 8px 34px 8px 12px;
+              background-position: calc(100% - 16px) calc(50% - 3px), calc(100% - 10px) calc(50% - 3px), calc(100% - 30px) calc(50% + 10px);
+            }
           }
         </style>
       </head>
       <body>
-        <!-- Inline styles duplicated here so content works when only <body> is injected without <head> -->
-        <style>
-          .tab-container { margin: 0; }
-          .tab-buttons { width:100%; display: flex; justify-content: center; position: relative; margin-bottom: 10px; }
-          .dropdown-toggle { border: lightgray 1px solid; width:94%; background:#fff;color:#000;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px; }
-          .dropdown-toggle:hover { background:#f9fafb ; }
-          .caret { font-size:12px;opacity:.95;transition:transform .2s ease; }
-          .tab-buttons.open .caret { transform: rotate(180deg); }
-          .dropdown-menu { position:absolute;top:calc(100% + 6px);left:5%;background:#fff;border-radius:10px;min-width:90%;box-shadow:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);padding:6px 0;z-index:1000;display:none; }
-          .tab-buttons.open .dropdown-menu { display:block; }
-          .dropdown-menu .tab-button { background:transparent;width:100%;text-align:left;border:none;padding:10px 14px;margin:0;font-size:14px;color:#374151;border-radius:6px;cursor:pointer; }
-          .dropdown-menu .tab-button:hover { background:#f3f4f6;color:#111827; }
-          .dropdown-menu .tab-button.active { background:#f9fafb;color:#000; }
-          .tab-content { display:none;padding:0;border:none;border-radius:0; overflow-x:auto; }
-          .tab-content.active { display:block; }
-          .tab-content img, .tab-content svg, .tab-content canvas, .tab-content video { max-width:100%; height:auto; }
-          .tab-content table { width:100%; border-collapse:collapse; }
-          .tab-content th, .tab-content td { word-break: break-word; }
-          /* Protein Powder template: stack columns on small screens */
-          @media (max-width: 640px) {
-            .protein-powder-nip { flex-direction: column !important; max-width: 100% !important; }
-            .protein-powder-nip .left-column, .protein-powder-nip .right-column { padding: 12px !important; }
-            .protein-powder-nip .right-column { padding-top: 0 !important; }
-          }
-          @media (max-width:640px){ .tab-container{ display: flex; flex-direction: column; align-items: center;} .tab-buttons{ width: 94%; display: flex; justify-content: center; position: relative; } .dropdown-menu{ left:0%; } .protein-powder-nip{flex-direction:column !important; max-width:100% !important;} .protein-powder-nip .left-column,.protein-powder-nip .right-column{padding:12px !important;} .protein-powder-nip .right-column{padding-top:0 !important;} .dropdown-toggle{width:100%;justify-content:space-between;} .dropdown-menu{min-width:100%;} }
-        </style>
-        <div class="tab-container">
-          <div class="tab-buttons">
-            <button class="dropdown-toggle" onclick="toggleDropdown()">
-              <span class="dropdown-label">${(variantData[0] && variantData[0].name) || "Select Variant"}</span>
-              <span class="caret">▾</span>
-            </button>
-            <div class="dropdown-menu">
-              ${variantData
-                .map(
-                  (variant, index) =>
-                    `<button class=\"tab-button ${index === 0 ? "active" : ""}\" onclick=\"showTab('${variant.id}', this)\">${variant.name}</button>`
-                )
-                .join("")}
-            </div>
+        <div class="nip-wrapper">
+          <div class="nip-selector">
+            <select id="nipVariantSelect">
+              ${selectOptions}
+            </select>
           </div>
-
-          ${variantData
-            .map(
-              (variant, index) => `
-            <div id="${variant.id}" class="tab-content ${index === 0 ? "active" : ""}">
-              
-              ${variant.htmlContent}
-            </div>
-          `
-            )
-            .join("")}
+          <div id="nipVariantPanels">
+            ${panelsMarkup}
+          </div>
         </div>
-
-
         <script>
-          function showTab(tabId, btn) {
-            // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-              content.classList.remove('active');
-            });
-
-            // Remove active class from all dropdown buttons
-            const tabButtons = document.querySelectorAll('.dropdown-menu .tab-button');
-            tabButtons.forEach(button => button.classList.remove('active'));
-
-            // Show selected tab content
-            const selectedTab = document.getElementById(tabId);
-            if (selectedTab) {
-              selectedTab.classList.add('active');
-            }
-
-            // Add active class to clicked button
-            const clickedButton = btn || (typeof event !== 'undefined' ? event.target : null);
-            if (clickedButton) clickedButton.classList.add('active');
-
-            // Update dropdown label and close menu
-            const labelEl = document.querySelector('.dropdown-label');
-            if (labelEl && clickedButton) labelEl.textContent = (clickedButton.textContent || '').trim();
-            const dropdown = document.querySelector('.tab-buttons');
-            if (dropdown) dropdown.classList.remove('open');
-          }
-
-          function toggleDropdown() {
-            const dropdown = document.querySelector('.tab-buttons');
-            if (dropdown) dropdown.classList.toggle('open');
-          }
-
-          // Close dropdown when clicking outside
-          document.addEventListener('click', function(e) {
-            const dropdown = document.querySelector('.tab-buttons');
-            if (!dropdown) return;
-            if (!dropdown.contains(e.target)) {
-              dropdown.classList.remove('open');
-            }
-          });
-
-          // Initialize first tab as active on page load
-          document.addEventListener('DOMContentLoaded', function() {
-            const container = document.querySelector('.tab-buttons');
-            if (container && !container.querySelector('.dropdown-toggle')) {
-              // Progressive enhancement: convert flat buttons into dropdown structure
-              const existingButtons = Array.from(container.querySelectorAll('.tab-button'));
-              const toggle = document.createElement('button');
-              toggle.className = 'dropdown-toggle';
-              const labelSpan = document.createElement('span');
-              labelSpan.className = 'dropdown-label';
-              labelSpan.textContent = (existingButtons[0]?.textContent || 'Select Variant').trim();
-              const caretSpan = document.createElement('span');
-              caretSpan.className = 'caret';
-              caretSpan.textContent = '▾';
-              toggle.appendChild(labelSpan);
-              toggle.appendChild(caretSpan);
-              toggle.addEventListener('click', toggleDropdown);
-
-              const menu = document.createElement('div');
-              menu.className = 'dropdown-menu';
-              existingButtons.forEach((b, i) => {
-                b.classList.remove('active');
-                // Ensure inline handler passes the button as second arg when clicked
-                // If not present, add a listener that calls showTab using its text/onclick
-                const onclickAttr = b.getAttribute('onclick');
-                if (!onclickAttr || !onclickAttr.includes('this')) {
-                  const match = onclickAttr && onclickAttr.match(/showTab\('([^']+)'\)/);
-                  const id = match ? match[1] : null;
-                  if (id) {
-                    b.onclick = function() { showTab(id, b); };
-                  }
-                }
-                menu.appendChild(b);
+          (function() {
+            var select = document.getElementById('nipVariantSelect');
+            if (!select) return;
+            var panels = Array.prototype.slice.call(document.querySelectorAll('.nip-variant[data-variant]'));
+            function showVariant(value) {
+              panels.forEach(function(panel) {
+                panel.style.display = panel.getAttribute('data-variant') === value ? '' : 'none';
               });
-
-              // Clear and rebuild
-              container.innerHTML = '';
-              container.appendChild(toggle);
-              container.appendChild(menu);
             }
-
-            const firstTab = document.querySelector('.tab-content');
-            const firstButton = document.querySelector('.dropdown-menu .tab-button');
-            if (firstTab) firstTab.classList.add('active');
-            if (firstButton) firstButton.classList.add('active');
-          });
+            select.addEventListener('change', function() {
+              showVariant(this.value);
+            });
+            if (select.value) {
+              showVariant(select.value);
+            } else if (panels.length) {
+              showVariant(panels[0].getAttribute('data-variant'));
+            }
+          })();
         </script>
       </body>
       </html>
@@ -897,8 +755,8 @@ export const generateTabbedProductHtml = query({
 
     return {
       success: true,
-      message: `Tabbed HTML generated for ${variantData.length} variant(s)`,
-      html: tabbedHtml,
+      message: `Plain HTML generated for ${variantData.length} variant(s)`,
+      html: plainHtml,
       variantCount: variantData.length,
     };
   },
@@ -1002,4 +860,8 @@ export const generateCombinedProductHtml = query({
     };
   },
 });
+
+
+
+
 

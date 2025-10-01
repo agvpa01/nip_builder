@@ -54,6 +54,33 @@ http.route({
         const doc=new DOMParser().parseFromString(data.html,'text/html');
         // Copy all styles (head and body) so custom dropdown styling is available
         doc.querySelectorAll('style').forEach(st=>document.head.appendChild(st.cloneNode(true)));
+        const hasTabElements = doc.querySelector('.tab-content') || doc.getElementById('variantSelect') || doc.querySelector('.dropdown-menu .tab-button') || doc.querySelector('.tab-buttons .tab-button');
+        if(!hasTabElements){
+          const fragment = doc.body ? doc.body.innerHTML : data.html;
+          if(!fragment) return;
+          const plainContainer=document.createElement('div');
+          plainContainer.className='nip-plain-container';
+          plainContainer.innerHTML = fragment;
+          const scripts = Array.from(plainContainer.querySelectorAll('script'));
+          scripts.forEach((script) => {
+            if (script.parentNode) {
+              script.parentNode.removeChild(script);
+            }
+          });
+          mount.innerHTML='';
+          mount.appendChild(plainContainer);
+          scripts.forEach((script) => {
+            const replacement=document.createElement('script');
+            if (script.type) replacement.type = script.type;
+            if (script.src) {
+              replacement.src = script.src;
+            } else {
+              replacement.text = script.text || script.textContent || '';
+            }
+            plainContainer.appendChild(replacement);
+          });
+          return;
+        }
         (function(){
           if(!document.getElementById('nip-embed-visibility')){
             var st=document.createElement('style'); st.id='nip-embed-visibility';
@@ -476,3 +503,4 @@ http.route({
 
 
 export default http;
+
