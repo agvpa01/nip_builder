@@ -744,7 +744,7 @@ export function AdminDashboard() {
                   Customize accordion panels, then copy or embed the generated HTML.
                 </p>
               </div>
-              <AccordionEditor />
+              <AccordionEditor products={products} />
             </div>
           )}
           {activeTab === "profile-pictures" && (

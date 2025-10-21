@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
 interface AccordionItem {
@@ -9,7 +10,12 @@ interface AccordionItem {
   content: string;
 }
 
+interface AccordionEditorProps {
+  products?: any[] | undefined;
+}
+
 const ACCORDION_SETTINGS_KEY = "productAccordionItems";
+const DEFAULT_SCOPE_TOKEN = "__default__";
 
 const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
   {
@@ -295,33 +301,145 @@ ${ACCORDION_SCRIPT.trim()}
 `.trim();
 };
 
-export function AccordionEditor() {
+export function AccordionEditor({ products: initialProducts }: AccordionEditorProps) {
   const savedItems = useQuery(api.settings.getSetting as any, {
     key: ACCORDION_SETTINGS_KEY,
   } as any) as AccordionItem[] | null | undefined;
   const setSetting = useMutation(api.settings.setSetting as any);
+  const productsFromQuery = useQuery(
+    api.products.getAllProducts as any,
+    initialProducts ? "skip" : {}
+  ) as any[] | undefined;
 
+  const products = useMemo(
+    () => initialProducts ?? productsFromQuery ?? [],
+    [initialProducts, productsFromQuery]
+  );
+  const productsLoading =
+    !initialProducts && productsFromQuery === undefined;
+
+  const [selectedProductId, setSelectedProductId] = useState<Id<"products"> | null>(null);
+  const [productFilter, setProductFilter] = useState("");
   const [items, setItems] = useState<AccordionItem[]>(DEFAULT_ACCORDION_ITEMS);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
+  const selectRef = useRef<HTMLSelectElement | null>(null);
+
+  const productAccordion = useQuery(
+    api.accordions.getProductAccordion as any,
+    selectedProductId ? ({ productId: selectedProductId } as any) : "skip"
+  ) as
+    | {
+        hasOverride: boolean;
+        items: AccordionItem[] | null;
+        productSlug: string | null;
+        productTitle: string | null;
+        updatedAt: number | null;
+        updatedBy: string | null;
+      }
+    | null
+    | undefined;
+
+  const saveProductAccordion = useMutation(
+    api.accordions.saveProductAccordion as any
+  );
+  const clearProductAccordion = useMutation(
+    api.accordions.clearProductAccordion as any
+  );
+
+  const defaultNormalized = useMemo(() => {
+    if (savedItems === undefined) {
+      return undefined;
+    }
+    const normalized = normalizeItems(savedItems);
+    return normalized && normalized.length
+      ? normalized
+      : DEFAULT_ACCORDION_ITEMS;
+  }, [savedItems]);
+
+  const filteredProducts = useMemo(() => {
+    if (!productFilter.trim()) {
+      return products;
+    }
+    const queryText = productFilter.trim().toLowerCase();
+    return products.filter((product: any) => {
+      const title = (product?.title || "").toString().toLowerCase();
+      const slug = (product?.onlineStoreUrl || "").toString().toLowerCase();
+      return title.includes(queryText) || slug.includes(queryText);
+    });
+  }, [products, productFilter]);
+
+  const selectedProduct = useMemo(() => {
+    if (!selectedProductId) {
+      return null;
+    }
+    return (
+      products.find((product: any) => product?._id === selectedProductId) ??
+      null
+    );
+  }, [products, selectedProductId]);
+
+  const productOverrideItems = useMemo(() => {
+    if (!selectedProductId || !productAccordion || !productAccordion?.items) {
+      return null;
+    }
+    const normalized = normalizeItems(productAccordion.items);
+    return normalized && normalized.length ? normalized : null;
+  }, [selectedProductId, productAccordion]);
 
   useEffect(() => {
-    if (savedItems === undefined) {
+    if (selectedProductId) {
+      if (productAccordion === undefined) {
+        return;
+      }
+      if (loadedScope === selectedProductId && hasUnsavedChanges) {
+        return;
+      }
+      const nextItems =
+        productOverrideItems && productOverrideItems.length
+          ? productOverrideItems
+          : defaultNormalized ?? DEFAULT_ACCORDION_ITEMS;
+      setItems(nextItems);
+      setHasLoadedSettings(true);
+      setHasUnsavedChanges(false);
+      setLoadedScope(selectedProductId);
       return;
     }
 
-    const normalized = normalizeItems(savedItems);
-    if (normalized && normalized.length) {
-      setItems(normalized);
-    } else if (!hasLoadedSettings && savedItems === null) {
-      setItems(DEFAULT_ACCORDION_ITEMS);
+    if (defaultNormalized === undefined) {
+      return;
     }
+    if (loadedScope === DEFAULT_SCOPE_TOKEN && hasUnsavedChanges) {
+      return;
+    }
+    setItems(defaultNormalized);
     setHasLoadedSettings(true);
     setHasUnsavedChanges(false);
-  }, [savedItems, hasLoadedSettings]);
+    setLoadedScope(DEFAULT_SCOPE_TOKEN);
+  }, [
+    selectedProductId,
+    productAccordion,
+    productOverrideItems,
+    defaultNormalized,
+    hasUnsavedChanges,
+    loadedScope,
+  ]);
 
   const generatedHtml = useMemo(() => generateAccordionHtml(items), [items]);
+
+  const editingDefault = !selectedProductId;
+  const hasOverride = !!(selectedProductId && productAccordion?.hasOverride);
+  const productSlug =
+    productAccordion?.productSlug ||
+    (selectedProduct?.onlineStoreUrl
+      ? selectedProduct.onlineStoreUrl
+      : null);
+  const productUpdatedAt =
+    productAccordion?.updatedAt && productAccordion.updatedAt > 0
+      ? new Date(productAccordion.updatedAt).toLocaleString()
+      : null;
 
   const baseUrl = useMemo(() => {
     if (configuredWidgetOrigin) {
@@ -335,16 +453,18 @@ export function AccordionEditor() {
     return window.location.origin;
   }, []);
 
-  const widgetSnippet = useMemo(
-    () =>
-      `<div data-accordion-widget></div>
-<script async src="${baseUrl}/accordion-widget.js" data-api-base="${baseUrl}"></script>`,
-    [baseUrl]
-  );
+  const widgetSnippet = useMemo(() => {
+    const attributes: string[] = [];
+    if (!editingDefault && productSlug) {
+      attributes.push(` data-product-slug="${productSlug}"`);
+    }
+    return `<div data-accordion-widget${attributes.join("")}></div>
+<script async src="${baseUrl}/accordion-widget.js" data-api-base="${baseUrl}"></script>`;
+  }, [baseUrl, editingDefault, productSlug]);
 
   const fetchSnippet = useMemo(
     () =>
-      `fetch('${baseUrl}/api/accordion')
+      `fetch('${baseUrl}/api/accordion?productUrl=' + encodeURIComponent(window.location.href))
   .then((res) => res.json())
   .then((data) => {
     if (data.success && Array.isArray(data.items)) {
@@ -371,7 +491,81 @@ export function AccordionEditor() {
     void copyToClipboard(generatedHtml, "Accordion HTML copied to clipboard");
   }, [copyToClipboard, generatedHtml]);
 
-  const loading = !hasLoadedSettings && savedItems === undefined;
+  const loading =
+    !hasLoadedSettings ||
+    (selectedProductId
+      ? productAccordion === undefined
+      : defaultNormalized === undefined);
+
+  const handleScopeChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const nextValue = event.target.value;
+      const normalizedNext = nextValue
+        ? (nextValue as Id<"products">)
+        : null;
+      const currentValue = selectedProductId ?? "";
+      if (
+        hasUnsavedChanges &&
+        (normalizedNext ?? "") !== currentValue
+      ) {
+        const shouldSwitch = window.confirm(
+          "You have unsaved changes. Switch products and discard them?"
+        );
+        if (!shouldSwitch) {
+          if (selectRef.current) {
+            selectRef.current.value = currentValue;
+          }
+          return;
+        }
+      }
+      setSelectedProductId(normalizedNext);
+      setHasUnsavedChanges(false);
+      setHasLoadedSettings(false);
+      setLoadedScope(null);
+    },
+    [hasUnsavedChanges, selectedProductId]
+  );
+
+  const handleFilterChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setProductFilter(event.target.value);
+    },
+    []
+  );
+
+  const handleClearOverride = useCallback(async () => {
+    if (!selectedProductId) {
+      return;
+    }
+    if (
+      !window.confirm(
+        "Remove the saved override for this product? It will fall back to the global default content."
+      )
+    ) {
+      return;
+    }
+    try {
+      await clearProductAccordion(
+        { productId: selectedProductId } as any
+      );
+      toast.success("Product override cleared");
+      setHasUnsavedChanges(false);
+      setHasLoadedSettings(false);
+      setLoadedScope(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to clear product override");
+    }
+  }, [selectedProductId, clearProductAccordion]);
+
+  const handleApplyGlobalDefault = useCallback(() => {
+    if (!defaultNormalized) {
+      toast.error("Global default content is still loading.");
+      return;
+    }
+    setItems(defaultNormalized);
+    setHasUnsavedChanges(true);
+  }, [defaultNormalized]);
 
   const updateItem = (id: string, updates: Partial<AccordionItem>) => {
     setItems((prev) =>
@@ -413,8 +607,8 @@ export function AccordionEditor() {
 
   const resetToDefaults = () => {
     if (
-      !confirm(
-        "Reset accordion items to the default template? Unsaved changes will be lost."
+      !window.confirm(
+        "Reset accordion items to the base template? Unsaved changes will be lost."
       )
     ) {
       return;
@@ -426,11 +620,31 @@ export function AccordionEditor() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await setSetting({
-        key: ACCORDION_SETTINGS_KEY,
-        value: items,
-      } as any);
-      toast.success("Accordion items saved");
+      const payload = items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+      }));
+
+      if (selectedProductId) {
+        await saveProductAccordion({
+          productId: selectedProductId,
+          items: payload,
+        } as any);
+        toast.success(
+          `Accordion saved for ${
+            selectedProduct?.title || "selected product"
+          }`
+        );
+        setLoadedScope(selectedProductId);
+      } else {
+        await setSetting({
+          key: ACCORDION_SETTINGS_KEY,
+          value: payload,
+        } as any);
+        toast.success("Default accordion items saved");
+        setLoadedScope(DEFAULT_SCOPE_TOKEN);
+      }
       setHasUnsavedChanges(false);
     } catch (error) {
       console.error(error);
@@ -453,6 +667,99 @@ export function AccordionEditor() {
 
   return (
     <div className="space-y-6">
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Choose accordion scope
+            </h2>
+            <p className="text-sm text-gray-600">
+              Select a product to override its accordion or edit the global
+              default used when no override exists.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Editing scope
+            </label>
+            <select
+              ref={selectRef}
+              value={selectedProductId ?? ""}
+              onChange={handleScopeChange}
+              className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={productsLoading}
+            >
+              <option value="">Global default (fallback)</option>
+              {filteredProducts.map((product: any) => (
+                <option key={product._id} value={product._id}>
+                  {product.title || "Untitled product"}
+                  {product.onlineStoreUrl
+                    ? ` (${product.onlineStoreUrl})`
+                    : ""}
+                </option>
+              ))}
+            </select>
+            {productsLoading && (
+              <p className="text-xs text-gray-500 mt-1">
+                Loading products...
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Filter products
+            </label>
+            <input
+              type="text"
+              value={productFilter}
+              onChange={handleFilterChange}
+              placeholder="Search by title or slug"
+              className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={productsLoading}
+            />
+          </div>
+        </div>
+        <div className="text-sm text-gray-600">
+          {editingDefault
+            ? "Editing the global default accordion. Products without overrides will render this content."
+            : `Editing ${selectedProduct?.title || "selected product"}${
+                productSlug ? ` (${productSlug})` : ""
+              }.`}
+        </div>
+        {!editingDefault && !hasOverride && (
+          <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+            No override saved yet for this product. Save changes to create one.
+          </div>
+        )}
+        {!editingDefault && hasOverride && productUpdatedAt && (
+          <div className="text-xs text-gray-500">
+            Last updated {productUpdatedAt}.
+          </div>
+        )}
+        {!editingDefault && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            <button
+              type="button"
+              onClick={handleApplyGlobalDefault}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Copy global default
+            </button>
+            {hasOverride && (
+              <button
+                type="button"
+                onClick={handleClearOverride}
+                className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50"
+              >
+                Clear override
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -491,6 +798,17 @@ export function AccordionEditor() {
             </code>{" "}
             to the container or script only when targeting an alternative saved
             set.
+          </li>
+          <li>
+            Embed on non-product pages by setting{" "}
+            <code className="px-1 py-0.5 bg-gray-100 rounded">
+              data-product-url
+            </code>{" "}
+            or{" "}
+            <code className="px-1 py-0.5 bg-gray-100 rounded">
+              data-product-slug
+            </code>
+            . Otherwise the widget reads the current browser URL.
           </li>
           <li>
             Override{" "}
