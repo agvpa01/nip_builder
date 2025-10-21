@@ -28,7 +28,7 @@ const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
     id: "nutrition",
     title: "Nutritional Facts &amp; Ingredients",
     content:
-      '<div data-convex-base="https://useful-llama-278.convex.site" data-product-url="https://vpa.com.au/products/whey-isolate-protein-powder"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
+      '<div data-convex-base="https://useful-llama-278.convex.site"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
   },
 ];
 
@@ -337,7 +337,7 @@ export function AccordionEditor() {
 
   const widgetSnippet = useMemo(
     () =>
-      `<div data-accordion-widget data-accordion-key="${ACCORDION_SETTINGS_KEY}"></div>
+      `<div data-accordion-widget></div>
 <script async src="${baseUrl}/accordion-widget.js" data-api-base="${baseUrl}"></script>`,
     [baseUrl]
   );
@@ -481,14 +481,16 @@ export function AccordionEditor() {
         </pre>
         <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
           <li>
+            Loads the default accordion configuration (
+            <code className="px-1 py-0.5 bg-gray-100 rounded">
+              {ACCORDION_SETTINGS_KEY}
+            </code>
+            ). Add{" "}
             <code className="px-1 py-0.5 bg-gray-100 rounded">
               data-accordion-key
             </code>{" "}
-            defaults to{" "}
-            <code className="px-1 py-0.5 bg-gray-100 rounded">
-              {ACCORDION_SETTINGS_KEY}
-            </code>{" "}
-            and lets you target alternative saved sets.
+            to the container or script only when targeting an alternative saved
+            set.
           </li>
           <li>
             Override{" "}

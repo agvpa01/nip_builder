@@ -124,7 +124,12 @@ export function EmbedInstructions() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <SnippetCard title="One‑tag (auto‑detect)" code={oneTag} onCopy={() => copy(oneTag)} note="Best for product pages. If no URL provided, the script uses the current page URL." />
-        <SnippetCard title="Explicit container" code={containerEmbed} onCopy={() => copy(containerEmbed)} note="Good for page builders (Shogun)." />
+        <SnippetCard
+          title="Explicit container"
+          code={containerEmbed}
+          onCopy={() => copy(containerEmbed)}
+          note="Good for page builders (Shogun). Leave data-product-url off to use the current page URL automatically."
+        />
         <SnippetCard title="Shopify Liquid (product template)" code={shopifyLiquid} onCopy={() => copy(shopifyLiquid)} note="Renders on product pages using shop.url + product.url." />
         <SnippetCard title="Iframe (quick check)" code={iframeEmbed} onCopy={() => copy(iframeEmbed)} note="Not SEO‑beneficial. Use only if needed." />
         <SnippetCard title="SSR example (PHP)" code={ssrPhp} onCopy={() => copy(ssrPhp)} note="Server‑rendered for best SEO." />

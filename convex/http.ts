@@ -32,7 +32,7 @@ const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
     id: "nutrition",
     title: "Nutritional Facts &amp; Ingredients",
     content:
-      '<div data-convex-base="https://useful-llama-278.convex.site" data-product-url="https://vpa.com.au/products/whey-isolate-protein-powder"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
+      '<div data-convex-base="https://useful-llama-278.convex.site"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
   },
 ];
 
@@ -322,8 +322,9 @@ const accordionWidgetScript = [
   "    if (!fallback) return '';",
   "    return fallback.replace(/\\/$/, '');",
   "  }",
-  "  function fetchAccordion(container, base){",
-  "    const key=container.getAttribute('data-accordion-key') || '';",
+  "  function fetchAccordion(container, base, scriptEl){",
+  "    const rawKey=(container.getAttribute('data-accordion-key') || (scriptEl ? scriptEl.getAttribute('data-accordion-key') : '') || '');",
+  "    const key=rawKey && rawKey.trim ? rawKey.trim() : rawKey;",
   "    const apiBase=normalizeBase(base);",
   "    if (!apiBase){",
   "      showStatus(container, 'Accordion unavailable.');",
@@ -354,7 +355,7 @@ const accordionWidgetScript = [
   "    const containers=document.querySelectorAll('[data-accordion-widget]');",
   "    containers.forEach((container)=>{",
   "      const base=resolveBase(container, scriptBase);",
-  "      fetchAccordion(container, base);",
+      "      fetchAccordion(container, base, scriptEl);",
   "    });",
   "  }",
   "  if (document.readyState==='loading'){",
@@ -1278,22 +1279,39 @@ http.route({
       const base = s.dataset.convexBase || new URL(s.src, location.href).origin;
       let region = s.dataset.nipRegion || '';
       let slug = s.dataset.nipSlug || '';
-      const prodUrl = s.dataset.productUrl || s.getAttribute('data-product-url');
+      const prodUrl = s.dataset.productUrl || s.getAttribute('data-product-url') || ((typeof window!=='undefined' && window.location) ? window.location.href : '');
       if(!slug && prodUrl){ const d=parseInputUrl(prodUrl); slug=d.slug; if(!region) region=d.region||''; }
       if(!slug) return;
       let mount = null; const sel = s.dataset.mount || s.getAttribute('data-mount');
       mount = sel ? document.querySelector(sel) : null;
-      if(!mount){ mount=document.createElement('div'); s.parentNode.insertBefore(mount, s); }
+      if(!mount){
+        const prev = s.previousElementSibling;
+        if(prev && prev.dataset && prev.dataset.convexBase){
+          mount = prev;
+        }
+      }
+      if(!mount){
+        mount=document.createElement('div');
+        s.parentNode.insertBefore(mount, s);
+      }
+      if(mount && mount.dataset){
+        mount.dataset.nipMounted='1';
+        if(!mount.dataset.convexBase && base) mount.setAttribute('data-convex-base', base);
+      }
       mountNip(mount, base, slug, region, s.dataset.nipTemplate || '');
     });
-    [...document.querySelectorAll('[data-convex-base][data-nip-slug], [data-convex-base][data-product-url]')].forEach(el=>{
-      const base = el.dataset.convexBase;
-      let region = el.dataset.nipRegion || '';
-      let slug = el.dataset.nipSlug || '';
-      const prodUrl = el.dataset.productUrl || '';
+    [...document.querySelectorAll('[data-convex-base]')].forEach(el=>{
+      if(!el) return;
+      const ds = el.dataset || {};
+      if(ds.nipMounted === '1') return;
+      const base = ds.convexBase;
+      let region = ds.nipRegion || '';
+      let slug = ds.nipSlug || '';
+      const prodUrl = ds.productUrl || ((typeof window!=='undefined' && window.location) ? window.location.href : '');
       if(!slug && prodUrl){ const d=parseInputUrl(prodUrl); slug=d.slug; if(!region) region=d.region||''; }
       if(!slug) return;
-      mountNip(el, base, slug, region, el.dataset.nipTemplate || '');
+      ds.nipMounted = '1';
+      mountNip(el, base, slug, region, ds.nipTemplate || '');
     });
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
