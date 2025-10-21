@@ -10,6 +10,8 @@ import { ComplexSupplementsTemplate } from "./components/ComplexSupplementsTempl
 import { USNutritionFactsTemplate } from "./components/USNutritionFactsTemplate";
 import { USSupplementsTemplate } from "./components/USSupplementsTemplate";
 import { EmbedInstructions } from "./components/EmbedInstructions";
+import { AccordionEditor } from "./components/AccordionEditor";
+import { ProfilePictureManager } from "./components/ProfilePictureManager";
 import { Id } from "../convex/_generated/dataModel";
 
 
@@ -649,6 +651,60 @@ export function AdminDashboard() {
               </li>
               <li>
                 <button
+                  onClick={() => setActiveTab("accordion")}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === "accordion"
+                      ? "bg-blue-100 text-blue-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+                    Accordions
+                  </div>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveTab("profile-pictures")}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === "profile-pictures"
+                      ? "bg-blue-100 text-blue-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5.121 17.804A7 7 0 0112 15a7 7 0 016.879 2.804M15 11a3 3 0 10-6 0 3 3 0 006 0z"
+                      />
+                    </svg>
+                    Profile Pictures
+                  </div>
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => setActiveTab("embed")}
                   className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                     activeTab === "embed"
@@ -680,6 +736,29 @@ export function AdminDashboard() {
 
         {/* Main Content */}
         <main className="flex-1 ml-64 p-8">
+          {activeTab === "accordion" && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Accordion Builder</h2>
+                <p className="text-gray-600">
+                  Customize accordion panels, then copy or embed the generated HTML.
+                </p>
+              </div>
+              <AccordionEditor />
+            </div>
+          )}
+          {activeTab === "profile-pictures" && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Pictures</h2>
+                <p className="text-gray-600">
+                  Deploy the Shopify widget and review recent profile photo uploads linked to
+                  customer IDs.
+                </p>
+              </div>
+              <ProfilePictureManager />
+            </div>
+          )}
           {activeTab === "embed" && (
             <div>
               <div className="mb-6">
@@ -1773,11 +1852,11 @@ export function AdminDashboard() {
                           </div>
                         </div>
                       </div> */}
-                      <div className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          Basic Supplements
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Basic Supplements
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
                           Simple, clean layout for basic supplements with
                           essential nutritional information and dosage
                           guidelines.
