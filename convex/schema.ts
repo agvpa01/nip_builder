@@ -41,6 +41,18 @@ const applicationTables = {
     .index("by_product", ["productId"])
     .index("by_variant", ["variantId"])
     .index("by_product_variant", ["productId", "variantId"]),
+
+  profilePictures: defineTable({
+    customerId: v.string(),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+    imageUrl: v.optional(v.string()),
+    uploadedBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_customer", ["customerId"]),
 };
 
 export default defineSchema({

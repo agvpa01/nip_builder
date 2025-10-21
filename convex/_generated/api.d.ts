@@ -19,6 +19,7 @@ import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
 import type * as nips from "../nips.js";
 import type * as products from "../products.js";
+import type * as profilePictures from "../profilePictures.js";
 import type * as router from "../router.js";
 import type * as settings from "../settings.js";
 
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   nips: typeof nips;
   products: typeof products;
+  profilePictures: typeof profilePictures;
   router: typeof router;
   settings: typeof settings;
 }>;
