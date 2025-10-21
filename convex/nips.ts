@@ -648,7 +648,7 @@ export const generateTabbedProductHtml = query({
           body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: clamp(12px, 5vw, 24px);
+            padding: 0;
             background: #ffffff;
             color: #111827;
             overflow-x: hidden;
@@ -660,7 +660,6 @@ export const generateTabbedProductHtml = query({
             align-items: center;
           }
           .nip-selector {
-            margin-bottom: 16px;
             position: relative;
             max-width: 100%;
             width: 94%;
@@ -688,7 +687,7 @@ export const generateTabbedProductHtml = query({
             content: '';
             position: absolute;
             right: 14px;
-            top: 50%;
+            top: 41%;
             margin-top: -3px;
             border-width: 6px 5px 0 5px;
             border-style: solid;
@@ -715,6 +714,9 @@ export const generateTabbedProductHtml = query({
               padding: 8px 34px 8px 12px;
               background-position: calc(100% - 16px) calc(50% - 3px), calc(100% - 10px) calc(50% - 3px), calc(100% - 30px) calc(50% + 10px);
             }
+          }
+          #nipVariantPanels {
+            margin-top: -10px;
           }
         </style>
       </head>
