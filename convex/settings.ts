@@ -2,6 +2,8 @@ import { query, mutation } from "./_generated/server"
 import { v } from "convex/values"
 import { getAuthUserId } from "@convex-dev/auth/server"
 
+const ACCORDION_SETTINGS_KEY = "productAccordionItems"
+
 async function requireAdmin(ctx: any) {
   const userId = await getAuthUserId(ctx)
   if (!userId) throw new Error("Must be authenticated")
@@ -45,3 +47,31 @@ export const setSetting = mutation({
   },
 })
 
+function sanitizePublicAccordionKey(raw: unknown): string {
+  if (typeof raw !== "string") return ACCORDION_SETTINGS_KEY
+  const trimmed = raw.trim()
+  if (!trimmed.length) return ACCORDION_SETTINGS_KEY
+  if (!/^[A-Za-z0-9._:-]{1,120}$/.test(trimmed)) {
+    return ACCORDION_SETTINGS_KEY
+  }
+  if (!trimmed.startsWith(ACCORDION_SETTINGS_KEY)) {
+    return ACCORDION_SETTINGS_KEY
+  }
+  return trimmed
+}
+
+export const getAccordionSettingPublic = query({
+  args: { key: v.optional(v.string()) },
+  handler: async (ctx, { key }) => {
+    const safeKey = sanitizePublicAccordionKey(key)
+    const row = await ctx.db
+      .query("adminSettings")
+      .withIndex("by_key", (q: any) => q.eq("key", safeKey))
+      .first()
+
+    return {
+      key: safeKey,
+      value: row ? row.value : null,
+    }
+  },
+})

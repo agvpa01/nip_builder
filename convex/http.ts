@@ -7,6 +7,1036 @@ const http = httpRouter();
 
 auth.addHttpRoutes(http);
 
+const ACCORDION_SETTINGS_KEY = "productAccordionItems";
+
+type AccordionItem = {
+  id: string;
+  title: string;
+  content: string;
+};
+
+const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
+  {
+    id: "description",
+    title: "Description",
+    content:
+      "<p>VPA Whey Isolate is Australia's leading Whey Protein Isolate; ultra-pure, fast-absorbing, low-carb, and high-protein. Ideal for lean muscle growth and recovery. No fillers. No hype. Just results.</p>",
+  },
+  {
+    id: "flavour",
+    title: "Flavour Guarantee",
+    content:
+      "<p>At VPAr, we don't rush flavours. Every one is crafted in-house by our food technician with 15+ years' experience, then refined through months of blind taste testing with real customers.</p><p>The result? Flavours made for our community, by our community.</p><p>But if it's not your thing? No worries. We'll replace it with another flavour of your choice - <b>on the house</b>.</p><p><b>Satisfaction Guarantee:</b> <br />Not 100% happy? Return it with at least 90% remaining and we'll organise an exchange.</p>",
+  },
+  {
+    id: "nutrition",
+    title: "Nutritional Facts &amp; Ingredients",
+    content:
+      '<div data-convex-base="https://useful-llama-278.convex.site" data-product-url="https://vpa.com.au/products/whey-isolate-protein-powder"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
+  },
+];
+
+const ACCORDION_STYLE = `
+  .rpg-accordion-root,
+  .rpg-accordion-root * {
+    box-sizing: border-box;
+  }
+
+  .rpg-accordion-root {
+    margin-top: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    padding: 8px 30px;
+    line-height: 1.6;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+  }
+
+  .rpg-accordion {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .rpg-accordion__item {
+    border-bottom: 1px solid #e0ddd8;
+  }
+
+  .rpg-accordion__item:last-child {
+    border-bottom: none;
+  }
+
+  .rpg-accordion__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+  }
+
+  .rpg-accordion__icon {
+    font-size: 18px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .rpg-accordion__item.is-active .rpg-accordion__icon {
+    transform: rotate(45deg);
+  }
+
+  .rpg-accordion__content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rpg-accordion__content-inner {
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+  }
+
+  .rpg-accordion__item.is-active .rpg-accordion__content-inner {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .rpg-accordion__content-inner h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+  }
+
+  .rpg-accordion__content-inner p {
+    margin-bottom: 16px;
+  }
+
+  .rpg-accordion__content-inner ul {
+    margin-left: 20px;
+    margin-top: 12px;
+  }
+
+  .rpg-accordion__content-inner li {
+    margin-bottom: 8px;
+  }
+`;
+
+const ACCORDION_SCRIPT = `
+  document.querySelectorAll(".rpg-accordion").forEach((accordion) => {
+    const items = accordion.querySelectorAll(".rpg-accordion__item");
+    const headers = accordion.querySelectorAll(".rpg-accordion__header");
+
+    headers.forEach((header) => {
+      header.addEventListener("click", () => {
+        const item = header.closest(".rpg-accordion__item");
+        if (!item) {
+          return;
+        }
+
+        const wasActive = item.classList.contains("is-active");
+
+        items.forEach((accordionItem) => {
+          accordionItem.classList.remove("is-active");
+          const content = accordionItem.querySelector(".rpg-accordion__content");
+          if (content) {
+            content.style.maxHeight = null;
+          }
+        });
+
+        if (!wasActive) {
+          item.classList.add("is-active");
+          const content = item.querySelector(".rpg-accordion__content");
+          if (content) {
+            content.style.maxHeight = content.scrollHeight + "px";
+          }
+        }
+      });
+    });
+
+    const activeItem = accordion.querySelector(".rpg-accordion__item.is-active");
+    if (activeItem) {
+      const content = activeItem.querySelector(".rpg-accordion__content");
+      if (content) {
+        content.style.maxHeight = content.scrollHeight + "px";
+      }
+    }
+  });
+`;
+
+const accordionCorsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+const accordionWidgetScript = [
+  "(()=>{",
+  "  const STYLE_ID='convex-accordion-widget-styles';",
+  `  const CSS=${JSON.stringify(ACCORDION_STYLE.trim())};`,
+  "  function injectStyles(){",
+  "    if (typeof document==='undefined') return;",
+  "    if (document.getElementById(STYLE_ID)) return;",
+  "    const style=document.createElement('style');",
+  "    style.id=STYLE_ID;",
+  "    style.textContent=CSS;",
+  "    document.head.appendChild(style);",
+  "  }",
+  "  function determineBase(scriptEl){",
+  "    const defaultOrigin=(typeof window!=='undefined' && window.location)?window.location.origin:'';",
+  "    if (!scriptEl) return defaultOrigin;",
+  "    const attr=scriptEl.getAttribute('data-api-base');",
+  "    if (attr) return attr;",
+  "    if (scriptEl.src){",
+  "      try {",
+  "        const url=new URL(scriptEl.src, defaultOrigin || undefined);",
+  "        return url.origin || defaultOrigin;",
+  "      } catch {",
+  "        return defaultOrigin;",
+  "      }",
+  "    }",
+  "    return defaultOrigin;",
+  "  }",
+  "  function currentScript(){",
+  "    if (typeof document==='undefined') return null;",
+  "    if (document.currentScript) return document.currentScript;",
+  "    const scripts=document.getElementsByTagName('script');",
+  "    return scripts[scripts.length-1] || null;",
+  "  }",
+  "  function sanitizeItems(raw){",
+  "    if (!Array.isArray(raw)) return [];",
+  "    return raw.map((entry, index)=>{",
+  "      const title=typeof entry?.title==='string' && entry.title.trim().length?entry.title.trim():`Accordion Item ${index+1}`;",
+  "      const content=typeof entry?.content==='string'?entry.content:'';",
+  "      return { title, content };",
+  "    }).filter(item=>item.title.trim().length>0 || item.content.trim().length>0);",
+  "  }",
+  "  function attachBehaviors(root){",
+  "    const items=Array.from(root.querySelectorAll('.rpg-accordion__item'));",
+  "    items.forEach((item)=>{",
+  "      const header=item.querySelector('.rpg-accordion__header');",
+  "      const content=item.querySelector('.rpg-accordion__content');",
+  "      if (!header || !content) return;",
+  "      if (item.classList.contains('is-active')){",
+  "        content.style.maxHeight=content.scrollHeight+'px';",
+  "      }",
+  "      header.addEventListener('click', ()=>{",
+  "        const isActive=item.classList.contains('is-active');",
+  "        items.forEach((other)=>{",
+  "          if (other===item) return;",
+  "          other.classList.remove('is-active');",
+  "          const otherContent=other.querySelector('.rpg-accordion__content');",
+  "          if (otherContent) otherContent.style.maxHeight=null;",
+  "        });",
+  "        if (isActive){",
+  "          item.classList.remove('is-active');",
+  "          content.style.maxHeight=null;",
+  "        } else {",
+  "          item.classList.add('is-active');",
+  "          content.style.maxHeight=content.scrollHeight+'px';",
+  "        }",
+  "      });",
+  "    });",
+  "  }",
+  "  function executeScripts(root){",
+  "    if (!root) return;",
+  "    const scripts=root.querySelectorAll('script');",
+  "    scripts.forEach((oldScript)=>{",
+  "      const parent=oldScript.parentNode;",
+  "      if (!parent) return;",
+  "      const newScript=document.createElement('script');",
+  "      for (let i=0;i<oldScript.attributes.length;i++){",
+  "        const attr=oldScript.attributes[i];",
+  "        newScript.setAttribute(attr.name, attr.value);",
+  "      }",
+  "      if (oldScript.async) newScript.async=true;",
+  "      if (oldScript.defer) newScript.defer=true;",
+  "      newScript.type=oldScript.type || 'text/javascript';",
+  "      const src=oldScript.getAttribute('src');",
+  "      if (src) newScript.src=src;",
+  "      if (!oldScript.src && oldScript.textContent){",
+  "        newScript.textContent=oldScript.textContent;",
+  "      }",
+  "      parent.replaceChild(newScript, oldScript);",
+  "    });",
+  "  }",
+  "  function renderAccordion(container, items){",
+  "    container.innerHTML='';",
+  "    const wrapper=document.createElement('div');",
+  "    wrapper.className='rpg-accordion-root';",
+  "    const accordion=document.createElement('div');",
+  "    accordion.className='rpg-accordion';",
+  "    wrapper.appendChild(accordion);",
+  "    items.forEach((item, index)=>{",
+  "      const itemEl=document.createElement('div');",
+  "      itemEl.className='rpg-accordion__item';",
+  "      if (index===0) itemEl.classList.add('is-active');",
+  "      const header=document.createElement('button');",
+  "      header.className='rpg-accordion__header';",
+  "      header.type='button';",
+  "      const titleSpan=document.createElement('span');",
+  "      titleSpan.textContent=item.title || `Accordion Item ${index+1}`;",
+  "      const iconSpan=document.createElement('span');",
+  "      iconSpan.className='rpg-accordion__icon';",
+  "      iconSpan.textContent='+';",
+  "      header.appendChild(titleSpan);",
+  "      header.appendChild(iconSpan);",
+  "      const contentWrap=document.createElement('div');",
+  "      contentWrap.className='rpg-accordion__content';",
+  "      const contentInner=document.createElement('div');",
+  "      contentInner.className='rpg-accordion__content-inner';",
+  "      contentInner.innerHTML=item.content || '';",
+  "      contentWrap.appendChild(contentInner);",
+  "      itemEl.appendChild(header);",
+  "      itemEl.appendChild(contentWrap);",
+  "      accordion.appendChild(itemEl);",
+  "    });",
+  "    container.appendChild(wrapper);",
+  "    requestAnimationFrame(()=>{",
+  "      attachBehaviors(wrapper);",
+  "      executeScripts(wrapper);",
+  "    });",
+  "  }",
+  "  function showStatus(container, message){",
+  "    container.innerHTML=`<div style=\"font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;color:#4b5563;text-align:center;padding:12px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;\">${message}</div>`;",
+  "  }",
+  "  function resolveBase(container, fallback){",
+  "    const attr=container.getAttribute('data-api-base') || container.getAttribute('data-accordion-api-base');",
+  "    if (attr) return attr;",
+  "    return fallback;",
+  "  }",
+  "  function normalizeBase(base){",
+  "    const fallback=(base && base.length ? base : ((typeof window!=='undefined' && window.location)?window.location.origin:''));",
+  "    if (!fallback) return '';",
+  "    return fallback.replace(/\\/$/, '');",
+  "  }",
+  "  function fetchAccordion(container, base){",
+  "    const key=container.getAttribute('data-accordion-key') || '';",
+  "    const apiBase=normalizeBase(base);",
+  "    if (!apiBase){",
+  "      showStatus(container, 'Accordion unavailable.');",
+  "      return;",
+  "    }",
+  "    const url=apiBase + '/api/accordion' + (key ? '?key=' + encodeURIComponent(key) : '');",
+  "    showStatus(container, 'Loading accordion...');",
+  "    fetch(url, { credentials:'omit' })",
+  "      .then((res)=>{",
+  "        if (!res.ok) throw new Error('HTTP ' + res.status);",
+  "        return res.json();",
+  "      })",
+  "      .then((data)=>{",
+  "        if (!data || !Array.isArray(data.items)) throw new Error('Invalid response');",
+  "        const items=sanitizeItems(data.items);",
+  "        if (!items.length) throw new Error('No accordion items');",
+  "        renderAccordion(container, items);",
+  "      })",
+  "      .catch((err)=>{",
+  "        console.error('[Convex accordion widget]', err);",
+  "        showStatus(container, 'Accordion unavailable.');",
+  "      });",
+  "  }",
+  "  function init(){",
+  "    injectStyles();",
+  "    const scriptEl=currentScript();",
+  "    const scriptBase=determineBase(scriptEl);",
+  "    const containers=document.querySelectorAll('[data-accordion-widget]');",
+  "    containers.forEach((container)=>{",
+  "      const base=resolveBase(container, scriptBase);",
+  "      fetchAccordion(container, base);",
+  "    });",
+  "  }",
+  "  if (document.readyState==='loading'){",
+  "    document.addEventListener('DOMContentLoaded', init);",
+  "  } else {",
+  "    init();",
+  "  }",
+  "})();",
+].join("\n");
+
+function defaultAccordionItems(): AccordionItem[] {
+  return DEFAULT_ACCORDION_ITEMS.map((item) => ({
+    id: item.id,
+    title: item.title,
+    content: item.content,
+  }));
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function normalizeAccordionItems(value: unknown): AccordionItem[] {
+  if (!Array.isArray(value)) {
+    return defaultAccordionItems();
+  }
+
+  const normalized = value
+    .map((entry, index) => {
+      const title =
+        typeof entry?.title === "string" && entry.title.trim().length
+          ? entry.title.trim()
+          : `Accordion Item ${index + 1}`;
+      const content =
+        typeof entry?.content === "string" ? entry.content : "";
+      const id =
+        typeof entry?.id === "string" && entry.id.trim().length
+          ? entry.id.trim()
+          : `accordion-item-${index + 1}`;
+      return { id, title, content };
+    })
+    .filter(
+      (entry) =>
+        entry.title.trim().length > 0 || entry.content.trim().length > 0
+    );
+
+  if (!normalized.length) {
+    return defaultAccordionItems();
+  }
+
+  return normalized.map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+    content: entry.content,
+  }));
+}
+
+function generateAccordionHtml(items: AccordionItem[]): string {
+  const sanitized = items.length ? items : defaultAccordionItems();
+  const itemsMarkup = sanitized
+    .map((item, index) => {
+      const activeClass = index === 0 ? " is-active" : "";
+      return `
+    <div class="rpg-accordion__item${activeClass}">
+      <button class="rpg-accordion__header">
+        <span>${escapeHtml(item.title || "Accordion Item")}</span>
+        <span class="rpg-accordion__icon">+</span>
+      </button>
+      <div class="rpg-accordion__content">
+        <div class="rpg-accordion__content-inner">
+          ${item.content || ""}
+        </div>
+      </div>
+    </div>`;
+    })
+    .join("\n");
+
+  return `
+<style>
+${ACCORDION_STYLE.trim()}
+</style>
+
+<div class="rpg-accordion-root">
+  <div class="rpg-accordion">
+${itemsMarkup}
+  </div>
+</div>
+
+<script>
+${ACCORDION_SCRIPT.trim()}
+</script>
+`.trim();
+}
+
+function accordionJsonResponse(body: any, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=300",
+      ...accordionCorsHeaders,
+    },
+  });
+}
+
+function sanitizeAccordionKey(raw: string | null): string {
+  if (typeof raw !== "string") {
+    return ACCORDION_SETTINGS_KEY;
+  }
+  const trimmed = raw.trim();
+  if (!trimmed.length) {
+    return ACCORDION_SETTINGS_KEY;
+  }
+  if (!/^[A-Za-z0-9._:-]{1,120}$/.test(trimmed)) {
+    return ACCORDION_SETTINGS_KEY;
+  }
+  if (!trimmed.startsWith(ACCORDION_SETTINGS_KEY)) {
+    return ACCORDION_SETTINGS_KEY;
+  }
+  return trimmed;
+}
+
+const profilePictureCorsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+const profilePictureWidgetScript = [
+  "(()=> {",
+  "  const STYLE_ID = 'convex-profile-picture-styles';",
+  "  const CSS = [",
+  "    '.profile-picture-widget{font-family:system-ui,-apple-system,\"Segoe UI\",sans-serif;display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:320px;margin:0 auto;}',",
+  "    '.profile-picture-preview-wrapper{position:relative;display:inline-block;}',",
+  "    '.profile-picture-preview{position:relative;width:133px;height:133px;border-radius:999px;border:2px solid #d1d5db;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:border-color .2s;}',",
+  "    '.profile-picture-preview:focus-visible{outline:2px solid #3B7538;outline-offset:4px;}',",
+  "    '.profile-picture-preview::after{content:\"\";position:absolute;inset:0;border-radius:999px;background:rgba(59,117,56,0);transition:background .2s;pointer-events:none;}',",
+  "    '.profile-picture-preview:hover::after{background:rgba(59,117,56,0.08);}',",
+  "    '.profile-picture-placeholder{color:#9ca3af;font-size:13px;text-align:center;padding:0 12px;}',",
+  "    '.profile-picture-display{position:absolute;inset:0;display:none;}',",
+  "    '.profile-picture-display img{width:100%;height:100%;object-fit:cover;}',",
+  "    '.profile-picture-cropper{position:absolute;inset:0;display:none;touch-action:none;cursor:grab;}',",
+  "    '.profile-picture-cropper.dragging{cursor:grabbing;}',",
+  "    '.profile-picture-cropper img{position:absolute;top:50%;left:50%;transform-origin:center center;will-change:transform;user-select:none;pointer-events:none;}',",
+  "    '.profile-picture-edit-button{position:absolute;bottom:-6px;right:-6px;width:40px;height:40px;border-radius:999px;border:1px solid #3B7538;background:#ffffff;display:flex;align-items:center;justify-content:center;color:#3B7538;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.14);transition:transform .2s,box-shadow .2s;}',",
+  "    '.profile-picture-edit-button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.18);}',",
+  "    '.profile-picture-edit-button:active{transform:scale(0.97);}',",
+  "    '.profile-picture-edit-button:focus-visible{outline:2px solid #3B7538;outline-offset:2px;}',",
+  "    '.profile-picture-edit-button svg{width:18px;height:18px;}',",
+  "    '.profile-picture-form{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;}',",
+  "    '.profile-picture-save{border:1px solid #3B7538;background:transparent;color:#3B7538;padding:10px 22px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;transition:background .2s,color .2s,transform .2s;display:none;}',",
+  "    '.profile-picture-save:hover{background:rgba(59,117,56,0.08);}',",
+  "    '.profile-picture-save:active{transform:translateY(1px);}',",
+  "    '.profile-picture-save:disabled{opacity:.6;cursor:not-allowed;transform:none;}',",
+  "    '.profile-picture-status{font-size:13px;min-height:18px;color:#374151;text-align:center;}',",
+  "    '.profile-picture-status.error{color:#b91c1c;}',",
+  "    '.profile-picture-status.success{color:#047857;}'",
+  "  ].join('');",
+  "",
+  "  function injectStyles(){",
+  "    if (typeof document === 'undefined') return;",
+  "    if (document.getElementById(STYLE_ID)) return;",
+  "    const style=document.createElement('style');",
+  "    style.id=STYLE_ID;",
+  "    style.textContent=CSS;",
+  "    document.head.appendChild(style);",
+  "  }",
+  "",
+  "  function ensureEndpoint(container, base){",
+  "    const dataset=container.dataset||{};",
+  "    if (dataset.profileEndpoint) return dataset.profileEndpoint;",
+  "    return base.replace(/\\/$/, '') + '/api/profile-picture';",
+  "  }",
+  "",
+  "  function determineBase(scriptEl){",
+  "    const defaultOrigin=(typeof window!=='undefined' && window.location)?window.location.origin:'';",
+  "    if (!scriptEl) return defaultOrigin;",
+  "    const attr=scriptEl.getAttribute('data-api-base');",
+  "    if (attr) return attr;",
+  "    if (scriptEl.src){",
+  "      try {",
+  "        const url=new URL(scriptEl.src, defaultOrigin || undefined);",
+  "        return url.origin || defaultOrigin;",
+  "      } catch {",
+  "        return defaultOrigin;",
+  "      }",
+  "    }",
+  "    return defaultOrigin;",
+  "  }",
+  "",
+  "  function currentScript(){",
+  "    if (typeof document==='undefined') return null;",
+  "    if (document.currentScript) return document.currentScript;",
+  "    const scripts=document.getElementsByTagName('script');",
+  "    return scripts[scripts.length-1] || null;",
+  "  }",
+  "",
+  "  function setStatus(el, message, type){",
+  "    if (!el) return;",
+  "    el.textContent=message||'';",
+  "    el.className='profile-picture-status'+(type?(' '+type):'');",
+  "  }",
+  "",
+  "  function render(container, endpoint, fetchEndpoint){",
+  "    if (!container || container.getAttribute('data-profile-picture-ready')==='true') return;",
+  "    container.setAttribute('data-profile-picture-ready','true');",
+  "    injectStyles();",
+  "    const dataset=container.dataset||{};",
+  "    const requiredCustomerId=(dataset.customerId || dataset.profileCustomerId || '').trim();",
+  "",
+  "    container.innerHTML=[",
+  "      '<div class=\"profile-picture-widget\">',",
+  "        '<div class=\"profile-picture-preview-wrapper\">',",
+  "          '<div class=\"profile-picture-preview\" data-role=\"preview\" role=\"button\" tabindex=\"0\" aria-label=\"Upload profile photo\">',",
+  "            '<div class=\"profile-picture-placeholder\" data-role=\"placeholder\">No photo</div>',",
+  "            '<div class=\"profile-picture-display\" data-role=\"display\">',",
+  "              '<img data-role=\"display-image\" alt=\"Current profile photo\" />',",
+  "            '</div>',",
+  "            '<div class=\"profile-picture-cropper\" data-role=\"cropper\">',",
+  "              '<img data-role=\"crop-image\" alt=\"Selected photo\" />',",
+  "            '</div>',",
+  "          '</div>',",
+  "          '<button type=\"button\" class=\"profile-picture-edit-button\" data-role=\"edit\" aria-label=\"Change photo\">',",
+  "            '<svg viewBox=\"0 0 20 20\" aria-hidden=\"true\" focusable=\"false\">',",
+  "              '<path fill=\"currentColor\" d=\"M4 13.5V16h2.5l7.4-7.4-2.5-2.5L4 13.5zm9.7-8.2 1.5-1.5a1 1 0 0 1 1.4 1.4l-1.5 1.5-1.4-1.4z\"/>',",
+  "            '</svg>',",
+  "          '</button>',",
+  "        '</div>',",
+  "        '<form class=\"profile-picture-form\" novalidate>',",
+  "          '<input type=\"hidden\" name=\"customerId\" value=\"'+requiredCustomerId.replace(/\"/g,'&quot;')+'\" />',",
+  "          '<input type=\"file\" name=\"photo\" accept=\"image/*\" style=\"display:none;\" />',",
+  "          '<button type=\"button\" class=\"profile-picture-save\" data-role=\"save\">Save photo</button>',",
+  "          '<div class=\"profile-picture-status\" data-role=\"status\"></div>',",
+  "        '</form>',",
+  "      '</div>'",
+  "    ].join('');",
+  "",
+  "    const form=container.querySelector('.profile-picture-form');",
+  "    const fileInput=form?.querySelector('input[type=\"file\"]');",
+  "    const customerInput=form?.querySelector('input[name=\"customerId\"]');",
+  "    const preview=container.querySelector('[data-role=\"preview\"]');",
+  "    const placeholder=container.querySelector('[data-role=\"placeholder\"]');",
+  "    const displayWrapper=container.querySelector('[data-role=\"display\"]');",
+  "    const displayImage=container.querySelector('[data-role=\"display-image\"]');",
+  "    const cropper=container.querySelector('[data-role=\"cropper\"]');",
+  "    const cropImage=container.querySelector('[data-role=\"crop-image\"]');",
+  "    const statusEl=container.querySelector('[data-role=\"status\"]');",
+  "    const saveButton=container.querySelector('[data-role=\"save\"]');",
+  "    const editButton=container.querySelector('[data-role=\"edit\"]');",
+  "",
+  "    if (form) form.addEventListener('submit',(event)=>event.preventDefault());",
+  "    if (customerInput) customerInput.value=requiredCustomerId;",
+  "",
+  "    function triggerFileSelection(){",
+  "      if (!fileInput) return;",
+  "      suppressNextFileOpen=false;",
+  "      fileInput.click();",
+  "    }",
+  "",
+  "    if (preview instanceof HTMLElement){",
+  "      preview.addEventListener('click', (event)=>{",
+  "        if (!fileInput) return;",
+  "        if (suppressNextFileOpen){",
+  "          suppressNextFileOpen=false;",
+  "          return;",
+  "        }",
+  "        triggerFileSelection();",
+  "      });",
+  "      preview.addEventListener('keydown', (event)=>{",
+  "        if (event.key==='Enter' || event.key===' '){",
+  "          event.preventDefault();",
+  "          triggerFileSelection();",
+  "        }",
+  "      });",
+  "    }",
+  "    editButton?.addEventListener('click', (event)=>{",
+  "      event.preventDefault();",
+  "      suppressNextFileOpen=false;",
+  "      triggerFileSelection();",
+  "    });",
+  "",
+  "    const cropState={",
+  "      image:null,",
+  "      scale:1,",
+  "      minScale:1,",
+  "      maxScale:3,",
+  "      offsetX:0,",
+  "      offsetY:0,",
+  "      viewportSize:preview?(preview.getBoundingClientRect().width||133):133,",
+  "    };",
+  "",
+  "    let dragPointer=null;",
+  "    let dragStart={x:0,y:0};",
+  "    let suppressNextFileOpen=false;",
+  "",
+  "    function toggleSaveButton(show){",
+  "      if (!saveButton) return;",
+  "      saveButton.style.display=show?'inline-flex':'none';",
+  "      if (!show){",
+  "        saveButton.disabled=false;",
+  "        saveButton.textContent='Save photo';",
+  "      }",
+  "    }",
+  "",
+  "    function showPlaceholder(){",
+  "      if (placeholder) placeholder.style.display='flex';",
+  "      if (displayWrapper) displayWrapper.style.display='none';",
+  "      if (cropper) cropper.style.display='none';",
+  "      toggleSaveButton(false);",
+  "    }",
+  "",
+  "    function showDisplayImage(url){",
+  "      if (!displayWrapper || !displayImage) return;",
+  "      if (!url){",
+  "        displayWrapper.style.display='none';",
+  "        displayImage.removeAttribute('src');",
+  "        if (placeholder) placeholder.style.display='flex';",
+  "        return;",
+  "      }",
+  "      if (placeholder) placeholder.style.display='none';",
+  "      if (cropper) cropper.style.display='none';",
+  "      displayImage.src=url;",
+  "      displayWrapper.style.display='block';",
+  "      toggleSaveButton(false);",
+  "    }",
+  "",
+  "    function prepareCropper(){",
+  "      if (placeholder) placeholder.style.display='none';",
+  "      if (displayWrapper) displayWrapper.style.display='none';",
+  "      if (cropper){",
+  "        cropper.style.display='block';",
+  "      }",
+  "    }",
+  "",
+  "    function resetCropperState(showPlaceholderView=true){",
+  "      cropState.image=null;",
+  "      cropState.scale=1;",
+  "      cropState.minScale=1;",
+  "      cropState.maxScale=3;",
+  "      cropState.offsetX=0;",
+  "      cropState.offsetY=0;",
+  "      suppressNextFileOpen=false;",
+  "      cropState.viewportSize=preview?(preview.getBoundingClientRect().width||133):133;",
+  "      dragPointer=null;",
+  "      if (cropper){",
+  "        cropper.classList.remove('dragging');",
+  "        cropper.style.display='none';",
+  "      }",
+  "      if (cropImage){",
+  "        cropImage.removeAttribute('src');",
+  "        cropImage.style.transform='';",
+  "      }",
+  "      if (showPlaceholderView){",
+  "        if (displayWrapper) displayWrapper.style.display='none';",
+  "        if (placeholder) placeholder.style.display='flex';",
+  "      }",
+  "      toggleSaveButton(false);",
+  "    }",
+  "",
+  "    function clampOffsets(){",
+  "      if (!cropState.image || !cropper) return;",
+  "      const viewport=cropState.viewportSize||cropper.getBoundingClientRect().width||133;",
+  "      cropState.viewportSize=viewport;",
+  "      const imgW=cropState.image.naturalWidth*cropState.scale;",
+  "      const imgH=cropState.image.naturalHeight*cropState.scale;",
+  "      const maxX=Math.max(0,(imgW-viewport)/2);",
+  "      const maxY=Math.max(0,(imgH-viewport)/2);",
+  "      cropState.offsetX=Math.min(maxX, Math.max(-maxX, cropState.offsetX));",
+  "      cropState.offsetY=Math.min(maxY, Math.max(-maxY, cropState.offsetY));",
+  "    }",
+  "",
+  "    function applyCropTransform(){",
+  "      if (!cropImage || !cropState.image) return;",
+  "      clampOffsets();",
+  "      cropImage.style.transform='translate(-50%, -50%) translate('+cropState.offsetX+'px,'+cropState.offsetY+'px) scale('+cropState.scale+')';",
+  "    }",
+  "",
+  "    function drawToCanvas(canvas,size){",
+  "      if (!cropState.image || !preview) return false;",
+  "      const ctx=canvas.getContext('2d');",
+  "      if (!ctx) return false;",
+  "      const viewport=cropState.viewportSize||preview.getBoundingClientRect().width||size;",
+  "      cropState.viewportSize=viewport;",
+  "      ctx.clearRect(0,0,size,size);",
+  "      ctx.fillStyle='#ffffff';",
+  "      ctx.fillRect(0,0,size,size);",
+  "      ctx.save();",
+  "      ctx.beginPath();",
+  "      ctx.arc(size/2,size/2,size/2,0,Math.PI*2);",
+  "      ctx.closePath();",
+  "      ctx.clip();",
+  "      const scaleFactor=size/viewport;",
+  "      ctx.translate(size/2 + cropState.offsetX*scaleFactor, size/2 + cropState.offsetY*scaleFactor);",
+  "      ctx.scale(cropState.scale*scaleFactor, cropState.scale*scaleFactor);",
+  "      ctx.translate(-cropState.image.naturalWidth/2, -cropState.image.naturalHeight/2);",
+  "      ctx.drawImage(cropState.image,0,0);",
+  "      ctx.restore();",
+  "      return true;",
+  "    }",
+  "",
+  "    function getCroppedDataUrl(size=133){",
+  "      const canvas=document.createElement('canvas');",
+  "      canvas.width=size;",
+  "      canvas.height=size;",
+  "      return drawToCanvas(canvas,size)?canvas.toDataURL('image/png'):null;",
+  "    }",
+  "",
+  "    async function createCroppedBlob(){",
+  "      const size=512;",
+  "      const canvas=document.createElement('canvas');",
+  "      canvas.width=size;",
+  "      canvas.height=size;",
+  "      if (!drawToCanvas(canvas,size)) return null;",
+  "      return await new Promise((resolve)=>canvas.toBlob((blob)=>resolve(blob),'image/png',0.95));",
+  "    }",
+  "",
+  "    async function performUpload(){",
+  "      if (!fileInput || !saveButton) return;",
+  "      const customerId=(customerInput?.value || '').trim();",
+  "      if (!customerId){",
+  "        setStatus(statusEl, 'Missing customer identifier.', 'error');",
+  "        toggleSaveButton(false);",
+  "        return;",
+  "      }",
+  "      if (!cropState.image && !(fileInput.files && fileInput.files[0])){",
+  "        setStatus(statusEl, 'Please choose an image first.', 'error');",
+  "        toggleSaveButton(false);",
+  "        return;",
+  "      }",
+  "",
+  "      setStatus(statusEl, '', '');",
+  "      saveButton.disabled=true;",
+  "      saveButton.textContent='Uploading...';",
+  "",
+  "      try {",
+  "        const formData=new FormData();",
+  "        formData.append('customerId', customerId);",
+  "        let uploadFile=null;",
+  "        let uploadName='profile-picture.png';",
+  "        let previewDataUrl=null;",
+  "",
+  "        if (cropState.image){",
+  "          previewDataUrl=getCroppedDataUrl(133);",
+  "          const blob=await createCroppedBlob();",
+  "          if (!blob){",
+  "            setStatus(statusEl, 'Unable to process image. Try another file.', 'error');",
+  "            return;",
+  "          }",
+  "          if (typeof File==='function'){",
+  "            uploadFile=new File([blob], 'profile-picture.png', { type:'image/png' });",
+  "          } else {",
+  "            uploadFile=blob;",
+  "          }",
+  "        } else if (fileInput.files && fileInput.files[0]){",
+  "          uploadFile=fileInput.files[0];",
+  "          uploadName=uploadFile.name || uploadName;",
+  "        }",
+  "",
+  "        if (!uploadFile){",
+  "          setStatus(statusEl, 'Please choose an image first.', 'error');",
+  "          saveButton.disabled=false;",
+  "          saveButton.textContent='Save photo';",
+  "          return;",
+  "        }",
+  "",
+  "        formData.append('photo', uploadFile, uploadName);",
+  "        const response=await fetch(endpoint, { method:'POST', body: formData, mode:'cors' });",
+  "        const data=await response.json().catch(()=>null);",
+  "        if (!response.ok || !data || data.success!==true){",
+  "          const message=(data && data.error) || 'Upload failed. Please try again.';",
+  "          setStatus(statusEl, message, 'error');",
+  "          return;",
+  "        }",
+  "",
+  "        setStatus(statusEl, 'Profile picture updated.', 'success');",
+  "        resetCropperState(false);",
+  "        if (fileInput) fileInput.value='';",
+  "        const imageUrl=data.imageUrl;",
+  "        if (imageUrl){",
+  "          showDisplayImage(imageUrl);",
+  "        } else if (previewDataUrl){",
+  "          showDisplayImage(previewDataUrl);",
+  "        } else {",
+  "          showPlaceholder();",
+  "        }",
+  "        toggleSaveButton(false);",
+  "      } catch (error){",
+  "        console.error('Profile picture upload encountered an error:', error);",
+  "        setStatus(statusEl, 'Network error. Please try again.', 'error');",
+  "      } finally {",
+  "        if (saveButton){",
+  "          saveButton.disabled=false;",
+  "          saveButton.textContent='Save photo';",
+  "        }",
+  "      }",
+  "    }",
+  "",
+  "    async function loadExisting(){",
+  "      resetCropperState();",
+  "      if (!fetchEndpoint || !customerInput || !customerInput.value.trim()){",
+  "        if (!requiredCustomerId){",
+  "          setStatus(statusEl, 'Set data-customer-id on the container to enable uploads.', 'error');",
+  "        }",
+  "        return;",
+  "      }",
+  "      try {",
+  "        const qs=new URLSearchParams({ customerId: customerInput.value.trim() });",
+  "        const res=await fetch(fetchEndpoint+'?'+qs.toString(), { method:'GET', mode:'cors' });",
+  "        if (!res.ok) return;",
+  "        const data=await res.json().catch(()=>null);",
+  "        if (data && data.imageUrl){",
+  "          showDisplayImage(data.imageUrl);",
+  "        }",
+  "      } catch (error){",
+  "        console.error('Failed to fetch existing profile picture:', error);",
+  "      }",
+  "    }",
+  "",
+  "    fileInput?.addEventListener('change', (event)=>{",
+  "      if (!fileInput) return;",
+  "      setStatus(statusEl, '', '');",
+  "      resetCropperState();",
+  "      const file=(event.target && event.target.files && event.target.files[0]) || null;",
+  "      if (!file){",
+  "        showPlaceholder();",
+  "        return;",
+  "      }",
+  "      const reader=new FileReader();",
+  "      reader.onload=function(e){",
+  "        const result=(e.target && e.target.result);",
+  "        if (typeof result!=='string'){",
+  "          setStatus(statusEl, 'Unable to read that image. Try a different file.', 'error');",
+  "          return;",
+  "        }",
+  "        const img=new Image();",
+  "        img.onload=function(){",
+  "          cropState.image=img;",
+  "          cropState.viewportSize=preview?(preview.getBoundingClientRect().width||133):133;",
+  "          const minScale=Math.max(",
+  "            cropState.viewportSize/img.naturalWidth,",
+  "            cropState.viewportSize/img.naturalHeight",
+  "          );",
+  "          cropState.scale=minScale;",
+  "          cropState.minScale=minScale;",
+  "          cropState.maxScale=minScale*3;",
+  "          cropState.offsetX=0;",
+  "          cropState.offsetY=0;",
+  "          if (cropImage){",
+  "            cropImage.src=result;",
+  "            cropImage.style.width=img.naturalWidth+'px';",
+  "            cropImage.style.height=img.naturalHeight+'px';",
+  "          }",
+  "          prepareCropper();",
+  "          applyCropTransform();",
+  "          toggleSaveButton(true);",
+  "          setStatus(statusEl, 'Drag to reposition. Use scroll to zoom. Save when ready.', '');",
+  "        };",
+  "        img.onerror=function(){",
+  "          resetCropperState();",
+  "          setStatus(statusEl, 'Unable to read that image. Try a different file.', 'error');",
+  "        };",
+  "        img.src=result;",
+  "      };",
+  "      reader.readAsDataURL(file);",
+  "    });",
+  "",
+  "    saveButton?.addEventListener('click', ()=>{",
+  "      performUpload();",
+  "    });",
+  "",
+  "    cropper?.addEventListener('pointerdown', (event)=>{",
+  "      if (!cropState.image) return;",
+  "      dragPointer=event.pointerId;",
+  "      dragStart={ x: event.clientX, y: event.clientY };",
+  "      cropper.setPointerCapture(event.pointerId);",
+  "      cropper.classList.add('dragging');",
+  "      event.preventDefault();",
+  "    });",
+  "",
+  "    cropper?.addEventListener('pointermove', (event)=>{",
+  "      if (!cropState.image || dragPointer===null || event.pointerId!==dragPointer) return;",
+  "      const dx=event.clientX-dragStart.x;",
+  "      const dy=event.clientY-dragStart.y;",
+  "      dragStart={ x: event.clientX, y: event.clientY };",
+  "      cropState.offsetX+=dx;",
+  "      cropState.offsetY+=dy;",
+  "      suppressNextFileOpen=true;",
+  "      applyCropTransform();",
+  "      event.preventDefault();",
+  "    });",
+  "",
+  "    function endDrag(event){",
+  "      if (dragPointer===null || event.pointerId!==dragPointer) return;",
+  "      cropper?.classList.remove('dragging');",
+  "      if (cropper && typeof cropper.hasPointerCapture==='function' && cropper.hasPointerCapture(event.pointerId)){",
+  "        cropper.releasePointerCapture(event.pointerId);",
+  "      }",
+  "      dragPointer=null;",
+  "    }",
+  "",
+  "    cropper?.addEventListener('pointerup', endDrag);",
+  "    cropper?.addEventListener('pointercancel', endDrag);",
+  "    cropper?.addEventListener('pointerleave', (event)=>{",
+  "      if (dragPointer===null) return;",
+  "      endDrag(event);",
+  "    });",
+  "",
+  "    cropper?.addEventListener('wheel', (event)=>{",
+  "      if (!cropState.image) return;",
+  "      event.preventDefault();",
+  "      const delta=Math.sign(event.deltaY);",
+  "      const factor=delta>0?0.94:1.06;",
+  "      let newScale=cropState.scale*factor;",
+  "      newScale=Math.min(cropState.maxScale, Math.max(cropState.minScale, newScale));",
+  "      const ratio=newScale/cropState.scale;",
+  "      cropState.scale=newScale;",
+  "      cropState.offsetX*=ratio;",
+  "      cropState.offsetY*=ratio;",
+  "      applyCropTransform();",
+  "    }, { passive:false });",
+  "",
+  "    resetCropperState();",
+  "    loadExisting();",
+  "  }",
+  "",
+  "  function init(){",
+  "    if (typeof document==='undefined') return;",
+  "    const scriptEl=currentScript();",
+  "    const base=determineBase(scriptEl);",
+  "    const containers=document.querySelectorAll('[data-profile-picture-widget]');",
+  "    if (!containers.length) return;",
+  "    containers.forEach((container)=>{",
+  "      const customEndpoint=ensureEndpoint(container, base);",
+  "      const fetchEndpoint=(container.dataset && container.dataset.profileFetchEndpoint) || customEndpoint;",
+  "      render(container, customEndpoint, fetchEndpoint);",
+  "    });",
+  "  }",
+  "",
+  "  if (typeof document!=='undefined'){",
+  "    if (document.readyState==='loading'){",
+  "      document.addEventListener('DOMContentLoaded', init, { once:true });",
+  "    } else {",
+  "      init();",
+  "    }",
+  "  }",
+  "})();",
+].join("\n");
+
+
+
+
+
+const MAX_PROFILE_PICTURE_BYTES = 6 * 1024 * 1024;
+const profilePictureAllowedTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+
+function sanitizeProfileField(value: any, maxLength = 180): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, maxLength);
+}
+
+function profileJsonResponse(body: any, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...profilePictureCorsHeaders,
+    },
+  });
+}
+
 // Public embed routes for NIPs
 // Helper to extract slug and infer region from a full product URL
 function deriveFromProductUrl(raw: string | null): {
@@ -501,6 +1531,214 @@ http.route({
   }),
 });
 
+http.route({
+  path: "/accordion-widget.js",
+  method: "GET",
+  handler: httpAction(async () => {
+    return new Response(accordionWidgetScript, {
+      headers: {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/accordion",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: accordionCorsHeaders,
+    });
+  }),
+});
+
+http.route({
+  path: "/api/accordion",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const key = sanitizeAccordionKey(url.searchParams.get("key"));
+
+    try {
+      const result = await ctx.runQuery(
+        (api.settings as any).getAccordionSettingPublic,
+        { key }
+      );
+
+      const resolvedKey =
+        typeof result?.key === "string" && result.key.length
+          ? result.key
+          : key;
+
+      const items = normalizeAccordionItems(result?.value);
+      const html = generateAccordionHtml(items);
+
+      return accordionJsonResponse({
+        success: true,
+        key: resolvedKey,
+        items,
+        html,
+        count: items.length,
+      });
+    } catch (error) {
+      console.error("Accordion API error:", error);
+      return accordionJsonResponse(
+        { success: false, error: "Failed to load accordion content." },
+        500
+      );
+    }
+  }),
+});
+
+http.route({
+  path: "/profile-picture-widget.js",
+  method: "GET",
+  handler: httpAction(async () => {
+    return new Response(profilePictureWidgetScript, {
+      headers: {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/profile-picture",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: profilePictureCorsHeaders,
+    });
+  }),
+});
+
+http.route({
+  path: "/api/profile-picture",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const url = new URL(req.url);
+    const customerIdParam = sanitizeProfileField(
+      url.searchParams.get("customerId")
+    );
+
+    if (!customerIdParam) {
+      return profileJsonResponse(
+        { success: false, error: "Missing customerId query parameter." },
+        400
+      );
+    }
+
+    try {
+      const record = await ctx.runQuery(
+        api.profilePictures.getProfilePictureByCustomer,
+        { customerId: customerIdParam }
+      );
+
+      if (!record || !record.imageUrl) {
+        return profileJsonResponse(
+          { success: false, error: "Profile picture not found." },
+          404
+        );
+      }
+
+      return profileJsonResponse(
+        {
+          success: true,
+          imageUrl: record.imageUrl,
+          updatedAt: record.updatedAt,
+        },
+        200
+      );
+    } catch (error) {
+      console.error("Failed to fetch profile picture:", error);
+      return profileJsonResponse(
+        { success: false, error: "Failed to load profile picture." },
+        500
+      );
+    }
+  }),
+});
+
+http.route({
+  path: "/api/profile-picture",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    try {
+      const formData = await req.formData();
+      const customerIdRaw = formData.get("customerId");
+      const photo = formData.get("photo");
+
+      const customerId = sanitizeProfileField(customerIdRaw, 180);
+      if (!customerId) {
+        return profileJsonResponse(
+          { success: false, error: "Customer ID is required." },
+          400
+        );
+      }
+
+      if (!(photo instanceof File)) {
+        return profileJsonResponse(
+          { success: false, error: "Upload must include a photo file." },
+          400
+        );
+      }
+
+      if (
+        (photo.type &&
+          !profilePictureAllowedTypes.includes(photo.type.toLowerCase())) ||
+        (!photo.type && !/\.(jpe?g|png|gif|webp)$/i.test(photo.name || ""))
+      ) {
+        return profileJsonResponse(
+          { success: false, error: "Unsupported image type." },
+          400
+        );
+      }
+
+      if (photo.size > MAX_PROFILE_PICTURE_BYTES) {
+        return profileJsonResponse(
+          { success: false, error: "Image exceeds maximum size of 6MB." },
+          400
+        );
+      }
+
+      const storageId = await ctx.storage.store(photo);
+      const identity = await ctx.auth.getUserIdentity();
+      const uploadedBy = identity?.subject ?? undefined;
+
+      const { imageUrl } = await ctx.runMutation(
+        api.profilePictures.saveProfilePicture,
+        {
+          customerId,
+          storageId,
+          fileName: photo.name || "profile-picture",
+          contentType: photo.type || "application/octet-stream",
+          size: photo.size,
+          uploadedBy,
+        }
+      );
+
+      return profileJsonResponse(
+        { success: true, imageUrl: imageUrl ?? null },
+        201
+      );
+    } catch (error) {
+      console.error("Profile picture upload failed:", error);
+      return profileJsonResponse(
+        { success: false, error: "Unexpected error during upload." },
+        500
+      );
+    }
+  }),
+});
+
 
 export default http;
+
 
