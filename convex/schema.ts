@@ -13,6 +13,16 @@ const applicationTables = {
     value: v.any(),
   }).index("by_key", ["key"]),
 
+  productAccordions: defineTable({
+    productId: v.id("products"),
+    productSlug: v.string(),
+    items: v.any(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  })
+    .index("by_product", ["productId"])
+    .index("by_slug", ["productSlug"]),
+
   products: defineTable({
     title: v.string(),
     productType: v.string(),

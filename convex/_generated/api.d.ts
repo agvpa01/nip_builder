@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as accordions from "../accordions.js";
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as dashboard from "../dashboard.js";
@@ -32,6 +33,7 @@ import type * as settings from "../settings.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  accordions: typeof accordions;
   admin: typeof admin;
   auth: typeof auth;
   dashboard: typeof dashboard;

@@ -325,12 +325,19 @@ const accordionWidgetScript = [
   "  function fetchAccordion(container, base, scriptEl){",
   "    const rawKey=(container.getAttribute('data-accordion-key') || (scriptEl ? scriptEl.getAttribute('data-accordion-key') : '') || '');",
   "    const key=rawKey && rawKey.trim ? rawKey.trim() : rawKey;",
+  "    const rawProductUrl=(container.getAttribute('data-product-url') || (scriptEl ? scriptEl.getAttribute('data-product-url') : '') || ((typeof window!=='undefined' && window.location) ? window.location.href : ''));",
+  "    const rawSlug=(container.getAttribute('data-product-slug') || (scriptEl ? scriptEl.getAttribute('data-product-slug') : '') || '');",
   "    const apiBase=normalizeBase(base);",
   "    if (!apiBase){",
   "      showStatus(container, 'Accordion unavailable.');",
   "      return;",
   "    }",
-  "    const url=apiBase + '/api/accordion' + (key ? '?key=' + encodeURIComponent(key) : '');",
+  "    const params=new URLSearchParams();",
+  "    if (key) params.set('key', key);",
+  "    if (rawProductUrl) params.set('productUrl', rawProductUrl);",
+  "    if (rawSlug) params.set('slug', rawSlug);",
+  "    const query=params.toString();",
+  "    const url=apiBase + '/api/accordion' + (query ? ('?' + query) : '');",
   "    showStatus(container, 'Loading accordion...');",
   "    fetch(url, { credentials:'omit' })",
   "      .then((res)=>{",
@@ -1579,28 +1586,62 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, req) => {
     const url = new URL(req.url);
-    const key = sanitizeAccordionKey(url.searchParams.get("key"));
+    const keyParam = sanitizeAccordionKey(url.searchParams.get("key"));
+    const productUrlParam =
+      url.searchParams.get("productUrl") || url.searchParams.get("url");
+    const slugParam =
+      url.searchParams.get("slug") || url.searchParams.get("productSlug");
+
+    const { slug: derivedSlug } = deriveFromProductUrl(productUrlParam);
+    const candidateSlug = slugParam || derivedSlug || null;
+
+    let items: AccordionItem[] | null = null;
+    let resolvedSlug: string | null = null;
+    let source: "product" | "default" = "default";
+
+    try {
+      if (candidateSlug) {
+        const productResult = await ctx.runQuery(
+          api.accordions.getProductAccordionPublic,
+          { slug: candidateSlug }
+        );
+
+        if (
+          productResult?.items &&
+          Array.isArray(productResult.items) &&
+          productResult.items.length
+        ) {
+          items = normalizeAccordionItems(productResult.items);
+          resolvedSlug = productResult.slug ?? candidateSlug;
+          source = "product";
+        }
+      }
+    } catch (error) {
+      console.error("Accordion product lookup failed:", error);
+    }
 
     try {
       const result = await ctx.runQuery(
         (api.settings as any).getAccordionSettingPublic,
-        { key }
+        { key: keyParam }
       );
 
       const resolvedKey =
         typeof result?.key === "string" && result.key.length
           ? result.key
-          : key;
+          : keyParam;
 
-      const items = normalizeAccordionItems(result?.value);
-      const html = generateAccordionHtml(items);
+      const fallbackItems = items ?? normalizeAccordionItems(result?.value);
+      const html = generateAccordionHtml(fallbackItems);
 
       return accordionJsonResponse({
         success: true,
         key: resolvedKey,
-        items,
+        productSlug: resolvedSlug,
+        source,
+        items: fallbackItems,
         html,
-        count: items.length,
+        count: fallbackItems.length,
       });
     } catch (error) {
       console.error("Accordion API error:", error);
