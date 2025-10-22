@@ -459,7 +459,7 @@ export function AccordionEditor({ products: initialProducts }: AccordionEditorPr
       attributes.push(` data-product-slug="${productSlug}"`);
     }
     return `<div data-accordion-widget${attributes.join("")}></div>
-<script async src="${baseUrl}/accordion-widget.js" data-api-base="${baseUrl}"></script>`;
+<script defer src="${baseUrl}/accordion-widget.js" data-api-base="${baseUrl}"></script>`;
   }, [baseUrl, editingDefault, productSlug]);
 
   const fetchSnippet = useMemo(

@@ -32,7 +32,7 @@ const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
     id: "nutrition",
     title: "Nutritional Facts &amp; Ingredients",
     content:
-      '<div data-convex-base="https://useful-llama-278.convex.site"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
+      '<div data-convex-base="https://useful-llama-278.convex.site"></div><script defer src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
   },
 ];
 
@@ -310,6 +310,10 @@ const accordionWidgetScript = [
   "    });",
   "  }",
   "  function showStatus(container, message){",
+  "    if (!message || !message.trim()){",
+  "      container.innerHTML='';",
+  "      return;",
+  "    }",
   "    container.innerHTML=`<div style=\"font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;color:#4b5563;text-align:center;padding:12px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;\">${message}</div>`;",
   "  }",
   "  function resolveBase(container, fallback){",
@@ -329,7 +333,7 @@ const accordionWidgetScript = [
   "    const rawSlug=(container.getAttribute('data-product-slug') || (scriptEl ? scriptEl.getAttribute('data-product-slug') : '') || '');",
   "    const apiBase=normalizeBase(base);",
   "    if (!apiBase){",
-  "      showStatus(container, 'Accordion unavailable.');",
+  "      showStatus(container, '');",
   "      return;",
   "    }",
   "    const params=new URLSearchParams();",
@@ -355,7 +359,7 @@ const accordionWidgetScript = [
   "      })",
   "      .catch((err)=>{",
   "        console.error('[Convex accordion widget]', err);",
-  "        showStatus(container, 'Accordion unavailable.');",
+  "        showStatus(container, '');",
   "      });",
   "  }",
   "  function init(){",
