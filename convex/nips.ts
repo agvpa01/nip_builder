@@ -626,16 +626,27 @@ export const generateTabbedProductHtml = query({
       })
       .join("");
 
-    const panelsMarkup = variantData
-      .map(
-        (
-          variant,
-          index
-        ) => `        <section class="nip-variant" data-variant="variant-${index}" style="${index === 0 ? "" : "display:none;"}">
-          ${variant.htmlContent}
-        </section>`
-      )
-      .join("");
+    const variantMap = Object.fromEntries(
+      variantData.map((variant, index) => {
+        const key = `variant-${index}`;
+        const htmlString =
+          typeof variant.htmlContent === "string"
+            ? variant.htmlContent
+            : String(variant.htmlContent ?? "");
+        return [
+          key,
+          {
+            name: variant.name ?? `Variant ${index + 1}`,
+            html: htmlString,
+          },
+        ];
+      })
+    );
+    const serializedVariantMap = JSON.stringify(variantMap)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026")
+      .replace(/\\u003c\\\//g, "\\u003c/"); // keep closing tags intact
 
     const plainHtml = `
       <!DOCTYPE html>
@@ -715,7 +726,7 @@ export const generateTabbedProductHtml = query({
               background-position: calc(100% - 16px) calc(50% - 3px), calc(100% - 10px) calc(50% - 3px), calc(100% - 30px) calc(50% + 10px);
             }
           }
-          #nipVariantPanels {
+          #nipVariantPanel {
             margin-top: -10px;
           }
         </style>
@@ -727,28 +738,30 @@ export const generateTabbedProductHtml = query({
               ${selectOptions}
             </select>
           </div>
-          <div id="nipVariantPanels">
-            ${panelsMarkup}
-          </div>
+          <div id="nipVariantPanel" class="nip-variant"></div>
         </div>
         <script>
           (function() {
             var select = document.getElementById('nipVariantSelect');
-            if (!select) return;
-            var panels = Array.prototype.slice.call(document.querySelectorAll('.nip-variant[data-variant]'));
-            function showVariant(value) {
-              panels.forEach(function(panel) {
-                panel.style.display = panel.getAttribute('data-variant') === value ? '' : 'none';
-              });
+            var panel = document.getElementById('nipVariantPanel');
+            if (!select || !panel) return;
+            var variants = ${serializedVariantMap};
+            function renderVariant(value) {
+              var variant = variants[value];
+              if (!variant) return;
+              panel.innerHTML = typeof variant.html === 'string' ? variant.html : '';
             }
+            var allKeys = Object.keys(variants);
+            if (!variants[select.value] && select.options.length) {
+              select.value = select.options[0].value;
+            }
+            if (!variants[select.value] && allKeys.length) {
+              select.value = allKeys[0];
+            }
+            renderVariant(select.value);
             select.addEventListener('change', function() {
-              showVariant(this.value);
+              renderVariant(this.value);
             });
-            if (select.value) {
-              showVariant(select.value);
-            } else if (panels.length) {
-              showVariant(panels[0].getAttribute('data-variant'));
-            }
           })();
         </script>
       </body>
