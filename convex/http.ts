@@ -1289,13 +1289,29 @@ http.route({
   }
   function init(){
     const scriptEmbeds=[...document.querySelectorAll('script[src*="/embed.js"],script[data-nip-slug],script[data-product-url]')];
+    const readMountData = (el, key) => {
+      if (!el) return "";
+      const datasetKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+      const dsVal = el.dataset ? el.dataset[datasetKey] : undefined;
+      if (dsVal && dsVal.trim() !== "") return dsVal;
+      const attrName = key.startsWith("data-") ? key : 'data-' + key;
+      if (typeof (el.getAttribute) === "function") {
+        const attrVal = el.getAttribute(attrName);
+        if (attrVal && attrVal.trim() !== "") return attrVal;
+      }
+      return "";
+    };
+
     scriptEmbeds.forEach(s=>{
       const base = s.dataset.convexBase || new URL(s.src, location.href).origin;
-      let region = s.dataset.nipRegion || '';
-      let slug = s.dataset.nipSlug || '';
+      const scriptSlugAttr = s.getAttribute('data-nip-slug') || '';
+      const scriptRegionAttr = s.getAttribute('data-nip-region') || '';
+      const scriptTemplateAttr = s.getAttribute('data-nip-template') || '';
+      let region = scriptRegionAttr.trim();
+      let slug = scriptSlugAttr.trim();
+      let template = scriptTemplateAttr.trim();
       const prodUrl = s.dataset.productUrl || s.getAttribute('data-product-url') || ((typeof window!=='undefined' && window.location) ? window.location.href : '');
       if(!slug && prodUrl){ const d=parseInputUrl(prodUrl); slug=d.slug; if(!region) region=d.region||''; }
-      if(!slug) return;
       let mount = null; const sel = s.dataset.mount || s.getAttribute('data-mount');
       mount = sel ? document.querySelector(sel) : null;
       if(!mount){
@@ -1308,11 +1324,43 @@ http.route({
         mount=document.createElement('div');
         s.parentNode.insertBefore(mount, s);
       }
+      if (mount) {
+        if (!slug) {
+          const mountProduct = readMountData(mount, "product-url") || readMountData(mount, "online-store-url") || readMountData(mount, "nip-slug");
+          if (mountProduct) {
+            const derived = parseInputUrl(mountProduct);
+            slug = derived.slug || mountProduct;
+            if (!region && derived.region) region = derived.region;
+          }
+        } else if (!scriptSlugAttr) {
+          const mountProduct = readMountData(mount, "product-url") || readMountData(mount, "online-store-url") || readMountData(mount, "nip-slug");
+          if (mountProduct) {
+            const derived = parseInputUrl(mountProduct);
+            slug = derived.slug || mountProduct;
+            if (!region && derived.region) region = derived.region;
+          }
+        }
+        if (!region) {
+          const mountRegion = readMountData(mount, "nip-region") || readMountData(mount, "region");
+          if (mountRegion) region = mountRegion;
+        } else if (!scriptRegionAttr) {
+          const mountRegion = readMountData(mount, "nip-region") || readMountData(mount, "region");
+          if (mountRegion) region = mountRegion;
+        }
+        if (!template) {
+          const mountTemplate = readMountData(mount, "nip-template");
+          if (mountTemplate) template = mountTemplate;
+        } else if (!scriptTemplateAttr) {
+          const mountTemplate = readMountData(mount, "nip-template");
+          if (mountTemplate) template = mountTemplate;
+        }
+      }
+      if(!slug) return;
       if(mount && mount.dataset){
         mount.dataset.nipMounted='1';
         if(!mount.dataset.convexBase && base) mount.setAttribute('data-convex-base', base);
       }
-      mountNip(mount, base, slug, region, s.dataset.nipTemplate || '');
+      mountNip(mount, base, slug, region, template);
     });
     [...document.querySelectorAll('[data-convex-base]')].forEach(el=>{
       if(!el) return;
