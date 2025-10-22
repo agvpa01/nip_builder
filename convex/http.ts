@@ -347,7 +347,10 @@ const accordionWidgetScript = [
   "      .then((data)=>{",
   "        if (!data || !Array.isArray(data.items)) throw new Error('Invalid response');",
   "        const items=sanitizeItems(data.items);",
-  "        if (!items.length) throw new Error('No accordion items');",
+  "        if (!items.length){",
+  "          container.innerHTML='';",
+  "          return;",
+  "        }",
   "        renderAccordion(container, items);",
   "      })",
   "      .catch((err)=>{",
@@ -1597,7 +1600,7 @@ http.route({
 
     let items: AccordionItem[] | null = null;
     let resolvedSlug: string | null = null;
-    let source: "product" | "default" = "default";
+    let source: "product" | "default" | "none" = "default";
 
     try {
       if (candidateSlug) {
@@ -1614,6 +1617,9 @@ http.route({
           items = normalizeAccordionItems(productResult.items);
           resolvedSlug = productResult.slug ?? candidateSlug;
           source = "product";
+        } else {
+          resolvedSlug = productResult?.slug ?? candidateSlug;
+          source = "none";
         }
       }
     } catch (error) {
@@ -1631,8 +1637,19 @@ http.route({
           ? result.key
           : keyParam;
 
-      const fallbackItems = items ?? normalizeAccordionItems(result?.value);
-      const html = generateAccordionHtml(fallbackItems);
+      let fallbackItems: AccordionItem[];
+      let html: string;
+
+      if (items) {
+        fallbackItems = items;
+        html = generateAccordionHtml(fallbackItems);
+      } else if (candidateSlug) {
+        fallbackItems = [];
+        html = "";
+      } else {
+        fallbackItems = normalizeAccordionItems(result?.value);
+        html = generateAccordionHtml(fallbackItems);
+      }
 
       return accordionJsonResponse({
         success: true,
