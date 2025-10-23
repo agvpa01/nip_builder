@@ -1105,6 +1105,7 @@ http.route({
           if(!fragment) return;
           const plainContainer=document.createElement('div');
           plainContainer.className='nip-plain-container';
+          plainContainer.style.cssText='width:100%;margin:0;padding:0;box-sizing:border-box;';
           plainContainer.innerHTML = fragment;
           const scripts = Array.from(plainContainer.querySelectorAll('script'));
           scripts.forEach((script) => {
@@ -1136,6 +1137,7 @@ http.route({
         const contentsEls=[...doc.querySelectorAll('.tab-content')];
         const container=document.createElement('div');
         container.className='tab-container';
+        container.style.cssText='width:100%;margin:0;padding:0;box-sizing:border-box;';
         const selectFromDoc = doc.getElementById('variantSelect');
         const dropdownBtnsFromDoc = [...doc.querySelectorAll('.dropdown-menu .tab-button')];
 

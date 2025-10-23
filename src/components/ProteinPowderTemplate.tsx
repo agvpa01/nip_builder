@@ -477,13 +477,13 @@ export function ProteinPowderTemplate({
       textSections.find((s) => s.id === "servings-per-pack-line")?.content ||
       "Servings per Pack: 33";
     let html = `
-    <div class="protein-powder-nip" style="font-family: Arial, sans-serif !important; max-width: 100%; margin: 0 auto;">
+    <div class="protein-powder-nip" style="font-family: Arial, sans-serif !important; width: 100%; margin: 0; padding: 0; box-sizing: border-box;">
     `;
 
     if (showTextSections) {
       html += `
         <!-- Left Column: Text Sections -->
-        <div class="left-column" style="flex: 1; padding: 20px; padding-right: 10px;">
+        <div class="left-column" style="flex: 1; padding: 0; margin: 0; box-sizing: border-box;">
       `;
       textSections.forEach((section) => {
         if (
@@ -506,7 +506,7 @@ export function ProteinPowderTemplate({
 
     html += `
       <!-- Right Column: Tables -->
-      <div class="right-column" style="flex: 1; padding: 20px; padding-left: 10px;">
+      <div class="right-column" style="flex: 1; padding: 0; margin: 0; box-sizing: border-box;">
         <!-- Nutritional Information Table -->
         <div class="nutritional-info" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
           <div class="table-header" style="background: black; color: white; text-align: center; font-weight: bold; font-size: 23px !important; letter-spacing: 0.8px !important; padding: 4px 0px; padding-bottom: 0px;">

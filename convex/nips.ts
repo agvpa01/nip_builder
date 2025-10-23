@@ -523,11 +523,13 @@ export const generateTabbedProductHtml = query({
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${product.title} - Nutritional Information Panel</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0 auto;
-              padding: 0;
-            }
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+          }
             .product-header {
               text-align: center;
               margin-bottom: 40px;
@@ -545,7 +547,7 @@ export const generateTabbedProductHtml = query({
               color: #666;
               margin: 10px 0 0 0;
             }
-            .content { padding: 0; border: none; border-radius: 0; margin: 0; }
+            .content { padding: 0; border: none; border-radius: 0; margin: 0; width: 100%; box-sizing: border-box; }
             .print-button {
               background: #28a745;
               color: white;
@@ -660,25 +662,37 @@ export const generateTabbedProductHtml = query({
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            width: 100%;
+            box-sizing: border-box;
             background: #ffffff;
             color: #111827;
             overflow-x: hidden;
           }
           .nip-wrapper {
+            width: 100%;
             max-width: 100%;
+            padding: 0;
+            margin: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
+            gap: 0;
+            box-sizing: border-box;
           }
           .nip-selector {
             position: relative;
+            width: 100%;
             max-width: 100%;
-            width: 94%;
+            margin: 0;
+            padding: 0;
+            display: block;
+            box-sizing: border-box;
           }
           .nip-selector select {
             width: 100%;
             max-width: 100%;
             display: block;
+            margin: 0;
             padding: 10px 44px 10px 14px;
             font-size: 14px;
             border: 1px solid #d1d5db;
@@ -714,10 +728,8 @@ export const generateTabbedProductHtml = query({
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
           }
           .nip-variant {
-            margin-bottom: 32px;
-          }
-          .nip-variant:last-of-type {
-            margin-bottom: 0;
+            margin: 0;
+            padding: 0;
           }
           @media (max-width: 640px) {
             .nip-selector select {
@@ -727,7 +739,15 @@ export const generateTabbedProductHtml = query({
             }
           }
           #nipVariantPanel {
-            margin-top: -10px;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          #nipVariantPanel > * {
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
           }
         </style>
       </head>
