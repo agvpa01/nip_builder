@@ -593,6 +593,20 @@ export const generateTabbedProductHtml = query({
           .nip-selector option {
             white-space: normal;
           }
+          
+
+
+          .protein-powder-nip {
+            max-width: 100% !important;
+          }
+
+          .protein-powder-nip .left-column {
+            padding: 10px 0px !important;
+          }
+
+          .protein-powder-nip .right-column {
+            padding: 10px 0px !important;
+          }
         </style>
         </head>
         <body>
@@ -748,6 +762,18 @@ export const generateTabbedProductHtml = query({
             margin: 0;
             width: 100%;
             box-sizing: border-box;
+          }
+
+          .protein-powder-nip {
+            max-width: 100% !important;
+          }
+
+          .protein-powder-nip .left-column {
+            padding: 10px 0px !important;
+          }
+
+          .protein-powder-nip .right-column {
+            padding: 10px 0px !important;
           }
         </style>
       </head>
