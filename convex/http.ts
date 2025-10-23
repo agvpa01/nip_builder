@@ -342,7 +342,7 @@ const accordionWidgetScript = [
   "    if (rawSlug) params.set('slug', rawSlug);",
   "    const query=params.toString();",
   "    const url=apiBase + '/api/accordion' + (query ? ('?' + query) : '');",
-  "    showStatus(container, 'Loading accordion...');",
+  "    showStatus(container, '');",
   "    fetch(url, { credentials:'omit' })",
   "      .then((res)=>{",
   "        if (!res.ok) throw new Error('HTTP ' + res.status);",
