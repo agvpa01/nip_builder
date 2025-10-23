@@ -595,6 +595,13 @@ export const generateTabbedProductHtml = query({
           }
           
 
+          .complex-supplements-nip {
+            max-width: 100% !important;
+          }
+          
+          .complex-supplements-nip .nutritional-info {
+            margin-top: 10px !important;
+          }
 
           .protein-powder-nip {
             max-width: 100% !important;
