@@ -655,14 +655,7 @@ export function AccordionEditor({ products: initialProducts }: AccordionEditorPr
   };
 
   if (loading) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center gap-3 text-gray-600">
-          <div className="h-6 w-6 border-b-2 border-blue-600 rounded-full animate-spin" />
-          <span>Loading accordion settings...</span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
