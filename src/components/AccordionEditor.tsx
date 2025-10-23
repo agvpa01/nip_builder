@@ -129,9 +129,34 @@ const ACCORDION_STYLE = `
   .rpg-accordion__content-inner ul {
     margin-left: 20px;
     margin-top: 12px;
+    padding-left: 20px;
+    list-style: disc;
+    list-style-position: outside;
   }
 
   .rpg-accordion__content-inner li {
+    margin-bottom: 8px;
+  }
+`;
+
+const VISUAL_EDITOR_STYLE = `
+  .rpg-accordion-visual-editor ul {
+    margin-left: 20px;
+    margin-top: 12px;
+    padding-left: 20px;
+    list-style: disc;
+    list-style-position: outside;
+  }
+
+  .rpg-accordion-visual-editor ol {
+    margin-left: 20px;
+    margin-top: 12px;
+    padding-left: 20px;
+    list-style: decimal;
+    list-style-position: outside;
+  }
+
+  .rpg-accordion-visual-editor li {
     margin-bottom: 8px;
   }
 `;
@@ -348,6 +373,20 @@ export function AccordionEditor({ products: initialProducts }: AccordionEditorPr
   const clearProductAccordion = useMutation(
     api.accordions.clearProductAccordion as any
   );
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const styleId = "rpg-accordion-visual-editor-style";
+    if (document.getElementById(styleId)) {
+      return;
+    }
+    const styleEl = document.createElement("style");
+    styleEl.id = styleId;
+    styleEl.textContent = VISUAL_EDITOR_STYLE.trim();
+    document.head.appendChild(styleEl);
+  }, []);
 
   const defaultNormalized = useMemo(() => {
     if (savedItems === undefined) {
@@ -1107,7 +1146,7 @@ function RichTextEditor({ value, onChange }: RichTextEditorProps) {
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
-              className="min-h-[160px] px-3 py-2 focus:outline-none text-sm leading-relaxed"
+              className="min-h-[160px] px-3 py-2 focus:outline-none text-sm leading-relaxed rpg-accordion-visual-editor"
               onInput={handleInput}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}

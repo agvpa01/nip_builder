@@ -127,6 +127,9 @@ const ACCORDION_STYLE = `
   .rpg-accordion__content-inner ul {
     margin-left: 20px;
     margin-top: 12px;
+    padding-left: 20px;
+    list-style: disc;
+    list-style-position: outside;
   }
 
   .rpg-accordion__content-inner li {
