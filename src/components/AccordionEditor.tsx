@@ -25,16 +25,16 @@ const DEFAULT_ACCORDION_ITEMS: AccordionItem[] = [
       "<p>VPA Whey Isolate is Australia's leading Whey Protein Isolate; ultra-pure, fast-absorbing, low-carb, and high-protein. Ideal for lean muscle growth and recovery. No fillers. No hype. Just results.</p>",
   },
   {
-    id: "flavour",
-    title: "Flavour Guarantee",
-    content:
-      "<p>At VPA®, we don’t rush flavours. Every one is crafted in-house by our food technician with 15+ years’ experience, then refined through months of blind taste testing with real customers.</p><p>The result? Flavours made for our community, by our community.</p><p>But if it’s not your thing? No worries. We’ll replace it with another flavour of your choice — <b>on the house</b>.</p><p><b>Satisfaction Guarantee:</b> <br />Not 100% happy? Return it with at least 90% remaining and we’ll organise an exchange.</p>",
-  },
-  {
     id: "nutrition",
     title: "Nutritional Facts &amp; Ingredients",
     content:
       '<div data-convex-base="https://useful-llama-278.convex.site"></div><script async src="https://useful-llama-278.convex.site/embed.js?v=1234123432"></script>',
+  },
+  {
+    id: "flavour",
+    title: "Flavour Guarantee",
+    content:
+      "<p>At VPA®, we don’t rush flavours. Every one is crafted in-house by our food technician with 15+ years’ experience, then refined through months of blind taste testing with real customers.</p><p>The result? Flavours made for our community, by our community.</p><p>But if it’s not your thing? No worries. We’ll replace it with another flavour of your choice — <b>on the house</b>.</p><p><b>Satisfaction Guarantee:</b> <br />Not 100% happy? Return it with at least 90% remaining and we’ll organise an exchange.</p>",
   },
 ];
 
